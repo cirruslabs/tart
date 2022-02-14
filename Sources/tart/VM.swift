@@ -24,8 +24,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
             ecid: vmConfig.ecid,
             auxStorage: auxStorage,
             hardwareModel: vmConfig.hardwareModel,
-            cpuCount: vmConfig.cpuCountMin,
-            memorySize: vmConfig.memorySizeMin
+            cpuCount: vmConfig.cpuCount,
+            memorySize: vmConfig.memorySize
         )
         
         self.virtualMachine = VZVirtualMachine(configuration: configuration)
@@ -68,8 +68,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         // Create config
         self.vmConfig = VMConfig(
             hardwareModel: requirements.hardwareModel,
-            cpuCountMin: requirements.minimumSupportedCPUCount,
-            memorySizeMin: requirements.minimumSupportedMemorySize
+            cpuCount: requirements.minimumSupportedCPUCount,
+            memorySize: requirements.minimumSupportedMemorySize
         )
         try self.vmConfig.save(toURL: vmDir.configURL)
         
@@ -79,8 +79,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
             ecid: self.vmConfig.ecid,
             auxStorage: auxStorage,
             hardwareModel: requirements.hardwareModel,
-            cpuCount: self.vmConfig.cpuCountMin,
-            memorySize: self.vmConfig.memorySizeMin
+            cpuCount: self.vmConfig.cpuCount,
+            memorySize: self.vmConfig.memorySize
         )
         self.virtualMachine = VZVirtualMachine(configuration: configuration)
         

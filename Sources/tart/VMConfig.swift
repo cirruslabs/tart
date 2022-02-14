@@ -4,22 +4,22 @@ enum CodingKeys: String, CodingKey {
     case version
     case ecid
     case hardwareModel
-    case cpuCountMin
-    case memorySizeMin
+    case cpuCount
+    case memorySize
 }
 
 struct VMConfig: Encodable, Decodable {
     var version: Int = 0
     var ecid: VZMacMachineIdentifier
     var hardwareModel: VZMacHardwareModel
-    var cpuCountMin: Int
-    var memorySizeMin: UInt64
+    var cpuCount: Int
+    var memorySize: UInt64
     
-    init(ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(), hardwareModel: VZMacHardwareModel, cpuCountMin: Int, memorySizeMin: UInt64) {
+    init(ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(), hardwareModel: VZMacHardwareModel, cpuCount: Int, memorySize: UInt64) {
         self.ecid = ecid
         self.hardwareModel = hardwareModel
-        self.cpuCountMin = cpuCountMin
-        self.memorySizeMin = memorySizeMin
+        self.cpuCount = cpuCount
+        self.memorySize = memorySize
     }
     
     init(fromURL: URL) throws {
@@ -60,9 +60,9 @@ struct VMConfig: Encodable, Decodable {
         }
         self.hardwareModel = hardwareModel
         
-        self.cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
+        self.cpuCount = try container.decode(Int.self, forKey: .cpuCount)
         
-        self.memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
+        self.memorySize = try container.decode(UInt64.self, forKey: .memorySize)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -71,7 +71,7 @@ struct VMConfig: Encodable, Decodable {
         try container.encode(self.version, forKey: .version)
         try container.encode(self.ecid.dataRepresentation.base64EncodedString(), forKey: .ecid)
         try container.encode(self.hardwareModel.dataRepresentation.base64EncodedString(), forKey: .hardwareModel)
-        try container.encode(self.cpuCountMin, forKey: .cpuCountMin)
-        try container.encode(self.memorySizeMin, forKey: .memorySizeMin)
+        try container.encode(self.cpuCount, forKey: .cpuCount)
+        try container.encode(self.memorySize, forKey: .memorySize)
     }
 }
