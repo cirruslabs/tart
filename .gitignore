@@ -1,2 +1,9 @@
 # Xcode's user settings
 xcuserdata/
+tart.xcodeproj/
+
+# AppCode
+.idea/
+
+# Swift
+.build/
