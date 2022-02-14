@@ -28,7 +28,9 @@ struct VMConfig: Encodable, Decodable {
     }
     
     func save(toURL: URL) throws {
-        try JSONEncoder().encode(self).write(to: toURL)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        try encoder.encode(self).write(to: toURL)
     }
     
     init(from decoder: Decoder) throws {
