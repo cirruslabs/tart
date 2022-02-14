@@ -6,9 +6,9 @@ struct AlreadyInitializedVMDirectoryError: Error {}
 struct VMDirectory {
     var baseURL: URL
     
-    var configURL: URL { self.baseURL.appendingPathComponent("config") }
-    var diskURL: URL { self.baseURL.appendingPathComponent("disk") }
-    var nvramURL: URL { self.baseURL.appendingPathComponent("nvram") }
+    var configURL: URL { self.baseURL.appendingPathComponent("config.json") }
+    var diskURL: URL { self.baseURL.appendingPathComponent("disk.bin") }
+    var nvramURL: URL { self.baseURL.appendingPathComponent("nvram.bin") }
     
     var initialized: Bool {
         FileManager.default.fileExists(atPath: configURL.path) &&
