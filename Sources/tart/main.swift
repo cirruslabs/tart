@@ -1,0 +1,3 @@
+import SwiftUI
+
+Root.main()
