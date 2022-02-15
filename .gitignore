@@ -2,6 +2,9 @@
 xcuserdata/
 tart.xcodeproj/
 
+# SwiftPM
+.swiftpm/
+
 # AppCode
 .idea/
 
