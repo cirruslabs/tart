@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "artifacts": {
+    "codesign": {
+      "type": "executable",
+      "version": "1.0",
+      "variants": [
+        {
+          "path": "bin/codesign",
+          "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
+        }
+      ]
+    }
+  }
+}

@@ -1,23 +1,26 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.6
 
 import PackageDescription
 
 let package = Package(
-  name: "Tart",
-  platforms: [
-    .macOS(.v12)
-  ],
-  dependencies: [
-    .package(
-      name: "swift-argument-parser",
-      url: "https://github.com/apple/swift-argument-parser",
-      .upToNextMinor(from: "1.0.3")
-    ),
-  ],
-  targets: [
-    .executableTarget(name: "Tart",
-      dependencies: [
-        .product(name: "ArgumentParser", package: "swift-argument-parser"),
-      ]),
-  ]
+        name: "Tart",
+        platforms: [
+            .macOS(.v12)
+        ],
+        dependencies: [
+            .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.3"),
+        ],
+        targets: [
+            .executableTarget(name: "tart",
+                    dependencies: [
+                        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                    ],
+                    plugins: [.plugin(name: "SwiftEntitlementsPlugin")]),
+            .plugin(
+                    name: "SwiftEntitlementsPlugin",
+                    capability: .buildTool(),
+                    dependencies: ["codesign"]
+            ),
+            .binaryTarget(name: "codesign", path: "artifacts/codesign.artifactbundle")
+        ]
 )
