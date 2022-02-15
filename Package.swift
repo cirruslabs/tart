@@ -14,13 +14,6 @@ let package = Package(
             .executableTarget(name: "tart",
                     dependencies: [
                         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                    ],
-                    plugins: [.plugin(name: "SwiftEntitlementsPlugin")]),
-            .plugin(
-                    name: "SwiftEntitlementsPlugin",
-                    capability: .buildTool(),
-                    dependencies: ["codesign"]
-            ),
-            .binaryTarget(name: "codesign", path: "artifacts/codesign.artifactbundle")
+                    ]),
         ]
 )
