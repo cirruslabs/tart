@@ -6,6 +6,7 @@ enum CodingKeys: String, CodingKey {
     case hardwareModel
     case cpuCount
     case memorySize
+    case macAddress
 }
 
 struct VMConfig: Encodable, Decodable {
@@ -14,12 +15,20 @@ struct VMConfig: Encodable, Decodable {
     var hardwareModel: VZMacHardwareModel
     var cpuCount: Int
     var memorySize: UInt64
+    var macAddress: VZMACAddress
     
-    init(ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(), hardwareModel: VZMacHardwareModel, cpuCount: Int, memorySize: UInt64) {
+    init(
+        ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(),
+        hardwareModel: VZMacHardwareModel,
+        cpuCount: Int,
+        memorySize: UInt64,
+        macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
+    ) {
         self.ecid = ecid
         self.hardwareModel = hardwareModel
         self.cpuCount = cpuCount
         self.memorySize = memorySize
+        self.macAddress = macAddress
     }
     
     init(fromURL: URL) throws {
@@ -63,6 +72,15 @@ struct VMConfig: Encodable, Decodable {
         self.cpuCount = try container.decode(Int.self, forKey: .cpuCount)
         
         self.memorySize = try container.decode(UInt64.self, forKey: .memorySize)
+        
+        let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
+        guard let macAddress = VZMACAddress.init(string: encodedMacAddress) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .hardwareModel,
+                in: container,
+                debugDescription: "failed to initialize VZMacAddress using the provided value")
+        }
+        self.macAddress = macAddress
     }
     
     func encode(to encoder: Encoder) throws {
@@ -73,5 +91,6 @@ struct VMConfig: Encodable, Decodable {
         try container.encode(self.hardwareModel.dataRepresentation.base64EncodedString(), forKey: .hardwareModel)
         try container.encode(self.cpuCount, forKey: .cpuCount)
         try container.encode(self.memorySize, forKey: .memorySize)
+        try container.encode(self.macAddress.string, forKey: .macAddress)
     }
 }
