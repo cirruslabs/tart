@@ -25,7 +25,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
             auxStorage: auxStorage,
             hardwareModel: vmConfig.hardwareModel,
             cpuCount: vmConfig.cpuCount,
-            memorySize: vmConfig.memorySize
+            memorySize: vmConfig.memorySize,
+            macAddress: vmConfig.macAddress
         )
         
         self.virtualMachine = VZVirtualMachine(configuration: configuration)
@@ -80,7 +81,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
             auxStorage: auxStorage,
             hardwareModel: requirements.hardwareModel,
             cpuCount: self.vmConfig.cpuCount,
-            memorySize: self.vmConfig.memorySize
+            memorySize: self.vmConfig.memorySize,
+            macAddress: self.vmConfig.macAddress
         )
         self.virtualMachine = VZVirtualMachine(configuration: configuration)
         
@@ -116,7 +118,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         auxStorage: VZMacAuxiliaryStorage,
         hardwareModel: VZMacHardwareModel,
         cpuCount: Int,
-        memorySize: UInt64
+        memorySize: UInt64,
+        macAddress: VZMACAddress
     ) throws -> VZVirtualMachineConfiguration {
         let configuration = VZVirtualMachineConfiguration()
         
@@ -153,6 +156,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         // Networking
         let vio = VZVirtioNetworkDeviceConfiguration()
         vio.attachment = VZNATNetworkDeviceAttachment()
+        vio.macAddress = macAddress
         configuration.networkDevices = [vio]
         
         // Storage
