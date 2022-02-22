@@ -16,7 +16,7 @@ struct IP: ParsableCommand {
                 let vmMacAddress = MACAddress(fromString: vmConfig.macAddress.string)!
                 
                 guard let ip = try ARPCache.ResolveMACAddress(macAddress: vmMacAddress) else {
-                    print("no IP address found")
+                    print("no IP address found, is your VM running?")
                     
                     Foundation.exit(1)
                 }
