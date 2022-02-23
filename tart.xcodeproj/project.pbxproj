@@ -14,6 +14,7 @@
 		4484BA6B27BF1F270043A359 /* IP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4484BA6A27BF1F270043A359 /* IP.swift */; };
 		4484BA7027BF1F6D0043A359 /* ARPCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4484BA6E27BF1F6D0043A359 /* ARPCache.swift */; };
 		4484BA7127BF1F6D0043A359 /* MACAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4484BA6F27BF1F6D0043A359 /* MACAddress.swift */; };
+		44DD8D8D27C596B300BB9041 /* Clone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DD8D8C27C596B300BB9041 /* Clone.swift */; };
 		44FDBB3427B4177C005A201B /* VMStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FDBB3327B4177C005A201B /* VMStorage.swift */; };
 		44FDBB4227B43E6D005A201B /* VM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FDBB4127B43E6D005A201B /* VM.swift */; };
 		44FDBB4427B4445E005A201B /* Root.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FDBB4327B4445E005A201B /* Root.swift */; };
@@ -43,6 +44,7 @@
 		4484BA6A27BF1F270043A359 /* IP.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IP.swift; sourceTree = "<group>"; };
 		4484BA6E27BF1F6D0043A359 /* ARPCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARPCache.swift; sourceTree = "<group>"; };
 		4484BA6F27BF1F6D0043A359 /* MACAddress.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MACAddress.swift; sourceTree = "<group>"; };
+		44DD8D8C27C596B300BB9041 /* Clone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clone.swift; sourceTree = "<group>"; };
 		44FDBB3327B4177C005A201B /* VMStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VMStorage.swift; sourceTree = "<group>"; };
 		44FDBB3927B43CCF005A201B /* tart-tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "tart-tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		44FDBB4127B43E6D005A201B /* VM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VM.swift; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 				44FDBB4327B4445E005A201B /* Root.swift */,
 				44FDBB4727B45EA1005A201B /* Delete.swift */,
 				44FDBB4927B45F6F005A201B /* List.swift */,
+				44DD8D8C27C596B300BB9041 /* Clone.swift */,
 			);
 			path = Commands;
 			sourceTree = "<group>";
@@ -239,6 +242,7 @@
 				44FDBB4C27B69515005A201B /* VMDirectory.swift in Sources */,
 				4484BA7127BF1F6D0043A359 /* MACAddress.swift in Sources */,
 				440478FD27B1352C0028EFB8 /* Create.swift in Sources */,
+				44DD8D8D27C596B300BB9041 /* Clone.swift in Sources */,
 				44FDBB4427B4445E005A201B /* Root.swift in Sources */,
 				44FDBB4A27B45F6F005A201B /* List.swift in Sources */,
 			);
