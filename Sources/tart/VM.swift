@@ -37,13 +37,23 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
     
     static func retrieveLatestIPSW() async throws -> URL {
+        defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
         let image = try await withCheckedThrowingContinuation { continuation in
             VZMacOSRestoreImage.fetchLatestSupported() { result in continuation.resume(with: result) }
         }
-        
-        let (downloadedImageURL, _) = try await URLSession.shared.download(from: image.url, delegate: nil)
-        
-        return downloadedImageURL
+        defaultLogger.appendNewLine("Fetching...")
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let downloadedTask = URLSession.shared.downloadTask(with: image.url) { location, _, error in
+                if (location != nil) {
+                    continuation.resume(returning: location!)
+                } else {
+                    continuation.resume(throwing: error!)
+                }
+            }
+            ProgressLogger(defaultLogger).FollowProgress(downloadedTask.progress)
+            downloadedTask.resume()
+        }
     }
     
     init(vmDir: VMDirectory, ipswURL: URL?, diskSize: UInt64 = 32 * 1024 * 1024 * 1024) async throws {
@@ -94,6 +104,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             DispatchQueue.main.async {
                 let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
+
+                defaultLogger.appendNewLine("Installing OS...")        
+                ProgressLogger(defaultLogger).FollowProgress(installer.progress)        
                 
                 installer.install { result in continuation.resume(with: result) }
             }
