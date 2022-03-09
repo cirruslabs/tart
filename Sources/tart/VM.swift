@@ -51,7 +51,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                     continuation.resume(throwing: error!)
                 }
             }
-            ProgressLogger(defaultLogger).FollowProgress(downloadedTask.progress)
+            ProgressObserver(downloadedTask.progress).log(defaultLogger)
             downloadedTask.resume()
         }
     }
@@ -105,8 +105,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
             DispatchQueue.main.async {
                 let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
 
-                defaultLogger.appendNewLine("Installing OS...")        
-                ProgressLogger(defaultLogger).FollowProgress(installer.progress)        
+                defaultLogger.appendNewLine("Installing OS...")
+                ProgressObserver(installer.progress).log(defaultLogger)        
                 
                 installer.install { result in continuation.resume(with: result) }
             }

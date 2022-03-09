@@ -14,7 +14,9 @@ var defaultLogger: Logger = {
 }()
 
 public class InteractiveConsoleLogger: Logger {
-    private let eraseLine = "\\x1B[K" // clear entire line
+    private let eraseCursorDown = "\u{001B}[J" // clear entire line
+    private let moveUp = "\u{001B}[1A" // move one line up
+    private let moveBeginningOfLine = "\r" // 
 
     public init() {
 
@@ -25,9 +27,7 @@ public class InteractiveConsoleLogger: Logger {
     }
 
     public func updateLastLine(_ line: String) {
-        print(eraseLine) // current empty line
-        print(eraseLine) // previous line that we want to update
-        print(line, terminator: "\n")
+        print(moveUp, moveBeginningOfLine, eraseCursorDown, line, separator: "", terminator: "\n")
     }
 }
 
