@@ -3,6 +3,7 @@ import Virtualization
 
 struct UnsupportedRestoreImageError: Error {}
 struct NoMainScreenFoundError: Error {}
+struct DownloadFailed: Error {}
 
 class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Virtualization.Framework's virtual machine
@@ -41,14 +42,34 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         let image = try await withCheckedThrowingContinuation { continuation in
             VZMacOSRestoreImage.fetchLatestSupported() { result in continuation.resume(with: result) }
         }
-        defaultLogger.appendNewLine("Fetching...")
+
+        let expectedIPSWLocation = VMStorage.tartCacheDir
+                .appendingPathComponent("IPSWs", isDirectory: true)
+                .appendingPathComponent("\(image.buildVersion).ipsw")
+
+        if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
+            defaultLogger.appendNewLine("Using cached *.ipsw file...")
+            return expectedIPSWLocation
+        }
+
+        defaultLogger.appendNewLine("Fetching \(expectedIPSWLocation.lastPathComponent)...")
 
         return try await withCheckedThrowingContinuation { continuation in
-            let downloadedTask = URLSession.shared.downloadTask(with: image.url) { location, _, error in
-                if (location != nil) {
-                    continuation.resume(returning: location!)
-                } else {
+            let downloadedTask = URLSession.shared.downloadTask(with: image.url) { location, response, error in
+                if error != nil {
                     continuation.resume(throwing: error!)
+                    return
+                }        
+                if (location == nil) {
+                    continuation.resume(throwing: DownloadFailed())
+                    return
+                }
+                // copy over the downloaded file since location will be deleted right after the callback execution
+                do {
+                    try FileManager.default.copyItem(at: location!, to: expectedIPSWLocation)
+                    continuation.resume(returning: expectedIPSWLocation)
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
             ProgressObserver(downloadedTask.progress).log(defaultLogger)
