@@ -16,6 +16,6 @@ public class ProgressObserver: NSObject {
     }
 
     private static func lineToRender(_ progress: Progress) -> String {
-        String(100 * progress.completedUnitCount / progress.totalUnitCount) + "%"
+        String(Int(100 * progress.fractionCompleted)) + "%"
     }
 }
