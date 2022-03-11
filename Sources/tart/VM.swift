@@ -42,10 +42,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         let image = try await withCheckedThrowingContinuation { continuation in
             VZMacOSRestoreImage.fetchLatestSupported() { result in continuation.resume(with: result) }
         }
+        
 
-        let expectedIPSWLocation = VMStorage.tartCacheDir
-                .appendingPathComponent("IPSWs", isDirectory: true)
-                .appendingPathComponent("\(image.buildVersion).ipsw")
+        let ipswCacheFolder = VMStorage.tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
+        try FileManager.default.createDirectory(at: ipswCacheFolder, withIntermediateDirectories: true)
+        
+        let expectedIPSWLocation = ipswCacheFolder.appendingPathComponent("\(image.buildVersion).ipsw", isDirectory: false)
 
         if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
             defaultLogger.appendNewLine("Using cached *.ipsw file...")
@@ -54,27 +56,24 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
         defaultLogger.appendNewLine("Fetching \(expectedIPSWLocation.lastPathComponent)...")
 
-        return try await withCheckedThrowingContinuation { continuation in
-            let downloadedTask = URLSession.shared.downloadTask(with: image.url) { location, response, error in
+        let data: Data = try await withCheckedThrowingContinuation { continuation in
+            let downloadedTask = URLSession.shared.dataTask(with: image.url) { data, response, error in
                 if error != nil {
                     continuation.resume(throwing: error!)
                     return
                 }        
-                if (location == nil) {
+                if (data == nil) {
                     continuation.resume(throwing: DownloadFailed())
                     return
                 }
-                // copy over the downloaded file since location will be deleted right after the callback execution
-                do {
-                    try FileManager.default.copyItem(at: location!, to: expectedIPSWLocation)
-                    continuation.resume(returning: expectedIPSWLocation)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+                continuation.resume(returning: data!)
             }
             ProgressObserver(downloadedTask.progress).log(defaultLogger)
             downloadedTask.resume()
         }
+        
+        try data.write(to: expectedIPSWLocation, options: [.atomic])
+        return expectedIPSWLocation
     }
     
     init(vmDir: VMDirectory, ipswURL: URL?, diskSize: UInt64 = 32 * 1024 * 1024 * 1024) async throws {
