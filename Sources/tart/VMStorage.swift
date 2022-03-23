@@ -1,15 +1,12 @@
 import Foundation
 
 struct VMStorage {
-    var homeDir: URL
-    var tartDir: URL
-    var vmsDir: URL
+    public static let tartHomeDir: URL = FileManager.default
+            .homeDirectoryForCurrentUser
+            .appendingPathComponent(".tart", isDirectory: true)
     
-    init() {
-        homeDir = FileManager.default.homeDirectoryForCurrentUser
-        tartDir = homeDir.appendingPathComponent(".tart", isDirectory: true)
-        vmsDir = tartDir.appendingPathComponent("vms", isDirectory: true)
-    }
+    public static let tartVMsDir: URL = tartHomeDir.appendingPathComponent("vms", isDirectory: true)
+    public static let tartCacheDir: URL = tartHomeDir.appendingPathComponent("cache", isDirectory: true)
     
     func create(_ name: String) throws -> VMDirectory {
         let vmDir = VMDirectory(baseURL: vmURL(name))
@@ -33,9 +30,10 @@ struct VMStorage {
     
     func list() throws -> [URL] {
         do {
-            return try FileManager.default.contentsOfDirectory(at: vmsDir,
-                                                               includingPropertiesForKeys: [.isDirectoryKey],
-                                                               options: .skipsSubdirectoryDescendants)
+            return try FileManager.default.contentsOfDirectory(
+                at: VMStorage.tartVMsDir,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: .skipsSubdirectoryDescendants)
         } catch {
             if error.isFileNotFound() {
                 return []
@@ -46,7 +44,10 @@ struct VMStorage {
     }
     
     private func vmURL(_ name: String) -> URL {
-        return URL.init(fileURLWithPath: name, isDirectory: true, relativeTo: vmsDir)
+        return URL.init(
+            fileURLWithPath: name, 
+            isDirectory: true, 
+            relativeTo: VMStorage.tartVMsDir)
     }
 }
 

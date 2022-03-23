@@ -3,6 +3,7 @@ import Virtualization
 
 struct UnsupportedRestoreImageError: Error {}
 struct NoMainScreenFoundError: Error {}
+struct DownloadFailed: Error {}
 
 class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Virtualization.Framework's virtual machine
@@ -37,13 +38,42 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
     
     static func retrieveLatestIPSW() async throws -> URL {
+        defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
         let image = try await withCheckedThrowingContinuation { continuation in
             VZMacOSRestoreImage.fetchLatestSupported() { result in continuation.resume(with: result) }
         }
         
-        let (downloadedImageURL, _) = try await URLSession.shared.download(from: image.url, delegate: nil)
+
+        let ipswCacheFolder = VMStorage.tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
+        try FileManager.default.createDirectory(at: ipswCacheFolder, withIntermediateDirectories: true)
         
-        return downloadedImageURL
+        let expectedIPSWLocation = ipswCacheFolder.appendingPathComponent("\(image.buildVersion).ipsw", isDirectory: false)
+
+        if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
+            defaultLogger.appendNewLine("Using cached *.ipsw file...")
+            return expectedIPSWLocation
+        }
+
+        defaultLogger.appendNewLine("Fetching \(expectedIPSWLocation.lastPathComponent)...")
+
+        let data: Data = try await withCheckedThrowingContinuation { continuation in
+            let downloadedTask = URLSession.shared.dataTask(with: image.url) { data, response, error in
+                if error != nil {
+                    continuation.resume(throwing: error!)
+                    return
+                }        
+                if (data == nil) {
+                    continuation.resume(throwing: DownloadFailed())
+                    return
+                }
+                continuation.resume(returning: data!)
+            }
+            ProgressObserver(downloadedTask.progress).log(defaultLogger)
+            downloadedTask.resume()
+        }
+        
+        try data.write(to: expectedIPSWLocation, options: [.atomic])
+        return expectedIPSWLocation
     }
     
     init(vmDir: VMDirectory, ipswURL: URL?, diskSize: UInt64 = 32 * 1024 * 1024 * 1024) async throws {
@@ -94,6 +124,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             DispatchQueue.main.async {
                 let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
+
+                defaultLogger.appendNewLine("Installing OS...")
+                ProgressObserver(installer.progress).log(defaultLogger)        
                 
                 installer.install { result in continuation.resume(with: result) }
             }
