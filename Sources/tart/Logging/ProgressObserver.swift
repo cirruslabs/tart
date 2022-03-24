@@ -1,21 +1,21 @@
 import Foundation
 
 public class ProgressObserver: NSObject {
-    @objc var progressToObserve: Progress
-    var observation: NSKeyValueObservation?
+  @objc var progressToObserve: Progress
+  var observation: NSKeyValueObservation?
 
-    public init(_ progress: Progress) {
-        progressToObserve = progress
-    }
-    
-    func log(_ renderer: Logger) {
-        renderer.appendNewLine(ProgressObserver.lineToRender(progressToObserve))
-        observation = observe(\.progressToObserve.fractionCompleted) { progress, _ in
-            renderer.updateLastLine(ProgressObserver.lineToRender(self.progressToObserve))
-        }        
-    }
+  public init(_ progress: Progress) {
+    progressToObserve = progress
+  }
 
-    private static func lineToRender(_ progress: Progress) -> String {
-        String(Int(100 * progress.fractionCompleted)) + "%"
+  func log(_ renderer: Logger) {
+    renderer.appendNewLine(ProgressObserver.lineToRender(progressToObserve))
+    observation = observe(\.progressToObserve.fractionCompleted) { progress, _ in
+      renderer.updateLastLine(ProgressObserver.lineToRender(self.progressToObserve))
     }
+  }
+
+  private static func lineToRender(_ progress: Progress) -> String {
+    String(Int(100 * progress.fractionCompleted)) + "%"
+  }
 }
