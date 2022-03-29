@@ -81,6 +81,9 @@ struct ARPCache {
       }
 
       let rawMAC = try match.getCaptureGroup(name: "mac", for: line)
+      if rawMAC == "(incomplete)" {
+        continue
+      }
       guard let mac = MACAddress(fromString: rawMAC) else {
         throw ARPCommandYieldedInvalidOutputError(explanation: "failed to parse MAC address \(rawMAC)")
       }
