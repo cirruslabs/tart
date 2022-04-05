@@ -4,30 +4,36 @@ enum CodingKeys: String, CodingKey {
   case version
   case ecid
   case hardwareModel
+  case cpuCountMin
   case cpuCount
+  case memorySizeMin
   case memorySize
   case macAddress
 }
 
 struct VMConfig: Encodable, Decodable {
-  var version: Int = 0
+  var version: Int = 1
   var ecid: VZMacMachineIdentifier
   var hardwareModel: VZMacHardwareModel
+  var cpuCountMin: Int
   var cpuCount: Int
+  var memorySizeMin: UInt64
   var memorySize: UInt64
   var macAddress: VZMACAddress
 
   init(
     ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(),
     hardwareModel: VZMacHardwareModel,
-    cpuCount: Int,
-    memorySize: UInt64,
+    cpuCountMin: Int,
+    memorySizeMin: UInt64,
     macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
     self.ecid = ecid
     self.hardwareModel = hardwareModel
-    self.cpuCount = cpuCount
-    self.memorySize = memorySize
+    self.cpuCountMin = cpuCountMin
+    self.cpuCount = cpuCountMin
+    self.memorySizeMin = memorySizeMin
+    self.memorySize = memorySizeMin
     self.macAddress = macAddress
   }
 
@@ -70,8 +76,17 @@ struct VMConfig: Encodable, Decodable {
     self.hardwareModel = hardwareModel
 
     self.cpuCount = try container.decode(Int.self, forKey: .cpuCount)
-
     self.memorySize = try container.decode(UInt64.self, forKey: .memorySize)
+
+    // Migrate to newer version
+    if version == 0 {
+      self.cpuCountMin = self.cpuCount
+      self.memorySizeMin = self.memorySize
+      self.version = 1
+    } else {
+      self.cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
+      self.memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
+    }
 
     let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
     guard let macAddress = VZMACAddress.init(string: encodedMacAddress) else {
@@ -89,7 +104,9 @@ struct VMConfig: Encodable, Decodable {
     try container.encode(self.version, forKey: .version)
     try container.encode(self.ecid.dataRepresentation.base64EncodedString(), forKey: .ecid)
     try container.encode(self.hardwareModel.dataRepresentation.base64EncodedString(), forKey: .hardwareModel)
+    try container.encode(self.cpuCountMin, forKey: .cpuCountMin)
     try container.encode(self.cpuCount, forKey: .cpuCount)
+    try container.encode(self.memorySizeMin, forKey: .memorySizeMin)
     try container.encode(self.memorySize, forKey: .memorySize)
     try container.encode(self.macAddress.string, forKey: .macAddress)
   }
