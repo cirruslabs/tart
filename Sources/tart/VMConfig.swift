@@ -1,5 +1,19 @@
 import Virtualization
 
+class LessThanMinimalResourcesError: NSObject, LocalizedError {
+  var userExplanation: String
+
+  init(_ userExplanation: String) {
+    self.userExplanation = userExplanation
+  }
+
+  override var description: String {
+    get {
+      return "LessThanMinimalResourcesError: \(self.userExplanation)"
+    }
+  }
+}
+
 enum CodingKeys: String, CodingKey {
   case version
   case ecid
@@ -16,9 +30,9 @@ struct VMConfig: Encodable, Decodable {
   var ecid: VZMacMachineIdentifier
   var hardwareModel: VZMacHardwareModel
   var cpuCountMin: Int
-  var cpuCount: Int
+  private(set) var cpuCount: Int
   var memorySizeMin: UInt64
-  var memorySize: UInt64
+  private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
 
   init(
@@ -109,5 +123,23 @@ struct VMConfig: Encodable, Decodable {
     try container.encode(self.memorySizeMin, forKey: .memorySizeMin)
     try container.encode(self.memorySize, forKey: .memorySize)
     try container.encode(self.macAddress.string, forKey: .macAddress)
+  }
+
+  mutating func setCPU(cpuCount: Int) throws {
+    if cpuCount < self.cpuCountMin {
+      throw LessThanMinimalResourcesError("VM should have \(self.cpuCountMin) CPU cores"
+              + " at minimum (requested \(cpuCount))")
+    }
+
+    self.cpuCount = cpuCount
+  }
+
+  mutating func setMemory(memorySize: UInt64) throws {
+    if memorySize < self.memorySizeMin {
+      throw LessThanMinimalResourcesError("VM should have \(self.memorySizeMin) bytes"
+              + " of memory at minimum (requested \(self.memorySizeMin))")
+    }
+
+    self.memorySize = memorySize
   }
 }

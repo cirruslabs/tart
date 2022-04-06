@@ -20,11 +20,11 @@ struct Set: AsyncParsableCommand {
       var vmConfig = try VMConfig(fromURL: vmDir.configURL)
 
       if let cpu = cpu {
-        vmConfig.cpuCount = Int(cpu)
+        try vmConfig.setCPU(cpuCount: Int(cpu))
       }
 
       if let memory = memory {
-        vmConfig.memorySize = UInt64(memory) * 1024 * 1024
+        try vmConfig.setMemory(memorySize: UInt64(memory) * 1024 * 1024)
       }
 
       try vmConfig.save(toURL: vmDir.configURL)
