@@ -89,18 +89,10 @@ struct VMConfig: Encodable, Decodable {
     }
     self.hardwareModel = hardwareModel
 
+    self.cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
     self.cpuCount = try container.decode(Int.self, forKey: .cpuCount)
+    self.memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
     self.memorySize = try container.decode(UInt64.self, forKey: .memorySize)
-
-    // Migrate to newer version
-    if version == 0 {
-      self.cpuCountMin = self.cpuCount
-      self.memorySizeMin = self.memorySize
-      self.version = 1
-    } else {
-      self.cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
-      self.memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
-    }
 
     let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
     guard let macAddress = VZMACAddress.init(string: encodedMacAddress) else {
