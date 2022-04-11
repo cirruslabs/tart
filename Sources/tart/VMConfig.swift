@@ -1,33 +1,53 @@
 import Virtualization
 
+class LessThanMinimalResourcesError: NSObject, LocalizedError {
+  var userExplanation: String
+
+  init(_ userExplanation: String) {
+    self.userExplanation = userExplanation
+  }
+
+  override var description: String {
+    get {
+      return "LessThanMinimalResourcesError: \(self.userExplanation)"
+    }
+  }
+}
+
 enum CodingKeys: String, CodingKey {
   case version
   case ecid
   case hardwareModel
+  case cpuCountMin
   case cpuCount
+  case memorySizeMin
   case memorySize
   case macAddress
 }
 
 struct VMConfig: Encodable, Decodable {
-  var version: Int = 0
+  var version: Int = 1
   var ecid: VZMacMachineIdentifier
   var hardwareModel: VZMacHardwareModel
-  var cpuCount: Int
-  var memorySize: UInt64
+  var cpuCountMin: Int
+  private(set) var cpuCount: Int
+  var memorySizeMin: UInt64
+  private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
 
   init(
     ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(),
     hardwareModel: VZMacHardwareModel,
-    cpuCount: Int,
-    memorySize: UInt64,
+    cpuCountMin: Int,
+    memorySizeMin: UInt64,
     macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
     self.ecid = ecid
     self.hardwareModel = hardwareModel
-    self.cpuCount = cpuCount
-    self.memorySize = memorySize
+    self.cpuCountMin = cpuCountMin
+    self.cpuCount = cpuCountMin
+    self.memorySizeMin = memorySizeMin
+    self.memorySize = memorySizeMin
     self.macAddress = macAddress
   }
 
@@ -69,8 +89,9 @@ struct VMConfig: Encodable, Decodable {
     }
     self.hardwareModel = hardwareModel
 
+    self.cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
     self.cpuCount = try container.decode(Int.self, forKey: .cpuCount)
-
+    self.memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
     self.memorySize = try container.decode(UInt64.self, forKey: .memorySize)
 
     let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
@@ -89,8 +110,28 @@ struct VMConfig: Encodable, Decodable {
     try container.encode(self.version, forKey: .version)
     try container.encode(self.ecid.dataRepresentation.base64EncodedString(), forKey: .ecid)
     try container.encode(self.hardwareModel.dataRepresentation.base64EncodedString(), forKey: .hardwareModel)
+    try container.encode(self.cpuCountMin, forKey: .cpuCountMin)
     try container.encode(self.cpuCount, forKey: .cpuCount)
+    try container.encode(self.memorySizeMin, forKey: .memorySizeMin)
     try container.encode(self.memorySize, forKey: .memorySize)
     try container.encode(self.macAddress.string, forKey: .macAddress)
+  }
+
+  mutating func setCPU(cpuCount: Int) throws {
+    if cpuCount < self.cpuCountMin {
+      throw LessThanMinimalResourcesError("VM should have \(self.cpuCountMin) CPU cores"
+              + " at minimum (requested \(cpuCount))")
+    }
+
+    self.cpuCount = cpuCount
+  }
+
+  mutating func setMemory(memorySize: UInt64) throws {
+    if memorySize < self.memorySizeMin {
+      throw LessThanMinimalResourcesError("VM should have \(self.memorySizeMin) bytes"
+              + " of memory at minimum (requested \(self.memorySizeMin))")
+    }
+
+    self.memorySize = memorySize
   }
 }

@@ -110,8 +110,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Create config
     self.vmConfig = VMConfig(
       hardwareModel: requirements.hardwareModel,
-      cpuCount: requirements.minimumSupportedCPUCount,
-      memorySize: requirements.minimumSupportedMemorySize
+      cpuCountMin: requirements.minimumSupportedCPUCount,
+      memorySizeMin: requirements.minimumSupportedMemorySize
     )
     try self.vmConfig.save(toURL: vmDir.configURL)
 
