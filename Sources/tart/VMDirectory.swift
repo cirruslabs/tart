@@ -7,16 +7,17 @@ struct AlreadyInitializedVMDirectoryError: Error {
 }
 
 struct VMDirectory {
+  var name: String
   var baseURL: URL
 
   var configURL: URL {
-    self.baseURL.appendingPathComponent("config.json")
+    baseURL.appendingPathComponent("config.json")
   }
   var diskURL: URL {
-    self.baseURL.appendingPathComponent("disk.bin")
+    baseURL.appendingPathComponent("disk.bin")
   }
   var nvramURL: URL {
-    self.baseURL.appendingPathComponent("nvram.bin")
+    baseURL.appendingPathComponent("nvram.bin")
   }
 
   var initialized: Bool {

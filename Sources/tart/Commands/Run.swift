@@ -39,7 +39,7 @@ struct Run: AsyncParsableCommand {
 
       struct MainApp: App {
         var body: some Scene {
-          WindowGroup {
+          WindowGroup(vm!.name) {
             Group {
               VMView(vm: vm!).onAppear {
                 NSWindow.allowsAutomaticWindowTabbing = false

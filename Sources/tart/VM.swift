@@ -18,11 +18,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   var sema = DispatchSemaphore(value: 0)
 
   // VM's config
+  var name: String
+  
+  // VM's config
   var config: VMConfig
 
   init(vmDir: VMDirectory) throws {
     let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
 
+    name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
 
     let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
@@ -98,13 +102,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try diskFileHandle.truncate(atOffset: diskSize)
     try diskFileHandle.close()
 
+    name = vmDir.name
     // Create config
     config = VMConfig(
       hardwareModel: requirements.hardwareModel,
       cpuCountMin: requirements.minimumSupportedCPUCount,
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
-    try self.config.save(toURL: vmDir.configURL)
+    try config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
     let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)

@@ -9,7 +9,7 @@ struct VMStorage {
   public static let tartCacheDir: URL = tartHomeDir.appendingPathComponent("cache", isDirectory: true)
 
   func create(_ name: String) throws -> VMDirectory {
-    let vmDir = VMDirectory(baseURL: vmURL(name))
+    let vmDir = VMDirectory(name: name, baseURL: vmURL(name))
 
     try vmDir.initialize()
 
@@ -17,7 +17,7 @@ struct VMStorage {
   }
 
   func read(_ name: String) throws -> VMDirectory {
-    let vmDir = VMDirectory(baseURL: vmURL(name))
+    let vmDir = VMDirectory(name: name, baseURL: vmURL(name))
 
     try vmDir.validate()
 
