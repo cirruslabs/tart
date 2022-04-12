@@ -18,14 +18,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   var sema = DispatchSemaphore(value: 0)
 
   // VM's config
-  var vmConfig: VMConfig
+  var config: VMConfig
 
   init(vmDir: VMDirectory) throws {
     let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
 
-    vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
+    config = try VMConfig.init(fromURL: vmDir.configURL)
 
-    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: vmConfig)
+    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -99,15 +99,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try diskFileHandle.close()
 
     // Create config
-    vmConfig = VMConfig(
+    config = VMConfig(
       hardwareModel: requirements.hardwareModel,
       cpuCountMin: requirements.minimumSupportedCPUCount,
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
-    try self.vmConfig.save(toURL: vmDir.configURL)
+    try self.config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
-    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: vmConfig)
+    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -162,11 +162,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Display
     let graphicsDeviceConfiguration = VZMacGraphicsDeviceConfiguration()
-    guard let mainScreen = NSScreen.main else {
-      throw NoMainScreenFoundError()
-    }
     graphicsDeviceConfiguration.displays = [
-      VZMacGraphicsDisplayConfiguration(for: mainScreen, sizeInPoints: mainScreen.frame.size)
+      VZMacGraphicsDisplayConfiguration(
+        widthInPixels: vmConfig.display.width,
+        heightInPixels: vmConfig.display.height,
+        pixelsPerInch: vmConfig.display.dpi
+      )
     ]
     configuration.graphicsDevices = [graphicsDeviceConfiguration]
 

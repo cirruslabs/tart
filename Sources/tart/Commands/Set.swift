@@ -13,6 +13,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM memory size in megabytes")
   var memory: UInt16?
 
+  @Option(help: "VM display settings in a format of <width>x<height>(x<dpi>)?. For example, 1200x800 or 1200x800x72")
+  var display: VMDisplayConfig?
+
   func run() async throws {
     do {
       let vmStorage = VMStorage()
@@ -27,6 +30,18 @@ struct Set: AsyncParsableCommand {
         try vmConfig.setMemory(memorySize: UInt64(memory) * 1024 * 1024)
       }
 
+      if let display = display {
+        if (display.width > 0) {
+          vmConfig.display.width = display.width
+        }
+        if (display.height > 0) {
+          vmConfig.display.height = display.height
+        }
+        if (display.dpi > 0) {
+          vmConfig.display.dpi = display.dpi
+        }
+      }
+
       try vmConfig.save(toURL: vmDir.configURL)
 
       Foundation.exit(0)
@@ -35,5 +50,18 @@ struct Set: AsyncParsableCommand {
 
       Foundation.exit(1)
     }
+  }
+}
+
+extension VMDisplayConfig: ExpressibleByArgument {
+  public init(argument: String) {
+    let parts = argument.components(separatedBy: "x").map {
+      Int($0) ?? 0
+    }
+    self = VMDisplayConfig(
+      width: parts[safe: 0] ?? 0,
+      height: parts[safe: 1] ?? 0,
+      dpi: parts[safe: 2] ?? 0
+    )
   }
 }
