@@ -18,36 +18,31 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   var sema = DispatchSemaphore(value: 0)
 
   // VM's config
-  var vmConfig: VMConfig
+  var name: String
+  
+  // VM's config
+  var config: VMConfig
 
   init(vmDir: VMDirectory) throws {
     let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
 
-    self.vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
+    name = vmDir.name
+    config = try VMConfig.init(fromURL: vmDir.configURL)
 
-    let configuration = try VM.craftConfiguration(
-              diskURL: vmDir.diskURL,
-              ecid: vmConfig.ecid,
-              auxStorage: auxStorage,
-              hardwareModel: vmConfig.hardwareModel,
-              cpuCount: vmConfig.cpuCount,
-              memorySize: vmConfig.memorySize,
-              macAddress: vmConfig.macAddress
-            )
-
-    self.virtualMachine = VZVirtualMachine(configuration: configuration)
+    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
+    virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
 
-    self.virtualMachine.delegate = self
+    virtualMachine.delegate = self
   }
 
   static func retrieveLatestIPSW() async throws -> URL {
     defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
     let image = try await withCheckedThrowingContinuation { continuation in
       VZMacOSRestoreImage.fetchLatestSupported() { result in
-                continuation.resume(with: result)
-              }
+        continuation.resume(with: result)
+      }
     }
 
 
@@ -65,16 +60,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     let data: Data = try await withCheckedThrowingContinuation { continuation in
       let downloadedTask = URLSession.shared.dataTask(with: image.url) { data, response, error in
-                if error != nil {
-                  continuation.resume(throwing: error!)
-                  return
-                }
-                if (data == nil) {
-                  continuation.resume(throwing: DownloadFailed())
-                  return
-                }
-                continuation.resume(returning: data!)
-              }
+        if error != nil {
+          continuation.resume(throwing: error!)
+          return
+        }
+        if (data == nil) {
+          continuation.resume(throwing: DownloadFailed())
+          return
+        }
+        continuation.resume(returning: data!)
+      }
       ProgressObserver(downloadedTask.progress).log(defaultLogger)
       downloadedTask.resume()
     }
@@ -90,8 +85,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // that match both the image and our platform
     let image = try await withCheckedThrowingContinuation { continuation in
       VZMacOSRestoreImage.load(from: ipswURL) { result in
-                continuation.resume(with: result)
-              }
+        continuation.resume(with: result)
+      }
     }
 
     guard let requirements = image.mostFeaturefulSupportedConfiguration else {
@@ -107,91 +102,77 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try diskFileHandle.truncate(atOffset: diskSize)
     try diskFileHandle.close()
 
+    name = vmDir.name
     // Create config
-    self.vmConfig = VMConfig(
+    config = VMConfig(
       hardwareModel: requirements.hardwareModel,
       cpuCountMin: requirements.minimumSupportedCPUCount,
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
-    try self.vmConfig.save(toURL: vmDir.configURL)
+    try config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
-    let configuration = try VM.craftConfiguration(
-              diskURL: vmDir.diskURL,
-              ecid: self.vmConfig.ecid,
-              auxStorage: auxStorage,
-              hardwareModel: requirements.hardwareModel,
-              cpuCount: self.vmConfig.cpuCount,
-              memorySize: self.vmConfig.memorySize,
-              macAddress: self.vmConfig.macAddress
-            )
-    self.virtualMachine = VZVirtualMachine(configuration: configuration)
+    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
+    virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
 
-    self.virtualMachine.delegate = self
+    virtualMachine.delegate = self
 
     // Run automated installation
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
       DispatchQueue.main.async {
-                let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
+        let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
 
-                defaultLogger.appendNewLine("Installing OS...")
-                ProgressObserver(installer.progress).log(defaultLogger)
+        defaultLogger.appendNewLine("Installing OS...")
+        ProgressObserver(installer.progress).log(defaultLogger)
 
-                installer.install { result in
-                          continuation.resume(with: result)
-                        }
-              }
+        installer.install { result in
+          continuation.resume(with: result)
+        }
+      }
     }
   }
 
   func run() async throws {
     try await withCheckedThrowingContinuation { continuation in
       DispatchQueue.main.async {
-                self.virtualMachine.start(completionHandler: { result in
-                          continuation.resume(with: result)
-                        })
-              }
+        self.virtualMachine.start(completionHandler: { result in
+          continuation.resume(with: result)
+        })
+      }
     }
 
     sema.wait()
   }
 
-  static func craftConfiguration(
-    diskURL: URL,
-    ecid: VZMacMachineIdentifier,
-    auxStorage: VZMacAuxiliaryStorage,
-    hardwareModel: VZMacHardwareModel,
-    cpuCount: Int,
-    memorySize: UInt64,
-    macAddress: VZMACAddress
-  ) throws -> VZVirtualMachineConfiguration {
+  static func craftConfiguration(diskURL: URL, auxStorage: VZMacAuxiliaryStorage, vmConfig: VMConfig) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
     // Boot loader
     configuration.bootLoader = VZMacOSBootLoader()
 
     // CPU and memory
-    configuration.cpuCount = cpuCount
-    configuration.memorySize = memorySize
+    configuration.cpuCount = vmConfig.cpuCount
+    configuration.memorySize = vmConfig.memorySize
 
     // Platform
     let platform = VZMacPlatformConfiguration()
 
-    platform.machineIdentifier = ecid
+    platform.machineIdentifier = vmConfig.ecid
     platform.auxiliaryStorage = auxStorage
-    platform.hardwareModel = hardwareModel
+    platform.hardwareModel = vmConfig.hardwareModel
 
     configuration.platform = platform
 
     // Display
     let graphicsDeviceConfiguration = VZMacGraphicsDeviceConfiguration()
-    guard let mainScreen = NSScreen.main else {
-      throw NoMainScreenFoundError()
-    }
     graphicsDeviceConfiguration.displays = [
-      VZMacGraphicsDisplayConfiguration(for: mainScreen, sizeInPoints: mainScreen.frame.size)
+      VZMacGraphicsDisplayConfiguration(
+        widthInPixels: vmConfig.display.width,
+        heightInPixels: vmConfig.display.height,
+        pixelsPerInch: vmConfig.display.dpi
+      )
     ]
     configuration.graphicsDevices = [graphicsDeviceConfiguration]
 
@@ -202,7 +183,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()
     vio.attachment = VZNATNetworkDeviceAttachment()
-    vio.macAddress = macAddress
+    vio.macAddress = vmConfig.macAddress
     configuration.networkDevices = [vio]
 
     // Storage

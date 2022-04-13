@@ -39,8 +39,20 @@ struct Run: AsyncParsableCommand {
 
       struct MainApp: App {
         var body: some Scene {
-          WindowGroup {
-            VMView(vm: vm!)
+          WindowGroup(vm!.name) {
+            Group {
+              VMView(vm: vm!).onAppear {
+                NSWindow.allowsAutomaticWindowTabbing = false
+              }
+            }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
+          }.commands {
+            // Remove some standard menu options
+            CommandGroup(replacing: .help, addition: {})
+            CommandGroup(replacing: .newItem, addition: {})
+            CommandGroup(replacing: .pasteboard, addition: {})
+            CommandGroup(replacing: .textEditing, addition: {})
+            CommandGroup(replacing: .undoRedo, addition: {})
+            CommandGroup(replacing: .windowSize, addition: {})
           }
         }
       }
@@ -56,7 +68,9 @@ struct VMView: NSViewRepresentable {
   @ObservedObject var vm: VM
 
   func makeNSView(context: Context) -> NSViewType {
-    VZVirtualMachineView()
+    let machineView = VZVirtualMachineView()
+    machineView.capturesSystemKeys = true
+    return machineView
   }
 
   func updateNSView(_ nsView: NSViewType, context: Context) {
