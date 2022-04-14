@@ -7,13 +7,19 @@ let package = Package(
   platforms: [
     .macOS(.v12)
   ],
+  products: [
+    .executable(name: "tart", targets: ["tart"])
+  ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.2"),
   ],
   targets: [
     .executableTarget(name: "tart",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
+      ],
+      resources: [
+        .process("Resources/Icon.png")
       ]),
   ]
 )
