@@ -12,7 +12,8 @@ struct Run: AsyncParsableCommand {
   var name: String
 
   @Flag var noGraphics: Bool = false
-
+  
+  @MainActor
   func run() async throws {
     let vmDir = try VMStorage().read(name)
     vm = try VM(vmDir: vmDir)
@@ -33,9 +34,12 @@ struct Run: AsyncParsableCommand {
       dispatchMain()
     } else {
       // UI mumbo-jumbo
-      let nsApp = await NSApplication.shared
-      await nsApp.setActivationPolicy(.regular)
-      await nsApp.activate(ignoringOtherApps: true)
+      let nsApp = NSApplication.shared
+      nsApp.setActivationPolicy(.regular)
+      nsApp.activate(ignoringOtherApps: true)
+
+      let icon = Bundle.module.image(forResource: "Icon.png")
+      nsApp.applicationIconImage = icon
 
       struct MainApp: App {
         var body: some Scene {
@@ -57,7 +61,7 @@ struct Run: AsyncParsableCommand {
         }
       }
 
-      await MainApp.main()
+      MainApp.main()
     }
   }
 }
