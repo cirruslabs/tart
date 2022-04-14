@@ -14,7 +14,7 @@ struct VMDirectory {
     baseURL.appendingPathComponent("config.json")
   }
   var diskURL: URL {
-    baseURL.appendingPathComponent("disk.bin")
+    baseURL.appendingPathComponent("disk.img")
   }
   var nvramURL: URL {
     baseURL.appendingPathComponent("nvram.bin")
