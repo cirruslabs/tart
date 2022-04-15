@@ -45,7 +45,8 @@ struct VMDirectory {
       FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
     }
     let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
-    try diskFileHandle.truncate(atOffset: UInt64(sizeGB) * 1024 * 1024 * 1024)
+    // macOS considers kilo being 1000 and not 1024
+    try diskFileHandle.truncate(atOffset: UInt64(sizeGB) * 1000 * 1000 * 1000)
     try diskFileHandle.close()
   }
 }
