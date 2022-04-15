@@ -16,6 +16,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display settings in a format of <width>x<height>(x<dpi>)?. For example, 1200x800 or 1200x800x72")
   var display: VMDisplayConfig?
 
+  @Option(help: .hidden)
+  var diskSize: UInt8?
+
   func run() async throws {
     do {
       let vmStorage = VMStorage()
@@ -43,6 +46,10 @@ struct Set: AsyncParsableCommand {
       }
 
       try vmConfig.save(toURL: vmDir.configURL)
+      
+      if diskSize != nil {
+        try vmDir.resizeDisk(diskSize!)
+      }
 
       Foundation.exit(0)
     } catch {
