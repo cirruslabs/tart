@@ -78,7 +78,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return expectedIPSWLocation
   }
 
-  init(vmDir: VMDirectory, ipswURL: URL?, diskSize: UInt64 = 32 * 1024 * 1024 * 1024) async throws {
+  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt8) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
 
     // Load the restore image and try to get the requirements
@@ -97,10 +97,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let auxStorage = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
 
     // Create disk
-    FileManager.default.createFile(atPath: vmDir.diskURL.path, contents: nil, attributes: nil)
-    let diskFileHandle = try FileHandle.init(forWritingTo: vmDir.diskURL)
-    try diskFileHandle.truncate(atOffset: diskSize)
-    try diskFileHandle.close()
+    try vmDir.resizeDisk(diskSizeGB)
 
     name = vmDir.name
     // Create config

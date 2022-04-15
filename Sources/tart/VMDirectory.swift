@@ -39,4 +39,13 @@ struct VMDirectory {
       throw UninitializedVMDirectoryError()
     }
   }
+  
+  func resizeDisk(_ sizeGB: UInt8) throws {
+    if !FileManager.default.fileExists(atPath: diskURL.path) {
+      FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
+    }
+    let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
+    try diskFileHandle.truncate(atOffset: UInt64(sizeGB) * 1024 * 1024 * 1024)
+    try diskFileHandle.close()
+  }
 }
