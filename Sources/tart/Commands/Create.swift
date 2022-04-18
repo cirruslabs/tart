@@ -9,7 +9,11 @@ struct Create: AsyncParsableCommand {
   @Argument(help: "VM name")
   var name: String
 
-  @Option(help: ArgumentHelp("Path to the IPSW file (or \"latest\") to fetch the latest appropriate IPSW", valueName: "path")) var fromIPSW: String?
+  @Option(help: ArgumentHelp("Path to the IPSW file (or \"latest\") to fetch the latest appropriate IPSW", valueName: "path")) 
+  var fromIPSW: String?
+
+  @Option(help: ArgumentHelp("Disk size in Gb")) 
+  var diskSize: UInt8 = 32
 
   func validate() throws {
     if fromIPSW == nil {
@@ -22,9 +26,9 @@ struct Create: AsyncParsableCommand {
       let vmDir = try VMStorage().create(name)
 
       if fromIPSW! == "latest" {
-        _ = try await VM(vmDir: vmDir, ipswURL: nil)
+        _ = try await VM(vmDir: vmDir, ipswURL: nil, diskSizeGB: diskSize)
       } else {
-        _ = try await VM(vmDir: vmDir, ipswURL: URL(fileURLWithPath: fromIPSW!))
+        _ = try await VM(vmDir: vmDir, ipswURL: URL(fileURLWithPath: fromIPSW!), diskSizeGB: diskSize)
       }
 
       Foundation.exit(0)
