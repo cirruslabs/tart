@@ -1,0 +1,40 @@
+project_name: tart
+
+builds:
+  - builder: prebuilt
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    prebuilt:
+      path: .build/{{ .Arch }}-apple-macosx/release/tart
+
+before:
+  hooks:
+    - swift build --product tart
+    
+after:
+  hooks:
+    - codesign --sign - --entitlements Sources/tart/tart.entitlements --force .build/arm64-apple-macosx/release/tart
+
+archives:
+  - id: binary
+    format: binary
+    name_template: "{{ .ProjectName }}"
+  - id: regular
+    name_template: "{{ .ProjectName }}"
+
+release:
+  prerelease: auto
+
+brews:
+  - name: tart
+    ids:
+      - regular
+    tap:
+      owner: cirruslabs
+      name: homebrew-cli
+    caveats: See the Github repository for more information
+    homepage: https://github.com/cirruslabs/tart
+    description: Run macOS VMs on Apple Silicon
+    skip_upload: auto

@@ -10,3 +10,6 @@ tart.xcodeproj/
 
 # Swift
 .build/
+
+# GoReleaser
+dist/
