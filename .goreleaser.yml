@@ -11,7 +11,7 @@ builds:
 
 before:
   hooks:
-    - swift build --product tart
+    - swift build -c release --product tart
     
 after:
   hooks:
