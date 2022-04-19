@@ -37,16 +37,14 @@ struct IP: AsyncParsableCommand {
     let waitUntil = Calendar.current.date(byAdding: .second, value: Int(secondsToWait), to: Date.now)!
     let vmMacAddress = MACAddress(fromString: config.macAddress.string)!
 
-    var ip: IPv4Address? = nil
-    
     repeat {
-      ip = try ARPCache.ResolveMACAddress(macAddress: vmMacAddress)
-      if ip == nil {
-        // just a wait a second before retrying
-        try await Task.sleep(nanoseconds: 1_000_000)
+      if let ip = try ARPCache.ResolveMACAddress(macAddress: vmMacAddress) {
+        return ip
       }
-    } while ip == nil && Date.now < waitUntil
-    
-    return ip
+
+      try await Task.sleep(nanoseconds: 1_000_000)
+    } while Date.now < waitUntil
+
+    return nil
   }
 }
