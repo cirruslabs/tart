@@ -6,7 +6,7 @@ task:
       os: darwin
       arch: arm64
   build_script: swift build --product tart
-  sign_script: codesign --sign - --entitlements Sources/tart/tart.entitlements --force .build/debug/tart
+  sign_script: codesign --sign - --entitlements Resources/tart.entitlements --force .build/debug/tart
   binary_artifacts:
     path: .build/debug/tart
 
