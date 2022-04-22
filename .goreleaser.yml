@@ -15,7 +15,7 @@ before:
     
 after:
   hooks:
-    - codesign --sign - --entitlements Sources/tart/tart.entitlements --force .build/arm64-apple-macosx/release/tart
+    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
 
 archives:
   - id: binary

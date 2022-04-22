@@ -38,8 +38,7 @@ struct Run: AsyncParsableCommand {
       nsApp.setActivationPolicy(.regular)
       nsApp.activate(ignoringOtherApps: true)
 
-      let icon = Bundle.module.image(forResource: "AppIcon.png")
-      nsApp.applicationIconImage = icon
+      nsApp.applicationIconImage = NSImage(data: AppIconData)
 
       struct MainApp: App {
         var body: some Scene {

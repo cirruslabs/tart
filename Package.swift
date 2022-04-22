@@ -17,9 +17,6 @@ let package = Package(
     .executableTarget(name: "tart",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-      ],
-      resources: [
-        .process("Resources/AppIcon.png")
       ]),
   ]
 )
