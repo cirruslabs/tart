@@ -5,8 +5,8 @@ import Virtualization
 
 var vm: VM?
 
-struct Run: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Run a VM")
+struct Start: AsyncParsableCommand {
+  static var configuration = CommandConfiguration(abstract: "Start a VM")
 
   @Argument(help: "VM name")
   var name: String
