@@ -1,3 +1,3 @@
-# Tart
+![tart VM view app](Resources/TartScreenshot.png)
 
-macOS VMs on Apple Silicon to use in CI and other automations
+*Tart* simplifies running macOS VMs on Apple Silicon wit
