@@ -7,15 +7,22 @@ struct List: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      for vmURL in try VMStorage().list() {
-        print(vmURL)
-      }
+      print("Name\tSource")
+
+      displayTable("local", try VMStorageLocal().list())
+      displayTable("oci", try VMStorageOCI().list())
 
       Foundation.exit(0)
     } catch {
       print(error)
 
       Foundation.exit(1)
+    }
+  }
+
+  private func displayTable(_ source: String, _ vms: [(String, VMDirectory)]) {
+    for (name, _) in vms {
+      print("\(source)\t\(name)")
     }
   }
 }

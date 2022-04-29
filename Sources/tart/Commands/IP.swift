@@ -14,7 +14,7 @@ struct IP: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let vmDir = try VMStorage().read(name)
+      let vmDir = try VMStorageLocal().open(name)
       let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
 
       guard let ip = try await resolveIP(vmConfig, secondsToWait: wait) else {
