@@ -4,7 +4,7 @@ class Credentials {
   static func retrieve(host: String) throws -> (String, String) {
     do {
       return try retrieveKeychain(host: host)
-    } catch {
+    } catch RegistryError.AuthFailed {
       return try retrieveStdin()
     }
   }
@@ -23,10 +23,10 @@ class Credentials {
 
     if status != errSecSuccess {
       if status == errSecItemNotFound {
-        throw RegistryError.AuthFailed
+        throw RegistryError.AuthFailed(why: "Keychain item not found")
       }
 
-      throw RegistryError.AuthFailed
+      throw RegistryError.AuthFailed(why: "Keychain returned unsuccessful status \(status)")
     }
 
     guard let item = item as? [String: Any],
@@ -34,7 +34,7 @@ class Credentials {
           let passwordData = item[kSecValueData as String] as? Data,
           let password = String(data: passwordData, encoding: .utf8)
       else {
-      throw RegistryError.AuthFailed
+      throw RegistryError.AuthFailed(why: "Keychain item has unexpected format")
     }
 
     return (user, password)
@@ -59,11 +59,13 @@ class Credentials {
                                      kSecAttrLabel as String: "Tart Credentials",
     ]
 
-    switch SecItemAdd(attributes as CFDictionary, nil) {
+    let status = SecItemAdd(attributes as CFDictionary, nil)
+
+    switch status {
     case errSecSuccess, errSecDuplicateItem:
       return
     default:
-      throw RegistryError.AuthFailed
+      throw RegistryError.AuthFailed(why: "Keychain returned unsuccessful status \(status)")
     }
   }
 }

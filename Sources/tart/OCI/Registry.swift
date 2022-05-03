@@ -3,7 +3,7 @@ import Foundation
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
   case MissingLocationHeader
-  case AuthFailed
+  case AuthFailed(why: String)
   case MalformedHeader
 }
 
@@ -166,15 +166,18 @@ class Registry {
 
   private func auth(response: HTTPURLResponse) async throws {
     guard let wwwAuthenticateRaw = response.value(forHTTPHeaderField: "WWW-Authenticate") else {
-      throw RegistryError.AuthFailed
+      throw RegistryError.AuthFailed(why: "got HTTP 401, but WWW-Authenticate header is missing")
     }
 
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
-
-    guard var authenticateURL = URLComponents(string: wwwAuthenticate.kvs["realm"]!) else {
-      throw NSError(domain: "realm contains some bullshit", code: 404)
+    guard let realm = wwwAuthenticate.kvs["realm"] else {
+      throw RegistryError.AuthFailed(why: "WWW-Authenticate header is missing a \"realm\" directive")
     }
-    authenticateURL.queryItems = ["scope", "service", "ROFL"].compactMap { key in
+
+    guard var authenticateURL = URLComponents(string: realm) else {
+      throw RegistryError.AuthFailed(why: "realm \"\(realm)\" doesn't look like URL")
+    }
+    authenticateURL.queryItems = ["scope", "service"].compactMap { key in
       if let value = wwwAuthenticate.kvs[key] {
         return URLQueryItem(name: key, value: value)
       } else {
@@ -182,15 +185,17 @@ class Registry {
       }
     }
 
-    var tokenRequest = URLRequest(url: authenticateURL.url!)
+    let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
+    let headers = [
+      "Authorization": "Basic \(encodedCredentials!)"
+    ]
 
-    let combo = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
+    let (responseData, response) = try await rawRequest("GET", authenticateURL, headers: headers)
+    if response.statusCode != 200 {
+      throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode)")
+    }
 
-    tokenRequest.addValue("Basic \(combo!)", forHTTPHeaderField: "Authorization")
-    let (result, _) = try await URLSession.shared.data(for: tokenRequest)
-
-    let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: result)
-    self.token = tokenResponse.token
+    token = try JSONDecoder().decode(TokenResponse.self, from: responseData).token
   }
 
   private func authAwareRequest(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
