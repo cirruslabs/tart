@@ -23,35 +23,37 @@ struct RemoteName: Comparable {
   }
 
   init(_ name: String) throws {
-    let alphas = UInt8(ascii: "a")...UInt8(ascii: "z")
-    let digits = UInt8(ascii: "0")...UInt8(ascii: "9")
-    let alphasDigitsCharacters = [alphas, digits].joined().map {
-              String(UnicodeScalar($0))
-            }
-            .joined()
-    let alphasDigits = CharacterSet(charactersIn: alphasDigitsCharacters)
+    let csNormal = [
+      UInt8(ascii: "a")...UInt8(ascii: "z"),
+      UInt8(ascii: "0")...UInt8(ascii: "9"),
+    ].asCharacterSet().union(CharacterSet(charactersIn: "_-."))
+
+    let csHex = [
+      UInt8(ascii: "a")...UInt8(ascii: "f"),
+      UInt8(ascii: "0")...UInt8(ascii: "9"),
+    ].asCharacterSet()
 
     let parser = Parse {
       Consumed {
-        alphasDigits.union(CharacterSet(charactersIn: "."))
+        csNormal
         Optionally {
           ":"
           Digits()
         }
       }
       "/"
-      alphasDigits.union(CharacterSet(charactersIn: "-/"))
+      csNormal.union(CharacterSet(charactersIn: "/"))
       Optionally {
         OneOf {
           Parse {
             ":"
-            alphasDigits.map {
+            csNormal.map {
               Tail(type: .Tag, value: String($0))
             }
           }
           Parse {
             "@sha256:"
-            alphasDigits.map {
+            csHex.map {
               Tail(type: .Digest, value: "sha256:" + String($0))
             }
           }
@@ -62,10 +64,10 @@ struct RemoteName: Comparable {
 
     let result = try parser.parse(name)
 
-    self.host = String(result.0)
-    self.namespace = String(result.1)
+    host = String(result.0)
+    namespace = String(result.1)
     if let tail = result.2 {
-      self.reference = tail.value
+      reference = tail.value
     }
   }
 
@@ -77,5 +79,12 @@ struct RemoteName: Comparable {
     } else {
       return lhs.reference < rhs.reference
     }
+  }
+}
+
+extension Array where Self.Element == ClosedRange<UInt8> {
+  func asCharacterSet() -> CharacterSet {
+    let characters = self.joined().map { String(UnicodeScalar($0)) }.joined()
+    return CharacterSet(charactersIn: characters)
   }
 }
