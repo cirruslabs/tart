@@ -16,6 +16,7 @@ class Credentials {
                                 kSecMatchLimit as String: kSecMatchLimitOne,
                                 kSecReturnAttributes as String: true,
                                 kSecReturnData as String: true,
+                                kSecAttrLabel as String: "Tart Credentials",
     ]
 
     var item: CFTypeRef?
