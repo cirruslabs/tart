@@ -88,12 +88,18 @@ class Registry {
     let uploadLocation = try uploadLocationFromResponse(response: postResponse)
 
     // Upload the blob
+    let headers = [
+      "Content-Length": "\(fromData.count)",
+      "Content-Type": "application/octet-stream",
+    ]
+
     let digest = Digest.hash(fromData)
     let parameters = [
       "digest": digest,
     ]
 
-    let (putData, putResponse) = try await rawRequest("PUT", uploadLocation, parameters: parameters, body: fromData)
+    let (putData, putResponse) = try await rawRequest("PUT", uploadLocation, headers: headers, parameters: parameters,
+      body: fromData)
     if putResponse.statusCode != 201 {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT)", code: putResponse.statusCode,
         details: String(decoding: putData, as: UTF8.self))
