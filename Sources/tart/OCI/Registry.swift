@@ -206,7 +206,8 @@ class Registry {
 
     let (responseData, response) = try await rawRequest("GET", authenticateURL, headers: headers)
     if response.statusCode != 200 {
-      throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode)")
+      throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
+        + "while retrieving an authentication token")
     }
 
     token = try JSONDecoder().decode(TokenResponse.self, from: responseData).token
