@@ -1,4 +1,5 @@
 import Foundation
+import Virtualization
 
 struct UninitializedVMDirectoryError: Error {
 }
@@ -7,7 +8,6 @@ struct AlreadyInitializedVMDirectoryError: Error {
 }
 
 struct VMDirectory {
-  var name: String
   var baseURL: URL
 
   var configURL: URL {
@@ -20,18 +20,26 @@ struct VMDirectory {
     baseURL.appendingPathComponent("nvram.bin")
   }
 
+  var name: String {
+    baseURL.lastPathComponent
+  }
+
   var initialized: Bool {
     FileManager.default.fileExists(atPath: configURL.path) &&
       FileManager.default.fileExists(atPath: diskURL.path) &&
       FileManager.default.fileExists(atPath: nvramURL.path)
   }
 
-  func initialize() throws {
-    if initialized {
+  func initialize(overwrite: Bool = false) throws {
+    if !overwrite && initialized {
       throw AlreadyInitializedVMDirectoryError()
     }
 
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
+
+    try? FileManager.default.removeItem(at: configURL)
+    try? FileManager.default.removeItem(at: diskURL)
+    try? FileManager.default.removeItem(at: nvramURL)
   }
 
   func validate() throws {
@@ -39,7 +47,18 @@ struct VMDirectory {
       throw UninitializedVMDirectoryError()
     }
   }
-  
+
+  func clone(to: VMDirectory) throws {
+    try FileManager.default.copyItem(at: configURL, to: to.configURL)
+    try FileManager.default.copyItem(at: nvramURL, to: to.nvramURL)
+    try FileManager.default.copyItem(at: diskURL, to: to.diskURL)
+
+    // Re-generate MAC address
+    var newVMConfig = try VMConfig(fromURL: to.configURL)
+    newVMConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    try newVMConfig.save(toURL: to.configURL)
+  }
+
   func resizeDisk(_ sizeGB: UInt8) throws {
     if !FileManager.default.fileExists(atPath: diskURL.path) {
       FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)

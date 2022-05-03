@@ -23,7 +23,7 @@ struct Create: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let vmDir = try VMStorage().create(name)
+      let vmDir = try VMStorageLocal().create(name)
 
       if fromIPSW! == "latest" {
         _ = try await VM(vmDir: vmDir, ipswURL: nil, diskSizeGB: diskSize)

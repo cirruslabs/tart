@@ -60,9 +60,12 @@ struct VMConfig: Codable {
     memorySize = memorySizeMin
   }
 
+  init(fromData: Data) throws {
+    self = try JSONDecoder().decode(VMConfig.self, from: fromData)
+  }
+
   init(fromURL: URL) throws {
-    let jsonConfigData = try FileHandle.init(forReadingFrom: fromURL).readToEnd()!
-    self = try JSONDecoder().decode(VMConfig.self, from: jsonConfigData)
+    self = try Self(fromData: try Data(contentsOf: fromURL))
   }
 
   func save(toURL: URL) throws {

@@ -1,7 +1,6 @@
 import ArgumentParser
 import Foundation
 import SystemConfiguration
-import Virtualization
 
 struct Clone: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Clone a VM")
@@ -14,17 +13,13 @@ struct Clone: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let vmStorage = VMStorage()
-      let sourceVMDir = try vmStorage.read(sourceName)
-      let newVMDir = try vmStorage.create(newName)
+      // Pull the VM in case it's OCI-based and doesn't exist locally yet
+      if let remoteName = try? RemoteName(sourceName), !VMStorageOCI().exists(remoteName) {
+        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+        try await VMStorageOCI().pull(remoteName, registry: registry)
+      }
 
-      try FileManager.default.copyItem(at: sourceVMDir.configURL, to: newVMDir.configURL)
-      try FileManager.default.copyItem(at: sourceVMDir.nvramURL, to: newVMDir.nvramURL)
-      try FileManager.default.copyItem(at: sourceVMDir.diskURL, to: newVMDir.diskURL)
-
-      var newVMConfig = try VMConfig(fromURL: newVMDir.configURL)
-      newVMConfig.macAddress = VZMACAddress.randomLocallyAdministered()
-      try newVMConfig.save(toURL: newVMDir.configURL)
+      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName))
 
       Foundation.exit(0)
     } catch {

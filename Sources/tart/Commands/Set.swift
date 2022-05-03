@@ -21,8 +21,7 @@ struct Set: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let vmStorage = VMStorage()
-      let vmDir = try vmStorage.read(name)
+      let vmDir = try VMStorageLocal().open(name)
       var vmConfig = try VMConfig(fromURL: vmDir.configURL)
 
       if let cpu = cpu {
@@ -46,7 +45,7 @@ struct Set: AsyncParsableCommand {
       }
 
       try vmConfig.save(toURL: vmDir.configURL)
-      
+
       if diskSize != nil {
         try vmDir.resizeDisk(diskSize!)
       }

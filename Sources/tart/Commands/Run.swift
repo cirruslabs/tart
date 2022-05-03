@@ -12,10 +12,10 @@ struct Run: AsyncParsableCommand {
   var name: String
 
   @Flag var noGraphics: Bool = false
-  
+
   @MainActor
   func run() async throws {
-    let vmDir = try VMStorage().read(name)
+    let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
     Task {

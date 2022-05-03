@@ -10,7 +10,7 @@ struct Delete: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      try VMStorage().delete(name)
+      try VMStorageHelper.delete(name)
 
       Foundation.exit(0)
     } catch {

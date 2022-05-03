@@ -8,6 +8,33 @@
         "revision" : "f3c9084a71ef4376f2fabbdf1d3d90a49f1fabdb",
         "version" : "1.1.2"
       }
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "revision" : "ce9c0d897db8a840c39de64caaa9b60119cf4be8",
+        "version" : "0.8.1"
+      }
+    },
+    {
+      "identity" : "swift-parsing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-parsing",
+      "state" : {
+        "revision" : "28d32e9ace1c4c43f5e5a177be837a202494c2d5",
+        "version" : "0.9.2"
+      }
+    },
+    {
+      "identity" : "xctest-dynamic-overlay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "state" : {
+        "revision" : "50a70a9d3583fe228ce672e8923010c8df2deddd",
+        "version" : "0.2.1"
+      }
     }
   ],
   "version" : 2
