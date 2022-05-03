@@ -79,10 +79,6 @@ extension VMDirectory {
     try nvramData.write(to: nvramURL)
   }
 
-  func pushToRegistry(registry: Registry, reference: String) async throws {
-    try await pushToRegistry(registry: registry, references: [reference])
-  }
-
   func pushToRegistry(registry: Registry, references: [String]) async throws {
     var layers = Array<OCIManifestLayer>()
 

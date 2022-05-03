@@ -15,6 +15,15 @@ struct RemoteName: Comparable, CustomStringConvertible {
   var host: String
   var namespace: String
   var reference: String = "latest"
+  var fullyQualifiedReference: String {
+    get {
+      if reference.starts(with: "sha256:") {
+        return "@" + reference
+      }
+
+      return ":" + reference
+    }
+  }
 
   init(host: String, namespace: String, reference: String) {
     self.host = host
@@ -82,13 +91,7 @@ struct RemoteName: Comparable, CustomStringConvertible {
   }
 
   var description: String {
-    var adjustedReference = ":" + reference
-
-    if reference.starts(with: "sha256:") {
-      adjustedReference + "@" + reference
-    }
-
-    return "\(host)/\(namespace)\(adjustedReference)"
+    "\(host)/\(namespace)\(fullyQualifiedReference)"
   }
 }
 

@@ -35,11 +35,12 @@ struct Push: AsyncParsableCommand {
       for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
         let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
 
-        for remoteName in remoteNamesForRegistry {
-          defaultLogger.appendNewLine("pushing \(localName) as \(remoteName)...")
+        let listOfTagsAndDigests = "{" + remoteNamesForRegistry.map{$0.fullyQualifiedReference }
+                .joined(separator: ",") + "}"
+        defaultLogger.appendNewLine("pushing \(localName) to "
+          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(listOfTagsAndDigests)...")
 
-          try await localVMDir.pushToRegistry(registry: registry, reference: remoteName.reference)
-        }
+        try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference })
       }
 
       Foundation.exit(0)
