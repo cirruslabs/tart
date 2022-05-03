@@ -35,63 +35,67 @@ class Registry {
       layers: layers)
     let manifestJSON = try JSONEncoder().encode(manifest)
 
-    let (_, response) = try await endpointRequest("PUT", "\(namespace)/manifests/\(reference)",
+    let (responseData, response) = try await endpointRequest("PUT", "\(namespace)/manifests/\(reference)",
       headers: ["Content-Type": manifest.mediaType],
       body: manifestJSON)
     if response.statusCode != 201 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing PUT on manifest push", code: response.statusCode)
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing manifest", code: response.statusCode,
+        details: String(decoding: responseData, as: UTF8.self))
     }
 
     return Digest.hash(manifestJSON)
   }
 
   public func pullManifest(reference: String) async throws -> (OCIManifest, Data) {
-    let (manifestData, response) = try await endpointRequest("GET", "\(namespace)/manifests/\(reference)",
+    let (responseData, response) = try await endpointRequest("GET", "\(namespace)/manifests/\(reference)",
       headers: ["Accept": ociManifestMediaType])
     if response.statusCode != 200 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing GET on manifest pull", code: response.statusCode)
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling manifest", code: response.statusCode,
+        details: String(decoding: responseData, as: UTF8.self))
     }
 
-    let manifest = try JSONDecoder().decode(OCIManifest.self, from: manifestData)
+    let manifest = try JSONDecoder().decode(OCIManifest.self, from: responseData)
 
-    return (manifest, manifestData)
+    return (manifest, responseData)
   }
 
   private func uploadLocationFromResponse(response: HTTPURLResponse) throws -> URLComponents {
-    guard let uploadLocation = response.value(forHTTPHeaderField: "Location") else {
+    guard let uploadLocationRaw = response.value(forHTTPHeaderField: "Location") else {
       throw RegistryError.MissingLocationHeader
     }
 
-    var loc = URL(string: uploadLocation)!
+    var uploadLocation = URL(string: uploadLocationRaw)!
 
-    // Is relative?
-    if loc.absoluteString == loc.relativeString {
-      loc = URL(string: loc.path, relativeTo: baseURL)!
+    // If the URL provided in the Location header
+    // is relative — make it absolute.
+    if uploadLocation.absoluteString == uploadLocation.relativeString {
+      uploadLocation = URL(string: uploadLocation.path, relativeTo: baseURL)!
     }
 
-    return URLComponents(url: loc, resolvingAgainstBaseURL: true)!
+    return URLComponents(url: uploadLocation, resolvingAgainstBaseURL: true)!
   }
 
   public func pushBlob(fromData: Data, chunkSize: Int = 5 * 1024 * 1024) async throws -> String {
-    // POST
-    let (_, postResponse) = try await endpointRequest("POST", "\(namespace)/blobs/uploads/",
+    // Initiate a blob upload
+    let (postData, postResponse) = try await endpointRequest("POST", "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
     if postResponse.statusCode != 202 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing POST on blob push", code: postResponse.statusCode)
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (POST)", code: postResponse.statusCode,
+        details: String(decoding: postData, as: UTF8.self))
     }
 
+    // Figure out where to upload the blob
     let uploadLocation = try uploadLocationFromResponse(response: postResponse)
 
+    // Upload the blob
     let digest = Digest.hash(fromData)
-
-    // PUT
     let parameters = [
       "digest": digest,
     ]
 
     let (putData, putResponse) = try await rawRequest("PUT", uploadLocation, parameters: parameters, body: fromData)
     if putResponse.statusCode != 201 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing PUT on blob push", code: putResponse.statusCode,
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT)", code: putResponse.statusCode,
         details: String(decoding: putData, as: UTF8.self))
     }
 
@@ -101,7 +105,8 @@ class Registry {
   public func pullBlob(_ digest: String) async throws -> Data {
     let (putData, putResponse) = try await endpointRequest("GET", "\(namespace)/blobs/\(digest)")
     if putResponse.statusCode != 200 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing GET on blob pull", code: putResponse.statusCode)
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: putResponse.statusCode,
+        details: String(decoding: putData, as: UTF8.self))
     }
 
     return putData
