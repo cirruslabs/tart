@@ -9,20 +9,22 @@ class WWWAuthenticate {
   var kvs: Dictionary<String, String> = Dictionary()
 
   init(rawHeaderValue: String) throws {
-    let splits = rawHeaderValue.split(separator: " ", maxSplits: 2)
+    let splits = rawHeaderValue.split(separator: " ", maxSplits: 1)
 
-    if splits.count >= 1 {
+    if splits.count == 2 {
       scheme = String(splits[0])
     } else {
-      throw RegistryError.MalformedHeader
+      throw RegistryError.MalformedHeader(why: "WWW-Authenticate header should consist of two parts: "
+        + "scheme and directives")
     }
 
-    let rawDirectives = contextAwareSplit(rawDirectives: String(splits[1]))
+    let rawDirectives = contextAwareCommaSplit(rawDirectives: String(splits[1]))
 
     try rawDirectives.forEach { sequence in
-      let parts = sequence.split(separator: "=")
+      let parts = sequence.split(separator: "=", maxSplits: 1)
       if parts.count != 2 {
-        throw RegistryError.MalformedHeader
+        throw RegistryError.MalformedHeader(why: "Each WWW-Authenticate header directive should be in the form of "
+          + "key=value or key=\"value\"")
       }
 
       let key = String(parts[0])
@@ -33,7 +35,7 @@ class WWWAuthenticate {
     }
   }
 
-  private func contextAwareSplit(rawDirectives: String) -> Array<String> {
+  private func contextAwareCommaSplit(rawDirectives: String) -> Array<String> {
     var result: Array<String> = Array()
     var inQuotation: Bool = false
     var accumulator: Array<Character> = Array()

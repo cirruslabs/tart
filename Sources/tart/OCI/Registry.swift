@@ -4,7 +4,7 @@ enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
   case MissingLocationHeader
   case AuthFailed(why: String)
-  case MalformedHeader
+  case MalformedHeader(why: String)
 }
 
 struct TokenResponse: Decodable {
