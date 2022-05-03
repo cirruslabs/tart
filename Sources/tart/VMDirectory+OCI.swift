@@ -9,7 +9,7 @@ enum OCIError: Error {
 
 extension VMDirectory {
   private static let bufferSizeBytes = 64 * 1024 * 1024
-  private static let layerLimitBytes = 512 * 1024 * 1024
+  private static let layerLimitBytes = 500 * 1000 * 1000
 
   private static let configMediaType = "application/vnd.cirruslabs.tart.config.v1"
   private static let diskMediaType = "application/vnd.cirruslabs.tart.disk.v1"
