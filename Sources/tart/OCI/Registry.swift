@@ -170,6 +170,10 @@ class Registry {
     }
 
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
+    if wwwAuthenticate.scheme != "Bearer" {
+      throw RegistryError.AuthFailed(why: "WWW-Authenticate header's authentication scheme "
+        + "\"\(wwwAuthenticate.scheme)\" is unsupported, expected \"Bearer\" scheme")
+    }
     guard let realm = wwwAuthenticate.kvs["realm"] else {
       throw RegistryError.AuthFailed(why: "WWW-Authenticate header is missing a \"realm\" directive")
     }
