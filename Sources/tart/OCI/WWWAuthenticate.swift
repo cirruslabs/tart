@@ -9,7 +9,6 @@ class WWWAuthenticate {
   var kvs: Dictionary<String, String> = Dictionary()
 
   init(rawHeaderValue: String) throws {
-    // Split
     let splits = rawHeaderValue.split(separator: " ", maxSplits: 2)
 
     if splits.count >= 1 {
