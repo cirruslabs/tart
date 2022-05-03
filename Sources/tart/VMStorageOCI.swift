@@ -74,6 +74,11 @@ class VMStorageOCI {
 
     // Create directory for reference if it's different
     if digestName != name {
+      // Overwrite the old symbolic link
+      if FileManager.default.fileExists(atPath: vmURL(name).path) {
+        try FileManager.default.removeItem(at: vmURL(name))
+      }
+
       try FileManager.default.createSymbolicLink(at: vmURL(name), withDestinationURL: vmURL(digestName))
     }
   }
