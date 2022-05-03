@@ -165,6 +165,7 @@ class Registry {
   }
 
   private func auth(response: HTTPURLResponse) async throws {
+    // Process WWW-Authenticate header
     guard let wwwAuthenticateRaw = response.value(forHTTPHeaderField: "WWW-Authenticate") else {
       throw RegistryError.AuthFailed(why: "got HTTP 401, but WWW-Authenticate header is missing")
     }
@@ -178,9 +179,18 @@ class Registry {
       throw RegistryError.AuthFailed(why: "WWW-Authenticate header is missing a \"realm\" directive")
     }
 
+    // Request a token
     guard var authenticateURL = URLComponents(string: realm) else {
-      throw RegistryError.AuthFailed(why: "realm \"\(realm)\" doesn't look like URL")
+      throw RegistryError.AuthFailed(why: "WWW-Authenticate header's realm directive "
+        + "\"\(realm)\" doesn't look like URL")
     }
+
+    // Token Authentication Specification[1]:
+    //
+    // >To respond to this challenge, the client will need to make a GET request
+    // >[...] using the service and scope values from the WWW-Authenticate header.
+    //
+    // [1]: https://docs.docker.com/registry/spec/auth/token/
     authenticateURL.queryItems = ["scope", "service"].compactMap { key in
       if let value = wwwAuthenticate.kvs[key] {
         return URLQueryItem(name: key, value: value)
