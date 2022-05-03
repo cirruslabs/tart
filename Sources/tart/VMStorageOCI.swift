@@ -62,6 +62,8 @@ class VMStorageOCI {
   }
 
   func pull(_ name: RemoteName, registry: Registry) async throws {
+    defaultLogger.appendNewLine("pulling manifest")
+
     let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference)
 
     // Create directory for manifest's digest

@@ -11,7 +11,7 @@ struct Tail {
   var value: String
 }
 
-struct RemoteName: Comparable {
+struct RemoteName: Comparable, CustomStringConvertible {
   var host: String
   var namespace: String
   var reference: String = "latest"
@@ -79,6 +79,16 @@ struct RemoteName: Comparable {
     } else {
       return lhs.reference < rhs.reference
     }
+  }
+
+  var description: String {
+    var adjustedReference = ":" + reference
+
+    if reference.starts(with: "sha256:") {
+      adjustedReference + "@" + reference
+    }
+
+    return "\(host)/\(namespace)\(adjustedReference)"
   }
 }
 

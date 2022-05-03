@@ -13,6 +13,8 @@ struct Pull: AsyncParsableCommand {
       let remoteName = try RemoteName(remoteName)
       let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
 
+      defaultLogger.appendNewLine("pulling \(remoteName)...")
+
       try await VMStorageOCI().pull(remoteName, registry: registry)
 
       Foundation.exit(0)

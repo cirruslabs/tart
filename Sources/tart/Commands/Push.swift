@@ -36,6 +36,8 @@ struct Push: AsyncParsableCommand {
         let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
 
         for remoteName in remoteNamesForRegistry {
+          defaultLogger.appendNewLine("pushing \(localName) as \(remoteName)...")
+
           try await localVMDir.pushToRegistry(registry: registry, reference: remoteName.reference)
         }
       }
