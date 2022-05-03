@@ -67,6 +67,10 @@ extension VMDirectory {
   }
 
   func pushToRegistry(registry: Registry, reference: String) async throws {
+    try await pushToRegistry(registry: registry, references: [reference])
+  }
+
+  func pushToRegistry(registry: Registry, references: [String]) async throws {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -102,6 +106,8 @@ extension VMDirectory {
     let ociConfigDescriptor = Descriptor(size: ociConfigJSON.count, digest: ociConfigDigest)
 
     // Manifest
-    _ = try await registry.pushManifest(reference: reference, config: ociConfigDescriptor, layers: layers)
+    for reference in references {
+      _ = try await registry.pushManifest(reference: reference, config: ociConfigDescriptor, layers: layers)
+    }
   }
 }

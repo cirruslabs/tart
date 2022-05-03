@@ -9,17 +9,36 @@ struct Push: AsyncParsableCommand {
   @Argument(help: "local VM name")
   var localName: String
 
-  @Argument(help: "remote VM name")
-  var remoteName: String
+  @Argument(help: "remote VM name(s)")
+  var remoteNames: [String]
 
   func run() async throws {
     do {
       let localVMDir = try VMStorageLocal().open(localName)
 
-      let remoteName = try RemoteName(remoteName)
-      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+      // Parse remote names supplied by the user
+      let remoteNames = try remoteNames.map{
+        try RemoteName($0)
+      }
 
-      try await localVMDir.pushToRegistry(registry: registry, reference: remoteName.reference)
+      // Group remote names by registry
+      struct RegistryIdentifier: Hashable, Equatable {
+        var host: String
+        var namespace: String
+      }
+
+      let registryGroups = Dictionary(grouping: remoteNames, by: {
+        RegistryIdentifier(host: $0.host, namespace: $0.namespace)
+      })
+
+      // Push VM
+      for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
+        let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
+
+        for remoteName in remoteNamesForRegistry {
+          try await localVMDir.pushToRegistry(registry: registry, reference: remoteName.reference)
+        }
+      }
 
       Foundation.exit(0)
     } catch {
