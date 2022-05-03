@@ -12,7 +12,7 @@ final class RemoteNameTests: XCTestCase {
     let expectedRemoteName = RemoteName(
       host: "ghcr.io",
       namespace: "a/b",
-      reference: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      reference: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     )
 
     XCTAssertEqual(expectedRemoteName,
