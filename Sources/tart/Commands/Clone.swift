@@ -11,6 +11,9 @@ struct Clone: AsyncParsableCommand {
   @Argument(help: "new VM name")
   var newName: String
 
+  @Flag(help: "Generate new MAC address.")
+  var newMacAddress: Bool = false
+
   func run() async throws {
     do {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet
@@ -19,7 +22,7 @@ struct Clone: AsyncParsableCommand {
         try await VMStorageOCI().pull(remoteName, registry: registry)
       }
 
-      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName))
+      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: newMacAddress)
 
       Foundation.exit(0)
     } catch {

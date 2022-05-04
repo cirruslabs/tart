@@ -48,14 +48,16 @@ struct VMDirectory {
     }
   }
 
-  func clone(to: VMDirectory) throws {
+  func clone(to: VMDirectory, generateMAC: Bool) throws {
     try FileManager.default.copyItem(at: configURL, to: to.configURL)
     try FileManager.default.copyItem(at: nvramURL, to: to.nvramURL)
     try FileManager.default.copyItem(at: diskURL, to: to.diskURL)
 
     // Re-generate MAC address
     var newVMConfig = try VMConfig(fromURL: to.configURL)
-    newVMConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    if generateMAC {
+      newVMConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    }
     try newVMConfig.save(toURL: to.configURL)
   }
 
