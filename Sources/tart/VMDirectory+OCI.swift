@@ -92,7 +92,7 @@ extension VMDirectory {
     let diskSize = try FileManager.default.attributesOfItem(atPath: diskURL.path)[.size] as! Int64
     
     defaultLogger.appendNewLine("pushing disk... this will take a while...")
-    let progress = Progress(totalUnitCount: diskSize / Int64(Self.layerLimitBytes))
+    let progress = Progress(totalUnitCount: diskSize)
     ProgressObserver(progress).log(defaultLogger)
 
     // Read VM's compressed disk as chunks
@@ -100,14 +100,14 @@ extension VMDirectory {
     let disk = try FileHandle(forReadingFrom: diskURL)
     let compressingFilter = try InputFilter<Data>(.compress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { _ in
       let data = try disk.read(upToCount: Self.bufferSizeBytes)
+      
+      progress.completedUnitCount += Int64(data?.count ?? 0)
 
       return data
     }
     while let chunk = try compressingFilter.readData(ofLength: Self.layerLimitBytes) {
       let chunkDigest = try await registry.pushBlob(fromData: chunk)
       layers.append(OCIManifestLayer(mediaType: Self.diskMediaType, size: chunk.count, digest: chunkDigest))
-      
-      progress.completedUnitCount += 1
     }
 
     // Read VM's NVRAM and push it as blob
@@ -129,7 +129,7 @@ extension VMDirectory {
 
     // Manifest
     for reference in references {
-      defaultLogger.appendNewLine("pushing manifest...")
+      defaultLogger.appendNewLine("pushing manifest for \(reference)...")
 
       _ = try await registry.pushManifest(reference: reference, config: ociConfigDescriptor, layers: layers)
     }
