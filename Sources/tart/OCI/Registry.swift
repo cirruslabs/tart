@@ -14,8 +14,6 @@ struct TokenResponse: Decodable {
 class Registry {
   var baseURL: URL
   var namespace: String
-  var user: String
-  var password: String
 
   var token: String? = nil
 
@@ -27,7 +25,6 @@ class Registry {
 
     baseURL = baseURLComponents.url!
     self.namespace = namespace
-    (user, password) = try Credentials.retrieve(host: host)
   }
 
   func pushManifest(reference: String, config: Descriptor, layers: [OCIManifestLayer]) async throws -> String {
@@ -199,6 +196,7 @@ class Registry {
       }
     }
 
+    let (user, password) = try Credentials.retrieve(host: baseURL.host!)
     let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
     let headers = [
       "Authorization": "Basic \(encodedCredentials!)"
