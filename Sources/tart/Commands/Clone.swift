@@ -11,18 +11,23 @@ struct Clone: AsyncParsableCommand {
   @Argument(help: "new VM name")
   var newName: String
 
-  @Flag(help: "Generate new MAC address.")
-  var newMacAddress: Bool = false
-
   func run() async throws {
     do {
-      // Pull the VM in case it's OCI-based and doesn't exist locally yet
-      if let remoteName = try? RemoteName(sourceName), !VMStorageOCI().exists(remoteName) {
-        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
-        try await VMStorageOCI().pull(remoteName, registry: registry)
-      }
+      if let remoteName = try? RemoteName(sourceName) {
+        if !VMStorageOCI().exists(remoteName) {
+          // Pull the VM in case it's OCI-based and doesn't exist locally yet
+          let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+          try await VMStorageOCI().pull(remoteName, registry: registry)
+        }
+        let removeVM = try VMStorageHelper.open(sourceName)
 
-      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: newMacAddress)
+        let removeConfig = try VMConfig.init(fromURL: removeVM.configURL)
+        let needToGenerateNewMAC = try localVMExistsWith(macAddress: removeConfig.macAddress.string)
+
+        try removeVM.clone(to: VMStorageLocal().create(newName), generateMAC: needToGenerateNewMAC)
+      } else {
+        try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
+      }
 
       Foundation.exit(0)
     } catch {
@@ -30,5 +35,16 @@ struct Clone: AsyncParsableCommand {
 
       Foundation.exit(1)
     }
+  }
+
+  private func localVMExistsWith(macAddress: String) throws -> Bool {
+    var needToGenerateNewMAC = false
+    for (_, localDir) in try VMStorageLocal().list() {
+      let localConfig = try VMConfig.init(fromURL: localDir.configURL)
+      if localConfig.macAddress.string == macAddress {
+        needToGenerateNewMAC = true
+      }
+    }
+    return needToGenerateNewMAC
   }
 }
