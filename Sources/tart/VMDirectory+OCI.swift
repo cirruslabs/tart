@@ -16,7 +16,7 @@ extension VMDirectory {
   private static let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
 
   func pullFromRegistry(registry: Registry, reference: String) async throws {
-    defaultLogger.appendNewLine("pulling manifest")
+    defaultLogger.appendNewLine("pulling manifest...")
 
     let (manifest, _) = try await registry.pullManifest(reference: reference)
 
@@ -52,8 +52,9 @@ extension VMDirectory {
     }
 
     // Progress
+    defaultLogger.appendNewLine("pulling disk...")
     let progress = Progress(totalUnitCount: Int64(diskLayers.map{ $0.size }.reduce(0) { $0 + $1 }))
-    defaultLogger.appendNewLine("pulling disk, \(progress.percentage())")
+    ProgressObserver(progress).log(defaultLogger)
 
     for diskLayer in diskLayers {
       let diskData = try await registry.pullBlob(diskLayer.digest)
@@ -61,13 +62,12 @@ extension VMDirectory {
 
       // Progress
       progress.completedUnitCount += Int64(diskLayer.size)
-      defaultLogger.updateLastLine("pulling disk, \(progress.percentage())")
     }
     try filter.finalize()
     try disk.close()
 
     // Pull VM's NVRAM file layer and store it in an NVRAM file
-    defaultLogger.appendNewLine("pulling NVRAM")
+    defaultLogger.appendNewLine("pulling NVRAM...")
 
     let nvramLayers = manifest.layers.filter {
       $0.mediaType == Self.nvramMediaType
@@ -90,16 +90,17 @@ extension VMDirectory {
 
     // Progress
     let diskSize = try FileManager.default.attributesOfItem(atPath: diskURL.path)[.size] as! Int64
+    
+    defaultLogger.appendNewLine("pushing disk... this will take a while...")
     let progress = Progress(totalUnitCount: diskSize)
-    defaultLogger.appendNewLine("pushing disk, \(progress.percentage())")
+    ProgressObserver(progress).log(defaultLogger)
 
     // Read VM's compressed disk as chunks
     // and sequentially upload them as blobs
     let disk = try FileHandle(forReadingFrom: diskURL)
     let compressingFilter = try InputFilter<Data>(.compress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { _ in
       let data = try disk.read(upToCount: Self.bufferSizeBytes)
-
-      // Progress
+      
       progress.completedUnitCount += Int64(data?.count ?? 0)
 
       return data
@@ -107,13 +108,10 @@ extension VMDirectory {
     while let chunk = try compressingFilter.readData(ofLength: Self.layerLimitBytes) {
       let chunkDigest = try await registry.pushBlob(fromData: chunk)
       layers.append(OCIManifestLayer(mediaType: Self.diskMediaType, size: chunk.count, digest: chunkDigest))
-
-      // Progress
-      defaultLogger.updateLastLine("pushing disk, \(progress.percentage())")
     }
 
     // Read VM's NVRAM and push it as blob
-    defaultLogger.appendNewLine("pushing NVRAM")
+    defaultLogger.appendNewLine("pushing NVRAM...")
 
     let nvram = try FileHandle(forReadingFrom: nvramURL).readToEnd()!
     let nvramDigest = try await registry.pushBlob(fromData: nvram)
@@ -131,7 +129,7 @@ extension VMDirectory {
 
     // Manifest
     for reference in references {
-      defaultLogger.appendNewLine("pushing manifest")
+      defaultLogger.appendNewLine("pushing manifest for \(reference)...")
 
       _ = try await registry.pushManifest(reference: reference, config: ociConfigDescriptor, layers: layers)
     }
