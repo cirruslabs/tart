@@ -12,30 +12,30 @@ Try running a Tart VM on your Apple Silicon device (will download a 25 GB image)
 
 ```shell
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/monterey-base:latest monterey-base
+tart clone tartvm/monterey-base monterey-base
 tart run monterey-base
 ```
 
 ## CI Integration
 
-If you are using [Cirrus CI](https://cirrus-ci.org/) then you can already use any of [`monterey-*` packages](https://github.com/orgs/cirruslabs/packages?tab=packages&q=monterey)
-provided and regularly updated by us. Here is an example of `.cirrus.yml` file:
+If you are using [Cirrus CI](https://cirrus-ci.org/) then you can already use any of the [images provided and regularly updated by us](https://hub.docker.com/u/tartvm).
+Here is an example of `.cirrus.yml` file:
 
 ```yaml
 task:
   name: hello
   macos_instance:
-    image: ghcr.io/cirruslabs/monterey-base:latest
+    image: tartvm/monterey-base:latest
   script: echo "Hello from within a Tart VM!"
 ```
 
-**Please use [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) with any other CI.** Cirrus CLI is a
+**Please use [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) with any other CI.** Cirrus CLI is an open-sourced
 CI-agnostic tool that can run workloads inside containers via Docker or Podman and now inside macOS VMs via Tart.
 Put `.cirrus.yml` from above in the root of your repository and run it locally or in CI with the following command:
 
 ```shell
 brew install cirruslabs/cli/cirrus
-cirrus run hello
+cirrus run
 ```
 
 ## Virtual Machine Management
@@ -50,8 +50,7 @@ tart create --from-ipsw=latest monterey-vanilla
 tart run monterey-vanilla
 ```
 
-After the initial booting of the VM you'll need to manually go through macOS installation process. As a convention
-we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
+After the initial booting of the VM you'll need to manually go through the macOS installation process. As a convention we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
 
 1. Enable Auto-Login. Users & Groups -> Login Options -> Automatic login -> admin.
 2. Allow SSH. Sharing -> Remote Login
@@ -61,7 +60,7 @@ we recommend creating an `admin` user with an `admin` password. After the regula
 
 ### Configuring a VM
 
-By default, a tart VM uses 2 CPUs and 4 GB of memory with a `1024x768` screen. This can be changed with `tart set` command.
+By default, a tart VM uses 2 CPUs and 4 GB of memory with a `1024x768` display. This can be changed with `tart set` command.
 Please refer to `tart set --help` for additional details.
 
 ### Building with Packer
@@ -75,7 +74,7 @@ Here is an example of a template to build `monterey-base` local image based of a
     {
       "name": "tart",
       "type": "tart-cli",
-      "vm_base_name": "ghcr.io/cirruslabs/monterey-vanilla:latest",
+      "vm_base_name": "tartvm/vanilla:latest",
       "vm_name": "monterey-base",
       "cpu_count": 4,
       "memory_gb": 8,
@@ -88,7 +87,7 @@ Here is an example of a template to build `monterey-base` local image based of a
   "provisioners": [
     {
       "inline": [
-        "echo 'Disabling spotlight...'",
+        "echo 'Disabling spotlight indexing...'",
         "sudo mdutil -a -i off"
       ],
       "type": "shell"
@@ -100,8 +99,23 @@ Here is an example of a template to build `monterey-base` local image based of a
 
 Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build all the `ghcr.io/cirruslabs/monterey-*` images.
 
-### Pushing to a registry
+### Working with a Remote OCI Registry
+
+#### Registry Authorization
+
+For example, let's say you want to push an image to a registry hosted at https://acme.io.
+First, you need to log in and save credential for `acme.io` host via `tart login` command:
+
+```shell
+tart login acme.io
+```
+
+Credentials are securely stored in Keychain.
+
+#### Pushing a Local Image
 
 
+
+#### Pulling a Remote Image
 
 ## FAQ
