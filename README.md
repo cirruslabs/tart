@@ -12,7 +12,7 @@ Try running a Tart VM on your Apple Silicon device (will download a 25 GB image)
 
 ```shell
 brew install cirruslabs/cli/tart
-tart clone tartvm/monterey-base monterey-base
+tart clone tartvm/monterey-base:latest monterey-base
 tart run monterey-base
 ```
 
@@ -97,13 +97,14 @@ Here is an example of a template to build `monterey-base` local image based of a
 }
 ```
 
-Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build all the `ghcr.io/cirruslabs/monterey-*` images.
+Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build [all the images managed by us](https://hub.docker.com/u/tartvm).
 
 ### Working with a Remote OCI Registry
 
+For example, let's say you want to push/pull images to a registry hosted at https://acme.io/.
+
 #### Registry Authorization
 
-For example, let's say you want to push an image to a registry hosted at https://acme.io.
 First, you need to log in and save credential for `acme.io` host via `tart login` command:
 
 ```shell
@@ -114,8 +115,35 @@ Credentials are securely stored in Keychain.
 
 #### Pushing a Local Image
 
+Once credentials are saved for `acme.io`. Run the following command to push a local images remotely with two tags.
 
+```shell
+tart push my-local-vm-name acme.io/remoteorg/name:latest acme.io/remoteorg/name:v1.0.0
+```
 
 #### Pulling a Remote Image
 
+```shell
+tart pull acme.io/remoteorg/name:latest my-local-vm-name
+```
+
 ## FAQ
+
+<details>
+  <summary>How Tart is different from Anka</summary>
+
+  Under the hood Tart is using the same technology as Anka 3.0 so there should be no real difference in performance
+  or features supported. If there is some feature missing please don't hesitate to [create a feature request](https://github.com/cirruslabs/tart/issues).
+
+  Instead of Anka Registry, Tart can work with any OCI-compatible container registry.
+
+  Tart doesn't yet have an analogue of Anka Controller for managing long living VMs. Please take a look at [CI integration](#ci-integration)
+  section for an option to run ephemeral VMs for your needs.
+</details>
+
+<details>
+  <summary>Why Tart is free and open sourced?</summary>
+
+  Tart is a relatively small project, and it didn't feel right to try to monetize it.
+  Apple did all the heavy lifting with their `Virtualization.Framework`.
+</details>
