@@ -99,7 +99,7 @@ Here is an example of a template to build `monterey-base` local image based of a
 
 Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build [all the images managed by us](https://hub.docker.com/u/tartvm).
 
-### Working with a Remote OCI Registry
+### Working with a Remote OCI Container Registry
 
 For example, let's say you want to push/pull images to a registry hosted at https://acme.io/.
 
@@ -115,7 +115,7 @@ Credentials are securely stored in Keychain.
 
 #### Pushing a Local Image
 
-Once credentials are saved for `acme.io`. Run the following command to push a local images remotely with two tags.
+Once credentials are saved for `acme.io`, run the following command to push a local images remotely with two tags:
 
 ```shell
 tart push my-local-vm-name acme.io/remoteorg/name:latest acme.io/remoteorg/name:v1.0.0
