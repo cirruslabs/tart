@@ -1,4 +1,4 @@
-# Tart – open source virtualization for your automation needs
+## Tart – open source virtualization for your automation needs
 
 ![tart VM view app](Resources/TartScreenshot.png)
 
