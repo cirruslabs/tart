@@ -72,6 +72,8 @@ class VMStorageOCI {
     if !exists(digestName) {
       let vmDir = try create(digestName)
       try await vmDir.pullFromRegistry(registry: registry, manifest: manifest)
+    } else {
+      defaultLogger.appendNewLine("\(digestName.reference) image is already cached! creating a symlink...")   
     }
 
     // Create directory for reference if it's different
