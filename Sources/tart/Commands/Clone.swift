@@ -19,12 +19,12 @@ struct Clone: AsyncParsableCommand {
           let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
           try await VMStorageOCI().pull(remoteName, registry: registry)
         }
-        let removeVM = try VMStorageHelper.open(sourceName)
+        let remoteVM = try VMStorageHelper.open(sourceName)
 
-        let removeConfig = try VMConfig.init(fromURL: removeVM.configURL)
-        let needToGenerateNewMAC = try localVMExistsWith(macAddress: removeConfig.macAddress.string)
+        let remoteConfig = try VMConfig.init(fromURL: remoteVM.configURL)
+        let needToGenerateNewMAC = try localVMExistsWith(macAddress: remoteConfig.macAddress.string)
 
-        try removeVM.clone(to: VMStorageLocal().create(newName), generateMAC: needToGenerateNewMAC)
+        try remoteVM.clone(to: VMStorageLocal().create(newName), generateMAC: needToGenerateNewMAC)
       } else {
         try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
       }

@@ -3,7 +3,7 @@ import Foundation
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
   case MissingLocationHeader
-  case AuthFailed(why: String)
+  case AuthFailed(why: String, details: String = "")
   case MalformedHeader(why: String)
 }
 
@@ -202,7 +202,7 @@ class Registry {
     let (responseData, response) = try await rawRequest("GET", authenticateURL, headers: headers)
     if response.statusCode != 200 {
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
-        + "while retrieving an authentication token")
+        + "while retrieving an authentication token", details: String(decoding: responseData, as: UTF8.self))
     }
 
     token = try JSONDecoder().decode(TokenResponse.self, from: responseData).token
