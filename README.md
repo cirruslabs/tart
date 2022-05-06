@@ -18,25 +18,30 @@ tart run monterey-base
 
 ## CI Integration
 
-If you are using [Cirrus CI](https://cirrus-ci.org/) then you can already use any of the [images provided and regularly updated by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
-Here is an example of `.cirrus.yml` file:
+[Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) is an open-sourced CI-agnostic tool that can run workloads
+inside containers via Docker or Podman and now inside macOS VMs via Tart. Put th following `.cirrus.yml` file
+in the root of your repository:
 
 ```yaml
 task:
   name: hello
   macos_instance:
+    # can be a remote or a local virtual machine
     image: ghcr.io/cirruslabs/macos-monterey-base:latest
   script: echo "Hello from within a Tart VM!"
 ```
 
-**Please use [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) with any other CI.** Cirrus CLI is an open-sourced
-CI-agnostic tool that can run workloads inside containers via Docker or Podman and now inside macOS VMs via Tart.
-Put `.cirrus.yml` from above in the root of your repository and run it locally or in CI with the following command:
+Run it locally or in CI with the following command:
 
 ```shell
 brew install cirruslabs/cli/cirrus
 cirrus run
 ```
+
+[Cirrus CI](https://cirrus-ci.org/) already leverages Tart to power its macOS cloud infrastructure. The `.cirrus.yml`
+config from above will just work in Cirrus CI and your tasks will be executed inside Tart VMs in our cloud.
+
+**Note:** Cirrus CI only allows [images manages and regularly updated by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
 
 ## Virtual Machine Management
 
