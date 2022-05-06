@@ -61,15 +61,11 @@ class Registry {
       throw RegistryError.MissingLocationHeader
     }
 
-    var uploadLocation = URL(string: uploadLocationRaw)!
-
-    // If the URL provided in the Location header
-    // is relative — make it absolute.
-    if uploadLocation.absoluteString == uploadLocation.relativeString {
-      uploadLocation = URL(string: uploadLocation.path, relativeTo: baseURL)!
+    guard let uploadLocation = URL(string: uploadLocationRaw) else {
+      throw RegistryError.MalformedHeader(why: "Location header contains invalid URL: \"\(uploadLocationRaw)\"")
     }
 
-    return URLComponents(url: uploadLocation, resolvingAgainstBaseURL: true)!
+    return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
   public func pushBlob(fromData: Data, chunkSize: Int = 5 * 1024 * 1024) async throws -> String {
@@ -137,8 +133,8 @@ class Registry {
   ) async throws -> (Data, HTTPURLResponse) {
     var urlComponents = urlComponents
 
-    if !parameters.isEmpty {
-      urlComponents.queryItems = Array()
+    if urlComponents.queryItems == nil {
+      urlComponents.queryItems = []
     }
     urlComponents.queryItems?.append(contentsOf: parameters.map { key, value -> URLQueryItem in
       URLQueryItem(name: key, value: value)
