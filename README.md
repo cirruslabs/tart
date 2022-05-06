@@ -12,20 +12,20 @@ Try running a Tart VM on your Apple Silicon device (will download a 25 GB image)
 
 ```shell
 brew install cirruslabs/cli/tart
-tart clone tartvm/monterey-base:latest monterey-base
+tart clone ghcr.io/cirruslabs/macos-monterey-base:latest monterey-base
 tart run monterey-base
 ```
 
 ## CI Integration
 
-If you are using [Cirrus CI](https://cirrus-ci.org/) then you can already use any of the [images provided and regularly updated by us](https://hub.docker.com/u/tartvm).
+If you are using [Cirrus CI](https://cirrus-ci.org/) then you can already use any of the [images provided and regularly updated by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
 Here is an example of `.cirrus.yml` file:
 
 ```yaml
 task:
   name: hello
   macos_instance:
-    image: tartvm/monterey-base:latest
+    image: ghcr.io/cirruslabs/macos-monterey-base:latest
   script: echo "Hello from within a Tart VM!"
 ```
 
@@ -97,7 +97,7 @@ Here is an example of a template to build `monterey-base` local image based of a
 }
 ```
 
-Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build [all the images managed by us](https://hub.docker.com/u/tartvm).
+Here is a [repository with Packer templates](https://github.com/cirruslabs/macos-image-templates) used to build [all the images managed by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
 
 ### Working with a Remote OCI Container Registry
 
