@@ -1,15 +1,7 @@
 import Foundation
 
 class Credentials {
-  static func retrieve(host: String) throws -> (String, String) {
-    do {
-      return try retrieveKeychain(host: host)
-    } catch RegistryError.AuthFailed {
-      return try retrieveStdin()
-    }
-  }
-
-  static func retrieveKeychain(host: String) throws -> (String, String) {
+  static func retrieveKeychain(host: String) throws -> (String, String)? {
     let query: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
                                 kSecAttrProtocol as String: kSecAttrProtocolHTTPS,
                                 kSecAttrServer as String: host,
@@ -24,7 +16,7 @@ class Credentials {
 
     if status != errSecSuccess {
       if status == errSecItemNotFound {
-        throw RegistryError.AuthFailed(why: "Keychain item not found")
+        return nil
       }
 
       throw RegistryError.AuthFailed(why: "Keychain returned unsuccessful status \(status)")

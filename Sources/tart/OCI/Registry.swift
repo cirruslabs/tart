@@ -192,11 +192,12 @@ class Registry {
       }
     }
 
-    let (user, password) = try Credentials.retrieve(host: baseURL.host!)
-    let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
-    let headers = [
-      "Authorization": "Basic \(encodedCredentials!)"
-    ]
+    var headers: Dictionary<String, String> = Dictionary()
+
+    if let (user, password) = try Credentials.retrieveKeychain(host: baseURL.host!) {
+      let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
+      headers["Authorization"] = "Basic \(encodedCredentials!)"
+    }
 
     let (responseData, response) = try await rawRequest("GET", authenticateURL, headers: headers)
     if response.statusCode != 200 {
