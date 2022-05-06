@@ -61,9 +61,11 @@ class Registry {
       throw RegistryError.MissingLocationHeader
     }
 
-    let uploadLocation = URL(string: uploadLocationRaw)!.absolutize(baseURL: baseURL)
+    guard let uploadLocation = URL(string: uploadLocationRaw) else {
+      throw RegistryError.MalformedHeader(why: "Location header contains invalid URL: \"\(uploadLocationRaw)\"")
+    }
 
-    return URLComponents(url: uploadLocation, resolvingAgainstBaseURL: true)!
+    return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
   public func pushBlob(fromData: Data, chunkSize: Int = 5 * 1024 * 1024) async throws -> String {
