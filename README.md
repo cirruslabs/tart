@@ -1,6 +1,4 @@
-## Tart – open source virtualization for your automation needs
-
-![tart VM view app](Resources/TartScreenshot.png)
+![Tart – open source virtualization for your automation needs](Resources/TartSocial.png)
 
 *Tart* is a virtualization toolset to build, run and manage virtual machines on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
@@ -17,6 +15,8 @@ brew install cirruslabs/cli/tart
 tart clone ghcr.io/cirruslabs/macos-monterey-base:latest monterey-base
 tart run monterey-base
 ```
+
+![tart VM view app](Resources/TartScreenshot.png)
 
 ## CI Integration
 
