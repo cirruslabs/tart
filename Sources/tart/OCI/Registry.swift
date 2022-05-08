@@ -9,6 +9,12 @@ enum RegistryError: Error {
 
 struct TokenResponse: Decodable {
   var token: String
+  var expiresIn: Int?
+
+  enum CodingKeys: String, CodingKey {
+    case token
+    case expiresIn = "expires_in"
+  }
 }
 
 class Registry {
@@ -16,6 +22,7 @@ class Registry {
   var namespace: String
 
   var token: String? = nil
+  var tokenExpiresAt: Date? = nil
 
   init(host: String, namespace: String) throws {
     var baseURLComponents = URLComponents()
@@ -147,6 +154,12 @@ class Registry {
     }
     request.httpBody = body
 
+    // Invalidate token if it has expired
+    if let tokenExpiresAt = tokenExpiresAt, tokenExpiresAt >= Date() {
+      self.token = nil
+      self.tokenExpiresAt = nil
+    }
+
     var (data, response) = try await authAwareRequest(request: request)
 
     if response.statusCode == 401 {
@@ -199,13 +212,24 @@ class Registry {
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
 
-    let (responseData, response) = try await rawRequest("GET", authenticateURL, headers: headers)
+    let (tokenResponseRaw, response) = try await rawRequest("GET", authenticateURL, headers: headers)
     if response.statusCode != 200 {
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
         + "while retrieving an authentication token", details: String(decoding: responseData, as: UTF8.self))
     }
 
-    token = try JSONDecoder().decode(TokenResponse.self, from: responseData).token
+    let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: tokenResponseRaw)
+
+    token = tokenResponse.token
+
+    // Tokens can expire and expire_in field is used to determine when:
+    //
+    // >The duration in seconds since the token was issued that it will remain valid.
+    // >When omitted, this defaults to 60 seconds. For compatibility with older clients,
+    // >a token should never be returned with less than 60 seconds to live.
+    //
+    // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
+    tokenExpiresAt = Date() + TimeInterval(tokenResponse.expiresIn ?? 60)
   }
 
   private func authAwareRequest(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
