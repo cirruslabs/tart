@@ -12,9 +12,6 @@ builds:
 before:
   hooks:
     - swift build -c release --product tart
-    
-after:
-  hooks:
     - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
 
 archives:
