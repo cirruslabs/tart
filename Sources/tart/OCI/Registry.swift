@@ -240,7 +240,7 @@ class Registry {
     var request = request
 
     if let token = currentAuthToken {
-      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+      request.addValue("Bearer \(token.token)", forHTTPHeaderField: "Authorization")
     }
 
     let (responseData, response) = try await URLSession.shared.data(for: request)
