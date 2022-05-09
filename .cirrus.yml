@@ -1,7 +1,6 @@
 persistent_worker:
   labels:
-    os: darwin
-    arch: arm64
+    name: Mac-Mini-M1
 
 task:
   name: Test
