@@ -8,12 +8,29 @@ enum RegistryError: Error {
 }
 
 struct TokenResponse: Decodable {
+  let creationTime = Date()
+  
   var token: String
-  var expiresIn: Int?
-
-  enum CodingKeys: String, CodingKey {
-    case token
-    case expiresIn = "expires_in"
+  var expires_in: Int?
+  
+  var tokenExpiresAt: Date {
+    get {
+      // Tokens can expire and expire_in field is used to determine when:
+      //
+      // >The duration in seconds since the token was issued that it will remain valid.
+      // >When omitted, this defaults to 60 seconds. For compatibility with older clients,
+      // >a token should never be returned with less than 60 seconds to live.
+      //
+      // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
+      
+      creationTime + TimeInterval(expires_in ?? 60)
+    }
+  }
+  
+  var isValid: Bool {
+    get {
+      Date() < tokenExpiresAt
+    }
   }
 }
 
@@ -21,8 +38,7 @@ class Registry {
   var baseURL: URL
   var namespace: String
 
-  var token: String? = nil
-  var tokenExpiresAt: Date? = nil
+  var currentAuthToken: TokenResponse? = nil
 
   init(host: String, namespace: String) throws {
     var baseURLComponents = URLComponents()
@@ -155,9 +171,8 @@ class Registry {
     request.httpBody = body
 
     // Invalidate token if it has expired
-    if let tokenExpiresAt = tokenExpiresAt, tokenExpiresAt >= Date() {
-      self.token = nil
-      self.tokenExpiresAt = nil
+    if currentAuthToken?.isValid == false {
+      currentAuthToken = nil
     }
 
     var (data, response) = try await authAwareRequest(request: request)
@@ -215,28 +230,17 @@ class Registry {
     let (tokenResponseRaw, response) = try await rawRequest("GET", authenticateURL, headers: headers)
     if response.statusCode != 200 {
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
-        + "while retrieving an authentication token", details: String(decoding: responseData, as: UTF8.self))
+        + "while retrieving an authentication token", details: String(decoding: tokenResponseRaw, as: UTF8.self))
     }
 
-    let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: tokenResponseRaw)
-
-    token = tokenResponse.token
-
-    // Tokens can expire and expire_in field is used to determine when:
-    //
-    // >The duration in seconds since the token was issued that it will remain valid.
-    // >When omitted, this defaults to 60 seconds. For compatibility with older clients,
-    // >a token should never be returned with less than 60 seconds to live.
-    //
-    // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
-    tokenExpiresAt = Date() + TimeInterval(tokenResponse.expiresIn ?? 60)
+    currentAuthToken = try JSONDecoder().decode(TokenResponse.self, from: tokenResponseRaw)
   }
 
   private func authAwareRequest(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
     var request = request
 
-    if let token = self.token {
-      request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    if let token = currentAuthToken {
+      request.addValue("Bearer \(token.token)", forHTTPHeaderField: "Authorization")
     }
 
     let (responseData, response) = try await URLSession.shared.data(for: request)
