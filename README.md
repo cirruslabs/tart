@@ -1,6 +1,4 @@
-## Tart – open source virtualization for your automation needs
-
-![tart VM view app](Resources/TartScreenshot.png)
+![Tart – open source virtualization for your automation needs](Resources/TartSocial.png)
 
 *Tart* is a virtualization toolset to build, run and manage virtual machines on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
@@ -18,6 +16,8 @@ tart clone ghcr.io/cirruslabs/macos-monterey-base:latest monterey-base
 tart run monterey-base
 ```
 
+![tart VM view app](Resources/TartScreenshot.png)
+
 ## CI Integration
 
 [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) is an open-sourced CI-agnostic tool that can run workloads
@@ -30,7 +30,11 @@ task:
   macos_instance:
     # can be a remote or a local virtual machine
     image: ghcr.io/cirruslabs/macos-monterey-base:latest
-  script: echo "Hello from within a Tart VM!"
+  hello_script:
+    - echo "Hello from within a Tart VM!"
+    - echo "Here is my CPU info:"
+    - sysctl -n machdep.cpu.brand_string
+    - sleep 15
 ```
 
 Run it locally or in CI with the following command:
@@ -39,6 +43,8 @@ Run it locally or in CI with the following command:
 brew install cirruslabs/cli/cirrus
 cirrus run
 ```
+
+![Cirrus CLI Run](Resources/TartCirrusCLI.gif)
 
 [Cirrus CI](https://cirrus-ci.org/) already leverages Tart to power its macOS cloud infrastructure. The `.cirrus.yml`
 config from above will just work in Cirrus CI and your tasks will be executed inside Tart VMs in our cloud.
