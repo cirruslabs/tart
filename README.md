@@ -162,7 +162,7 @@ tart pull acme.io/remoteorg/name:latest my-local-vm-name
 </details>
 
 <details>
-  <summary>How to change disk size of a given VM?</summary>
+  <summary>How to change VM's disk size?</summary>
 
   You can choose disk size upon creation of a virtual machine:
 
