@@ -175,7 +175,7 @@ tart pull acme.io/remoteorg/name:latest my-local-vm-name
 </details>
 
 <details>
-  <summary>Does Tart support nested vitualization?</summary>
+  <summary>Nested virtualization support?</summary>
 
   Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
   doesn't support nested virtualization.
