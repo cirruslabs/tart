@@ -52,8 +52,10 @@ extension VMDirectory {
     }
 
     // Progress
-    defaultLogger.appendNewLine("pulling disk...")
-    let progress = Progress(totalUnitCount: Int64(diskLayers.map{ $0.size }.reduce(0) { $0 + $1 }))
+    let diskCompressedSize: Int64 = Int64(diskLayers.map {$0.size}.reduce(0) {$0 + $1})
+    let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
+    defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
+    let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
     for diskLayer in diskLayers {
