@@ -160,3 +160,23 @@ tart pull acme.io/remoteorg/name:latest my-local-vm-name
   Tart is a relatively small project, and it didn't feel right to try to monetize it.
   Apple did all the heavy lifting with their `Virtualization.Framework`.
 </details>
+
+<details>
+  <summary>How to change disk size of a given VM?</summary>
+
+  You can choose disk size upon creation of a virtual machine:
+
+  ```shell
+  tart create --from-ipsw=latest --disk-size=25 monterey-vanilla
+  ```
+
+  For an existing VM please use [Packer Plugin](https://github.com/cirruslabs/packer-plugin-tart) which can increase
+  disk size for new virtual machines. Here is an example of [how to change disk size in a Packer template](https://github.com/cirruslabs/macos-image-templates/blob/fb0bcf68e0b093129136875c050205a66729b596/templates/base.pkr.hcl#L15).
+</details>
+
+<details>
+  <summary>Does Tart support nested vitualization?</summary>
+
+  Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
+  doesn't support nested virtualization.
+</details>
