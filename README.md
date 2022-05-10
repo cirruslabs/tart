@@ -78,7 +78,7 @@ Please refer to `tart set --help` for additional details.
 
 ### Building with Packer
 
-Please refer to [Tart Packer Plugin reposiotry](https://github.com/cirruslabs/packer-plugin-tart) for setup instructions.
+Please refer to [Tart Packer Plugin repository](https://github.com/cirruslabs/packer-plugin-tart) for setup instructions.
 Here is an example of a template to build `monterey-base` local image based of a remote image:
 
 ```json
