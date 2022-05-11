@@ -28,6 +28,9 @@ class Softnet {
 
     vmFD = fds[0]
     softnetFD = fds[1]
+
+    try setSocketBuffers(vmFD, 1 * 1024 * 1024);
+    try setSocketBuffers(softnetFD, 1 * 1024 * 1024);
   }
 
   func run() throws {
@@ -54,5 +57,20 @@ class Softnet {
     }
 
     return nil
+  }
+
+  private func setSocketBuffers(_ fd: Int32, _ sizeBytes: Int) throws {
+    var option_value = sizeBytes
+    let option_len = socklen_t(MemoryLayout<Int>.size)
+
+    var ret = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &option_value, option_len)
+    if ret != 0 {
+      throw SoftnetError.InitializationFailed(why: "setsockopt(SO_RCVBUF) returned \(ret)")
+    }
+
+    ret = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &option_value, option_len)
+    if ret != 0 {
+      throw SoftnetError.InitializationFailed(why: "setsockopt(SO_SNDBUF) returned \(ret)")
+    }
   }
 }
