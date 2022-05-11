@@ -35,3 +35,5 @@ brews:
     homepage: https://github.com/cirruslabs/tart
     description: Run macOS VMs on Apple Silicon
     skip_upload: auto
+    custom_block: |
+      depends_on :macos => :monterey
