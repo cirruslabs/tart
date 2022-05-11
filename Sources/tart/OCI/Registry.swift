@@ -8,11 +8,27 @@ enum RegistryError: Error {
 }
 
 struct TokenResponse: Decodable {
-  let creationTime = Date()
-  
   var token: String
-  var expires_in: Int?
-  
+  var expiresIn: Int?
+  var issuedAt: Date = Date()
+
+  enum CodingKeys: String, CodingKey {
+    case token
+    case expiresIn = "expires_in"
+    case issuedAt = "issued_at"
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+    token = try container.decode(String.self, forKey: .token)
+    expiresIn = try container.decodeIfPresent(Int.self, forKey: .expiresIn)
+    if let issuedAtRaw = try container.decodeIfPresent(String.self, forKey: .issuedAt),
+       let issuedAt = Date(fromRFC3339: issuedAtRaw) {
+      self.issuedAt = issuedAt
+    }
+  }
+
   var tokenExpiresAt: Date {
     get {
       // Tokens can expire and expire_in field is used to determine when:
@@ -23,7 +39,7 @@ struct TokenResponse: Decodable {
       //
       // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
       
-      creationTime + TimeInterval(expires_in ?? 60)
+      issuedAt + TimeInterval(expiresIn ?? 60)
     }
   }
   
