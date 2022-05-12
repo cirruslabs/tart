@@ -8,25 +8,29 @@ enum RegistryError: Error {
 }
 
 struct TokenResponse: Decodable {
+  let defaultIssuedAt = Date()
+  let defaultExpiresIn = 60
+
   var token: String
   var expiresIn: Int?
-  var issuedAt: Date = Date()
+  var issuedAt: Date?
 
-  enum CodingKeys: String, CodingKey {
-    case token
-    case expiresIn = "expires_in"
-    case issuedAt = "issued_at"
-  }
+  static func parse(fromData: Data) throws -> Self {
+    let decoder = JSONDecoder()
 
-  init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-    token = try container.decode(String.self, forKey: .token)
-    expiresIn = try container.decodeIfPresent(Int.self, forKey: .expiresIn)
-    if let issuedAtRaw = try container.decodeIfPresent(String.self, forKey: .issuedAt),
-       let issuedAt = Date(fromRFC3339: issuedAtRaw) {
-      self.issuedAt = issuedAt
-    }
+    // RFC3339 date formatter from Apple's documentation[1]
+    //
+    // [1]: https://developer.apple.com/documentation/foundation/dateformatter
+    let dateFormatter = DateFormatter()
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+    decoder.dateDecodingStrategy = .formatted(dateFormatter)
+
+    return try decoder.decode(TokenResponse.self, from: fromData)
   }
 
   var tokenExpiresAt: Date {
@@ -38,8 +42,8 @@ struct TokenResponse: Decodable {
       // >a token should never be returned with less than 60 seconds to live.
       //
       // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
-      
-      issuedAt + TimeInterval(expiresIn ?? 60)
+
+      (issuedAt ?? defaultIssuedAt) + TimeInterval(expiresIn ?? defaultExpiresIn)
     }
   }
   
@@ -249,7 +253,7 @@ class Registry {
         + "while retrieving an authentication token", details: String(decoding: tokenResponseRaw, as: UTF8.self))
     }
 
-    currentAuthToken = try JSONDecoder().decode(TokenResponse.self, from: tokenResponseRaw)
+    currentAuthToken = try TokenResponse.parse(fromData: tokenResponseRaw)
   }
 
   private func authAwareRequest(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
