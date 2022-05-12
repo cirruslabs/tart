@@ -8,11 +8,31 @@ enum RegistryError: Error {
 }
 
 struct TokenResponse: Decodable {
-  let creationTime = Date()
-  
+  let defaultIssuedAt = Date()
+  let defaultExpiresIn = 60
+
   var token: String
-  var expires_in: Int?
-  
+  var expiresIn: Int?
+  var issuedAt: Date?
+
+  static func parse(fromData: Data) throws -> Self {
+    let decoder = JSONDecoder()
+
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+    // RFC3339 date formatter from Apple's documentation[1]
+    //
+    // [1]: https://developer.apple.com/documentation/foundation/dateformatter
+    let dateFormatter = DateFormatter()
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+    decoder.dateDecodingStrategy = .formatted(dateFormatter)
+
+    return try decoder.decode(TokenResponse.self, from: fromData)
+  }
+
   var tokenExpiresAt: Date {
     get {
       // Tokens can expire and expire_in field is used to determine when:
@@ -22,8 +42,8 @@ struct TokenResponse: Decodable {
       // >a token should never be returned with less than 60 seconds to live.
       //
       // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
-      
-      creationTime + TimeInterval(expires_in ?? 60)
+
+      (issuedAt ?? defaultIssuedAt) + TimeInterval(expiresIn ?? defaultExpiresIn)
     }
   }
   
@@ -233,7 +253,7 @@ class Registry {
         + "while retrieving an authentication token", details: String(decoding: tokenResponseRaw, as: UTF8.self))
     }
 
-    currentAuthToken = try JSONDecoder().decode(TokenResponse.self, from: tokenResponseRaw)
+    currentAuthToken = try TokenResponse.parse(fromData: tokenResponseRaw)
   }
 
   private func authAwareRequest(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
