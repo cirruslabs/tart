@@ -13,7 +13,7 @@ struct Pull: AsyncParsableCommand {
       // Be more liberal when accepting local image as argument,
       // see https://github.com/cirruslabs/tart/issues/36
       if VMStorageLocal().exists(remoteName) {
-        print("an image named \"\(remoteName)\" already exists locally, perhaps you've meant to pull a remote image instead?")
+        print("\"\(remoteName)\" is a local image. Nothing to pull here!")
 
         Foundation.exit(0)
       }
