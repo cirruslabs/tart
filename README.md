@@ -20,9 +20,13 @@ tart run monterey-base
 
 ## CI Integration
 
-[Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) is an open-sourced CI-agnostic tool that can run workloads
-inside containers via Docker or Podman and now inside macOS VMs via Tart. Put the following `.cirrus.yml` file
-in the root of your repository:
+Tart itself is only responsible for managing virtual machines, but we've built Tart support into a tool called Cirrus CLI
+also developed by Cirrus Labs. [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) is a command line tool with
+one configuration format to execute common CI steps (run a script, cache a folder, etc.) locally or in any CI system.
+We built Cirrus CLI to solve "But it works on my machine!" problem.
+
+Here is an example of a `.cirrus.yml` configuration file which will start a Tart VM, will copy over working directory and
+will run scripts and [other instructions](https://cirrus-ci.org/guide/writing-tasks/#supported-instructions) inside the virtual machine:
 
 ```yaml
 task:
@@ -37,7 +41,7 @@ task:
     - sleep 15
 ```
 
-Run it locally or in CI with the following command:
+Put the above `.cirrus.yml` file in the root of your repository and run it with the following command:
 
 ```shell
 brew install cirruslabs/cli/cirrus
