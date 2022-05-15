@@ -10,6 +10,14 @@ struct Pull: AsyncParsableCommand {
 
   func run() async throws {
     do {
+      // Be more liberal when accepting local image as argument,
+      // see https://github.com/cirruslabs/tart/issues/36
+      if VMStorageLocal().exists(remoteName) {
+        print("\"\(remoteName)\" is a local image, nothing to pull here!")
+
+        Foundation.exit(0)
+      }
+
       let remoteName = try RemoteName(remoteName)
       let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
 
