@@ -140,7 +140,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
-    sema.wait()
+    await withTaskCancellationHandler(operation: {
+      sema.wait()
+    }, onCancel: {
+      sema.signal()
+    })
+
+    if Task.isCancelled {
+      DispatchQueue.main.sync {
+        Task {
+          try await self.virtualMachine.stop()
+        }
+      }
+    }
   }
 
   static func craftConfiguration(diskURL: URL, auxStorage: VZMacAuxiliaryStorage, vmConfig: VMConfig) throws -> VZVirtualMachineConfiguration {

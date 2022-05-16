@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 
 @main
 struct Root: AsyncParsableCommand {
@@ -16,4 +17,27 @@ struct Root: AsyncParsableCommand {
       Push.self,
       Delete.self,
     ])
+
+  public static func main() async throws {
+    // Handle cancellation by Ctrl+C
+    let task = withUnsafeCurrentTask { $0 }!
+    let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
+    sigintSrc.setEventHandler {
+      task.cancel()
+    }
+    sigintSrc.activate()
+
+    // Parse and run command
+    do {
+      var command = try parseAsRoot()
+
+      if var asyncCommand = command as? AsyncParsableCommand {
+        try await asyncCommand.run()
+      } else {
+        try command.run()
+      }
+    } catch {
+      exit(withError: error)
+    }
+  }
 }
