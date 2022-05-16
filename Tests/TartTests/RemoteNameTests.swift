@@ -7,6 +7,12 @@ final class RemoteNameTests: XCTestCase {
 
     XCTAssertEqual(expectedRemoteName, try RemoteName("ghcr.io/a/b:latest"))
   }
+  
+  func testComplexTag() throws {
+    let expectedRemoteName = RemoteName(host: "ghcr.io", namespace: "a/b", reference: "1.2.3-RC-1")
+
+    XCTAssertEqual(expectedRemoteName, try RemoteName("ghcr.io/a/b:1.2.3-RC-1"))
+  }
 
   func testDigest() throws {
     let expectedRemoteName = RemoteName(
