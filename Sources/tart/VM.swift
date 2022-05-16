@@ -173,6 +173,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     ]
     configuration.graphicsDevices = [graphicsDeviceConfiguration]
 
+    // Audio
     let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
     soundDeviceConfiguration.streams = [VZVirtioSoundDeviceInputStreamConfiguration(), VZVirtioSoundDeviceOutputStreamConfiguration()]
     configuration.audioDevices = [soundDeviceConfiguration]
