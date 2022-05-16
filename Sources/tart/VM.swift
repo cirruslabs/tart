@@ -207,7 +207,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func virtualMachine(_ virtualMachine: VZVirtualMachine, networkDevice: VZNetworkDevice, attachmentWasDisconnectedWithError error: Error) {
-    print("virtual machine's network attachment has been disconnected")
+    print("virtual machine's network attachment \(networkDevice) has been disconnected with error: \(error)")
     sema.signal()
   }
 }
