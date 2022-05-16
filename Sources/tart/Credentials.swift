@@ -55,7 +55,7 @@ class Credentials {
 
     if user.count > maxCharacters {
       throw CredentialsError.CredentialTooLong(
-        message: "\(name) should contain no more than \(buf.count - 2) characters")
+        message: "\(name) should contain no more than \(maxCharacters) characters")
     }
 
     return user
