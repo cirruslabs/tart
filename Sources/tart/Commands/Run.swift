@@ -18,50 +18,55 @@ struct Run: AsyncParsableCommand {
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
-    Task {
-      do {
-        try await vm!.run()
+    await withThrowingTaskGroup(of: Void.self) { group in
+      group.addTask {
+        do {
+          try await vm!.run()
 
-        Foundation.exit(0)
-      } catch {
-        print(error)
+          Foundation.exit(0)
+        } catch {
+          print(error)
 
-        Foundation.exit(1)
-      }
-    }
-
-    if noGraphics {
-      dispatchMain()
-    } else {
-      // UI mumbo-jumbo
-      let nsApp = NSApplication.shared
-      nsApp.setActivationPolicy(.regular)
-      nsApp.activate(ignoringOtherApps: true)
-
-      nsApp.applicationIconImage = NSImage(data: AppIconData)
-
-      struct MainApp: App {
-        var body: some Scene {
-          WindowGroup(vm!.name) {
-            Group {
-              VMView(vm: vm!).onAppear {
-                NSWindow.allowsAutomaticWindowTabbing = false
-              }
-            }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
-          }.commands {
-            // Remove some standard menu options
-            CommandGroup(replacing: .help, addition: {})
-            CommandGroup(replacing: .newItem, addition: {})
-            CommandGroup(replacing: .pasteboard, addition: {})
-            CommandGroup(replacing: .textEditing, addition: {})
-            CommandGroup(replacing: .undoRedo, addition: {})
-            CommandGroup(replacing: .windowSize, addition: {})
-          }
+          Foundation.exit(1)
         }
       }
 
-      MainApp.main()
+      if noGraphics {
+        dispatchMain()
+      } else {
+        runUI()
+      }
     }
+  }
+
+  private func runUI() {
+    let nsApp = NSApplication.shared
+    nsApp.setActivationPolicy(.regular)
+    nsApp.activate(ignoringOtherApps: true)
+
+    nsApp.applicationIconImage = NSImage(data: AppIconData)
+
+    struct MainApp: App {
+      var body: some Scene {
+        WindowGroup(vm!.name) {
+          Group {
+            VMView(vm: vm!).onAppear {
+              NSWindow.allowsAutomaticWindowTabbing = false
+            }
+          }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
+        }.commands {
+                  // Remove some standard menu options
+                  CommandGroup(replacing: .help, addition: {})
+                  CommandGroup(replacing: .newItem, addition: {})
+                  CommandGroup(replacing: .pasteboard, addition: {})
+                  CommandGroup(replacing: .textEditing, addition: {})
+                  CommandGroup(replacing: .undoRedo, addition: {})
+                  CommandGroup(replacing: .windowSize, addition: {})
+                }
+      }
+    }
+
+    MainApp.main()
   }
 }
 

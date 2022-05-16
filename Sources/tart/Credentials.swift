@@ -1,5 +1,10 @@
 import Foundation
 
+enum CredentialsError: Error {
+  case CredentialRequired(which: String)
+  case CredentialTooLong(message: String)
+}
+
 class Credentials {
   static func retrieveKeychain(host: String) throws -> (String, String)? {
     let query: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
@@ -34,13 +39,26 @@ class Credentials {
   }
 
   static func retrieveStdin() throws -> (String, String) {
-    print("User: ", terminator: "")
-    let user = readLine() ?? ""
+    let user = try readStdinCredential(name: "username", prompt: "User: ", isSensitive: false)
+    let password = try readStdinCredential(name: "password", prompt: "Password: ", isSensitive: true)
 
-    let rawPass = getpass("Password: ")
-    let pass = String(cString: rawPass!, encoding: .utf8)!
+    return (user, password)
+  }
 
-    return (user, pass)
+  private static func readStdinCredential(name: String, prompt: String, maxCharacters: Int = 255, isSensitive: Bool) throws -> String {
+    var buf = [CChar](repeating: 0, count: maxCharacters + 1 /* sentinel */ + 1 /* NUL */)
+    guard let rawCredential = readpassphrase(prompt, &buf, buf.count, isSensitive ? RPP_ECHO_OFF : RPP_ECHO_ON) else {
+      throw CredentialsError.CredentialRequired(which: name)
+    }
+
+    let credential = String(cString: rawCredential).trimmingCharacters(in: .newlines)
+
+    if credential.count > maxCharacters {
+      throw CredentialsError.CredentialTooLong(
+        message: "\(name) should contain no more than \(maxCharacters) characters")
+    }
+
+    return credential
   }
 
   static func store(host: String, user: String, password: String) throws {
