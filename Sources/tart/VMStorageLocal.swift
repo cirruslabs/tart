@@ -36,8 +36,12 @@ class VMStorageLocal {
       return try FileManager.default.contentsOfDirectory(
         at: baseURL,
         includingPropertiesForKeys: [.isDirectoryKey],
-        options: .skipsSubdirectoryDescendants).map { url in
+        options: .skipsSubdirectoryDescendants).compactMap { url in
         let vmDir = VMDirectory(baseURL: url)
+
+        if !vmDir.initialized {
+          return nil
+        }
 
         return (vmDir.name, vmDir)
       }
