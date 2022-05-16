@@ -34,6 +34,7 @@ struct RemoteName: Comparable, CustomStringConvertible {
   init(_ name: String) throws {
     let csNormal = [
       UInt8(ascii: "a")...UInt8(ascii: "z"),
+      UInt8(ascii: "A")...UInt8(ascii: "Z"),
       UInt8(ascii: "0")...UInt8(ascii: "9"),
     ].asCharacterSet().union(CharacterSet(charactersIn: "_-."))
 
