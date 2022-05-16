@@ -51,14 +51,14 @@ class Credentials {
       throw CredentialsError.CredentialRequired(which: name)
     }
 
-    let user = String(cString: rawCredential).trimmingCharacters(in: .newlines)
+    let credential = String(cString: rawCredential).trimmingCharacters(in: .newlines)
 
-    if user.count > maxCharacters {
+    if credential.count > maxCharacters {
       throw CredentialsError.CredentialTooLong(
         message: "\(name) should contain no more than \(maxCharacters) characters")
     }
 
-    return user
+    return credential
   }
 
   static func store(host: String, user: String, password: String) throws {
