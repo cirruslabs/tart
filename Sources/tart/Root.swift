@@ -5,6 +5,7 @@ import Foundation
 struct Root: AsyncParsableCommand {
   static var configuration = CommandConfiguration(
     commandName: "tart",
+    version: CI.version,
     subcommands: [
       Create.self,
       Clone.self,

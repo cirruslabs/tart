@@ -11,6 +11,7 @@ builds:
 
 before:
   hooks:
+    - cat Sources/tart/CI/CI.swift | envsubst | tee Sources/tart/CI/CI.swift
     - swift build -c release --product tart
     - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
 

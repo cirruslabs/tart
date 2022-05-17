@@ -62,11 +62,26 @@ struct Run: AsyncParsableCommand {
                   CommandGroup(replacing: .textEditing, addition: {})
                   CommandGroup(replacing: .undoRedo, addition: {})
                   CommandGroup(replacing: .windowSize, addition: {})
+                  // Replace some standard menu options
+                  CommandGroup(replacing: .appInfo) { AboutTart() }
                 }
       }
     }
 
     MainApp.main()
+  }
+}
+
+struct AboutTart: View {
+  var body: some View {
+    Button("About Tart") {
+      NSApplication.shared.orderFrontStandardAboutPanel(options: [
+        NSApplication.AboutPanelOptionKey.applicationIcon: NSApplication.shared.applicationIconImage as Any,
+        NSApplication.AboutPanelOptionKey.applicationName: "Tart",
+        NSApplication.AboutPanelOptionKey.applicationVersion: CI.version,
+        NSApplication.AboutPanelOptionKey.credits: try! NSAttributedString(markdown: "https://github.com/cirruslabs/tart"),
+      ])
+    }
   }
 }
 
