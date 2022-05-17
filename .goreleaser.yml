@@ -11,6 +11,7 @@ builds:
 
 before:
   hooks:
+    - .ci/set-version.sh
     - swift build -c release --product tart
     - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
 
