@@ -13,6 +13,8 @@ struct Run: AsyncParsableCommand {
 
   @Flag var noGraphics: Bool = false
 
+  @Flag var recovery: Bool = false
+
   @MainActor
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
@@ -21,7 +23,7 @@ struct Run: AsyncParsableCommand {
     await withThrowingTaskGroup(of: Void.self) { group in
       group.addTask {
         do {
-          try await vm!.run()
+          try await vm!.run(recovery)
 
           Foundation.exit(0)
         } catch {

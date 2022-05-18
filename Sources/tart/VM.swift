@@ -133,12 +133,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
-  func run() async throws {
-    try await withCheckedThrowingContinuation { continuation in
-      DispatchQueue.main.async {
-        self.virtualMachine.start(completionHandler: { result in
-          continuation.resume(with: result)
-        })
+  func run(_ recovery: Bool) async throws {
+    DispatchQueue.main.sync {
+      Task {
+        try await self.virtualMachine.start(recovery)
       }
     }
 
