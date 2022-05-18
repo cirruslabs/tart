@@ -106,6 +106,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       cpuCountMin: requirements.minimumSupportedCPUCount,
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
+    // allocate at least 4 CPUs because otherwise VMs are frequently freezing
+    try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
     try config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
