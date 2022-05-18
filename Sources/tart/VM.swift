@@ -103,7 +103,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Create config
     config = VMConfig(
       hardwareModel: requirements.hardwareModel,
-      cpuCountMin: requirements.minimumSupportedCPUCount,
+      // allocate at least 4 CPUs because otherwise VMs are frequently freezing
+      cpuCountMin: max(4, requirements.minimumSupportedCPUCount),
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
     try config.save(toURL: vmDir.configURL)
