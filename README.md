@@ -181,7 +181,7 @@ tart pull acme.io/remoteorg/name:latest my-local-vm-name
 <details>
   <summary>VM location on disk</summary>
 
-  Tart stores all it's files in `~/.tart` directory. Local images that you can run are stored in `~/.tart/vms`.
+  Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
   Remote images are pulled into `~/.tart/vms/cache/OCIs/`.
 </details>
 
