@@ -179,6 +179,13 @@ tart pull acme.io/remoteorg/name:latest my-local-vm-name
 </details>
 
 <details>
+  <summary>VM location on disk</summary>
+
+  Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
+  Remote images are pulled into `~/.tart/vms/cache/OCIs/`.
+</details>
+
+<details>
   <summary>Nested virtualization support?</summary>
 
   Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
