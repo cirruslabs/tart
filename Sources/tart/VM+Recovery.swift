@@ -1,7 +1,7 @@
 import Foundation
 import Virtualization
 
-// Original found by @saagarjha
+// Originally found by @saagarjha
 // See https://github.com/saagarjha/VirtualApple/blob/c737f41dae24c40996ded7dccb222b160c857de8/VirtualApple/VirtualMachine.swift#L135-L145
 
 @objc protocol _VZVirtualMachine {
