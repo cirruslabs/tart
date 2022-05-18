@@ -7,7 +7,7 @@ struct List: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      print("Name\tSource")
+      print("Source\tName")
 
       displayTable("local", try VMStorageLocal().list())
       displayTable("oci", try VMStorageOCI().list())
