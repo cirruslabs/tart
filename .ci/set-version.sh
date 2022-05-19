@@ -1,3 +1,5 @@
 #!/bin/sh
 
-cat Sources/tart/CI/CI.swift | envsubst | tee Sources/tart/CI/CI.swift
+TMPFILE=$(mktemp)
+envsubst < Sources/tart/CI/CI.swift > $TMPFILE
+cat $TMPFILE > Sources/tart/CI/CI.swift
