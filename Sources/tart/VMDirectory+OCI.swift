@@ -4,7 +4,7 @@ import Compression
 enum OCIError: Error {
   case ShouldBeExactlyOneLayer
   case ShouldBeAtLeastOneLayer
-  case FailedToCreateDiskFile
+  case FailedToCreateVmFile
 }
 
 extension VMDirectory {
@@ -31,8 +31,14 @@ extension VMDirectory {
     if configLayers.count != 1 {
       throw OCIError.ShouldBeExactlyOneLayer
     }
-    let configData = try await registry.pullBlob(configLayers.first!.digest)
-    try VMConfig(fromData: configData).save(toURL: configURL)
+    if !FileManager.default.createFile(atPath: configURL.path, contents: nil) {
+      throw OCIError.FailedToCreateVmFile
+    }
+    let configFile = try FileHandle(forWritingTo: configURL)
+    try await registry.pullBlobInto(configLayers.first!.digest) { buffer in
+      configFile.write(Data(buffer: buffer))
+    }
+    try configFile.close()
 
     // Pull VM's disk layers and decompress them sequentially into a disk file
     let diskLayers = manifest.layers.filter {
@@ -42,7 +48,7 @@ extension VMDirectory {
       throw OCIError.ShouldBeAtLeastOneLayer
     }
     if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
-      throw OCIError.FailedToCreateDiskFile
+      throw OCIError.FailedToCreateVmFile
     }
     let disk = try FileHandle(forWritingTo: diskURL)
     let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
@@ -52,18 +58,23 @@ extension VMDirectory {
     }
 
     // Progress
-    let diskCompressedSize: Int64 = Int64(diskLayers.map {$0.size}.reduce(0) {$0 + $1})
+    let diskCompressedSize: Int64 = Int64(diskLayers.map {
+              $0.size
+            }
+            .reduce(0) {
+              $0 + $1
+            })
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
     defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
     let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
     for diskLayer in diskLayers {
-      let diskData = try await registry.pullBlob(diskLayer.digest)
-      try filter.write(diskData)
-
-      // Progress
-      progress.completedUnitCount += Int64(diskLayer.size)
+      try await registry.pullBlobInto(diskLayer.digest) { buffer in
+        let data = Data(buffer: buffer)
+        try filter.write(data)
+        progress.completedUnitCount += Int64(data.count)
+      }
     }
     try filter.finalize()
     try disk.close()
@@ -77,8 +88,14 @@ extension VMDirectory {
     if nvramLayers.count != 1 {
       throw OCIError.ShouldBeExactlyOneLayer
     }
-    let nvramData = try await registry.pullBlob(nvramLayers.first!.digest)
-    try nvramData.write(to: nvramURL)
+    if !FileManager.default.createFile(atPath: nvramURL.path, contents: nil) {
+      throw OCIError.FailedToCreateVmFile
+    }
+    let nvram = try FileHandle(forWritingTo: nvramURL)
+    try await registry.pullBlobInto(nvramLayers.first!.digest) { buffer in
+      nvram.write(Data(buffer: buffer))
+    }
+    try nvram.close()
   }
 
   func pushToRegistry(registry: Registry, references: [String]) async throws {
@@ -92,7 +109,7 @@ extension VMDirectory {
 
     // Progress
     let diskSize = try FileManager.default.attributesOfItem(atPath: diskURL.path)[.size] as! Int64
-    
+
     defaultLogger.appendNewLine("pushing disk... this will take a while...")
     let progress = Progress(totalUnitCount: diskSize)
     ProgressObserver(progress).log(defaultLogger)
@@ -102,7 +119,7 @@ extension VMDirectory {
     let disk = try FileHandle(forReadingFrom: diskURL)
     let compressingFilter = try InputFilter<Data>(.compress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { _ in
       let data = try disk.read(upToCount: Self.bufferSizeBytes)
-      
+
       progress.completedUnitCount += Int64(data?.count ?? 0)
 
       return data
