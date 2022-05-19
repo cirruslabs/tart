@@ -17,7 +17,7 @@ extension VZVirtualMachine {
       }
     }
 
-    // use private API for recovery
+    // use some private stuff only for recovery
     let options = Dynamic._VZVirtualMachineStartOptions()
     options.bootMacOSRecovery = recovery
 
