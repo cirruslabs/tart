@@ -18,9 +18,6 @@ extension VZVirtualMachine {
     }
 
     // use some private stuff only for recovery
-    let options = Dynamic._VZVirtualMachineStartOptions()
-    options.bootMacOSRecovery = recovery
-
     return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
       DispatchQueue.main.async {
         let handler: @convention(block) (_ result: Any?) -> Void = { result in
@@ -30,6 +27,9 @@ extension VZVirtualMachine {
             continuation.resume(returning: ())
           }
         }
+        // dynamic magic
+        let options = Dynamic._VZVirtualMachineStartOptions()
+        options.bootMacOSRecovery = recovery
         Dynamic(self)._start(withOptions: options, completionHandler: handler)
       }
     }
