@@ -134,11 +134,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run(_ recovery: Bool) async throws {
-    DispatchQueue.main.sync {
-      Task {
-        try await self.virtualMachine.start(recovery)
-      }
-    }
+    try await virtualMachine.start(recovery)
 
     await withTaskCancellationHandler(operation: {
       sema.wait()

@@ -1,23 +1,37 @@
 import Foundation
 import Virtualization
+import Dynamic
 
-// Originally found by @saagarjha
-// See https://github.com/saagarjha/VirtualApple/blob/c737f41dae24c40996ded7dccb222b160c857de8/VirtualApple/VirtualMachine.swift#L135-L145
-
-@objc protocol _VZVirtualMachine {
-  @objc(_startWithOptions:completionHandler:)
-  func _start(with options: _VZVirtualMachineStartOptions) async throws
-}
-
-@objc protocol _VZVirtualMachineStartOptions {
-  init()
-  var bootMacOSRecovery: Bool { get set }
-}
+// Kudos to @saagarjha's VirtualApple for finding about _VZVirtualMachineStartOptions
 
 extension VZVirtualMachine {
   func start(_ recovery: Bool) async throws {
-    let options = unsafeBitCast(NSClassFromString("_VZVirtualMachineStartOptions")!, to: _VZVirtualMachineStartOptions.Type.self).init()
+    if !recovery {
+      // just use the regular API
+      return try await withCheckedThrowingContinuation { continuation in
+        DispatchQueue.main.async {
+          self.start(completionHandler: { result in
+            continuation.resume(with: result)
+          })
+        }
+      }
+    }
+
+    // use private API for recovery
+    let options = Dynamic._VZVirtualMachineStartOptions()
     options.bootMacOSRecovery = recovery
-    try await unsafeBitCast(self, to: _VZVirtualMachine.self)._start(with: options)
+
+    return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      DispatchQueue.main.async {
+        let handler: @convention(block) (_ result: Any?) -> Void = { result in
+          if let error = result as? Error {
+            continuation.resume(throwing: error)
+          } else {
+            continuation.resume(returning: ())
+          }
+        }
+        Dynamic(self)._start(withOptions: options, completionHandler: handler)
+      }
+    }
   }
 }
