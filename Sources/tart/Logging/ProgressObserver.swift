@@ -3,6 +3,7 @@ import Foundation
 public class ProgressObserver: NSObject {
   @objc var progressToObserve: Progress
   var observation: NSKeyValueObservation?
+  var lastTimeUpdated = Date.now
 
   public init(_ progress: Progress) {
     progressToObserve = progress
@@ -11,7 +12,11 @@ public class ProgressObserver: NSObject {
   func log(_ renderer: Logger) {
     renderer.appendNewLine(ProgressObserver.lineToRender(progressToObserve))
     observation = observe(\.progressToObserve.fractionCompleted) { progress, _ in
-      renderer.updateLastLine(ProgressObserver.lineToRender(self.progressToObserve))
+      let currentTime = Date.now
+      if self.progressToObserve.isFinished || currentTime.timeIntervalSince(self.lastTimeUpdated) >= 1.0 {
+        self.lastTimeUpdated = currentTime
+        renderer.updateLastLine(ProgressObserver.lineToRender(self.progressToObserve))
+      }
     }
   }
 
