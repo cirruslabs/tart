@@ -21,7 +21,7 @@ struct List: AsyncParsableCommand {
   }
 
   private func displayTable(_ source: String, _ vms: [(String, VMDirectory)]) {
-    for (name, _) in vms {
+    for (name, _) in vms.sorted(by: { left, right in left.0 < right.0 }) {
       print("\(source)\t\(name)")
     }
   }
