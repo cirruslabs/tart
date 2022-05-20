@@ -17,7 +17,7 @@ struct IP: AsyncParsableCommand {
       let vmDir = try VMStorageLocal().open(name)
       let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
 
-      guard let ip = try await resolveIP(vmConfig, secondsToWait: wait) else {
+      guard let ip = try await IP.resolveIP(vmConfig, secondsToWait: wait) else {
         print("no IP address found, is your VM running?")
 
         Foundation.exit(1)
@@ -33,7 +33,7 @@ struct IP: AsyncParsableCommand {
     }
   }
 
-  private func resolveIP(_ config: VMConfig, secondsToWait: UInt16) async throws -> IPv4Address? {
+  static public func resolveIP(_ config: VMConfig, secondsToWait: UInt16) async throws -> IPv4Address? {
     let waitUntil = Calendar.current.date(byAdding: .second, value: Int(secondsToWait), to: Date.now)!
     let vmMacAddress = MACAddress(fromString: config.macAddress.string)!
 

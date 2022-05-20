@@ -5,6 +5,9 @@ import Virtualization
 
 var vm: VM?
 
+struct IPNotFound: Error {
+}
+
 struct Run: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Run a VM")
 
@@ -14,9 +17,16 @@ struct Run: AsyncParsableCommand {
   @Flag var noGraphics: Bool = false
 
   @Flag var recovery: Bool = false
+  
+  @Flag var vnc: Bool = false
 
   @MainActor
   func run() async throws {
+    if recovery && vnc {
+      print("You can't run in recovery and use VNC!")
+      Foundation.exit(1)      
+    }
+    
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
@@ -32,8 +42,22 @@ struct Run: AsyncParsableCommand {
           Foundation.exit(1)
         }
       }
+      if vnc {
+        group.addTask(operation: {
+          do {
+            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
+            guard let ip = resolvedIP else {
+              throw IPNotFound()
+            }
+            let url = URL(string: "vnc://admin:admin\(ip)")!
+            NSWorkspace.shared.open(url)
+          } catch {
+            print("Failed to get an IP for screen sharing: \(error)")
+          }
+        })
+      }
 
-      if noGraphics {
+      if noGraphics || vnc {
         dispatchMain()
       } else {
         runUI()
