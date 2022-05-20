@@ -10,8 +10,6 @@ enum RegistryError: Error {
   case MalformedHeader(why: String)
 }
 
-private let MAX_TEXT_RESPONSE_SIZE = 1024 * 1024
-
 extension HTTPClientResponse.Body {
   func readTextResponse() async throws -> String? {
     let data = try await readResponse()
