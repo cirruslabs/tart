@@ -35,7 +35,7 @@ extension VMDirectory {
       throw OCIError.FailedToCreateVmFile
     }
     let configFile = try FileHandle(forWritingTo: configURL)
-    try await registry.pullBlobInto(configLayers.first!.digest) { buffer in
+    try await registry.pullBlob(configLayers.first!.digest) { buffer in
       configFile.write(Data(buffer: buffer))
     }
     try configFile.close()
@@ -70,7 +70,7 @@ extension VMDirectory {
     ProgressObserver(progress).log(defaultLogger)
 
     for diskLayer in diskLayers {
-      try await registry.pullBlobInto(diskLayer.digest) { buffer in
+      try await registry.pullBlob(diskLayer.digest) { buffer in
         let data = Data(buffer: buffer)
         try filter.write(data)
         progress.completedUnitCount += Int64(data.count)
@@ -92,7 +92,7 @@ extension VMDirectory {
       throw OCIError.FailedToCreateVmFile
     }
     let nvram = try FileHandle(forWritingTo: nvramURL)
-    try await registry.pullBlobInto(nvramLayers.first!.digest) { buffer in
+    try await registry.pullBlob(nvramLayers.first!.digest) { buffer in
       nvram.write(Data(buffer: buffer))
     }
     try nvram.close()

@@ -96,9 +96,9 @@ class Registry {
   }
 
   func ping() async throws {
-    let (_, response) = try await endpointRequest("GET", "/v2/")
-    if response.statusCode != 200 {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing ping", code: response.statusCode)
+    let response = try await endpointRequest(.GET, "/v2/")
+    if response.status != .ok {
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing ping", code: response.status.code)
     }
   }
 
@@ -178,7 +178,7 @@ class Registry {
     return digest
   }
 
-  public func pullBlobInto(_ digest: String, handler: (ByteBuffer) throws -> Void) async throws {
+  public func pullBlob(_ digest: String, handler: (ByteBuffer) throws -> Void) async throws {
     let response = try await endpointRequest(.GET, "\(namespace)/blobs/\(digest)")
     if response.status != .ok {
       let body = try await response.body.readTextResponse()
