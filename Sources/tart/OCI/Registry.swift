@@ -26,8 +26,8 @@ extension HTTPClientResponse.Body {
 }
 
 struct TokenResponse: Decodable {
-  let defaultIssuedAt = Date()
-  let defaultExpiresIn = 60
+  static let defaultIssuedAt = Date()
+  static let defaultExpiresIn = 60
 
   var token: String
   var expiresIn: Int?
@@ -61,7 +61,7 @@ struct TokenResponse: Decodable {
       //
       // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
 
-      (issuedAt ?? defaultIssuedAt) + TimeInterval(expiresIn ?? defaultExpiresIn)
+      (issuedAt ?? TokenResponse.defaultIssuedAt) + TimeInterval(expiresIn ?? TokenResponse.defaultExpiresIn)
     }
   }
 
