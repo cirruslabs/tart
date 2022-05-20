@@ -31,6 +31,20 @@ struct Run: AsyncParsableCommand {
     vm = try VM(vmDir: vmDir)
 
     await withThrowingTaskGroup(of: Void.self) { group in
+      if vnc {
+        group.addTask(operation: {
+          do {
+            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
+            guard let ip = resolvedIP else {
+              throw IPNotFound()
+            }
+            let url = URL(string: "vnc://\(ip)")!
+            NSWorkspace.shared.open(url)
+          } catch {
+            print("Failed to get an IP for screen sharing: \(error)")
+          }
+        })
+      }
       group.addTask {
         do {
           try await vm!.run(recovery)
@@ -41,20 +55,6 @@ struct Run: AsyncParsableCommand {
 
           Foundation.exit(1)
         }
-      }
-      if vnc {
-        group.addTask(operation: {
-          do {
-            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
-            guard let ip = resolvedIP else {
-              throw IPNotFound()
-            }
-            let url = URL(string: "vnc://admin:admin\(ip)")!
-            NSWorkspace.shared.open(url)
-          } catch {
-            print("Failed to get an IP for screen sharing: \(error)")
-          }
-        })
       }
 
       if noGraphics || vnc {
