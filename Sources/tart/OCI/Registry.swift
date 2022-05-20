@@ -73,7 +73,7 @@ struct TokenResponse: Decodable {
 }
 
 class Registry {
-  let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
+  private let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
   
   deinit {
     try! httpClient.syncShutdown()
