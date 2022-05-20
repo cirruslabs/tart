@@ -127,13 +127,16 @@ extension VMDirectory {
 
     let ociConfigJSON = try JSONEncoder().encode(OCIConfig())
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON)
-    let ociConfigDescriptor = Descriptor(size: ociConfigJSON.count, digest: ociConfigDigest)
+    let manifest = OCIManifest(
+            config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
+            layers: layers
+    )
 
     // Manifest
     for reference in references {
       defaultLogger.appendNewLine("pushing manifest for \(reference)...")
 
-      _ = try await registry.pushManifest(reference: reference, config: ociConfigDescriptor, layers: layers)
+      _ = try await registry.pushManifest(reference: reference, manifest: manifest)
     }
   }
 }

@@ -60,19 +60,29 @@ class Registry {
 
   var currentAuthToken: TokenResponse? = nil
 
-  init(host: String, namespace: String) throws {
+  init(urlComponents: URLComponents, namespace: String) throws {
+    baseURL = urlComponents.url!
+    self.namespace = namespace
+  }
+
+  convenience init(host: String, namespace: String) throws {
     var baseURLComponents = URLComponents()
+
     baseURLComponents.scheme = "https"
     baseURLComponents.host = host
     baseURLComponents.path = "/v2/"
 
-    baseURL = baseURLComponents.url!
-    self.namespace = namespace
+    try self.init(urlComponents: baseURLComponents, namespace: namespace)
   }
 
-  func pushManifest(reference: String, config: Descriptor, layers: [OCIManifestLayer]) async throws -> String {
-    let manifest = OCIManifest(config: OCIManifestConfig(size: config.size, digest: config.digest),
-      layers: layers)
+  func ping() async throws {
+    let (_, response) = try await endpointRequest("GET", "/v2/")
+    if response.statusCode != 200 {
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing ping", code: response.statusCode)
+    }
+  }
+
+  func pushManifest(reference: String, manifest: OCIManifest) async throws -> String {
     let manifestJSON = try JSONEncoder().encode(manifest)
 
     let (responseData, response) = try await endpointRequest("PUT", "\(namespace)/manifests/\(reference)",
