@@ -120,7 +120,7 @@ extension VMDirectory {
     layers.append(OCIManifestLayer(mediaType: Self.nvramMediaType, size: nvram.count, digest: nvramDigest))
 
     // Craft a stub OCI config for Docker Hub compatibility
-    struct OCIConfig: Encodable, Decodable {
+    struct OCIConfig: Codable {
       var architecture: String = "arm64"
       var os: String = "darwin"
     }

@@ -56,7 +56,7 @@ final class RegistryTests: XCTestCase {
 
     func testPushPullManifest() async throws {
         // Craft a basic config
-        struct OCIConfig: Encodable, Decodable {
+        struct OCIConfig: Codable {
             var architecture: String = "arm64"
             var os: String = "darwin"
         }
