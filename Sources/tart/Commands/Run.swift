@@ -34,6 +34,7 @@ struct Run: AsyncParsableCommand {
       if vnc {
         group.addTask(operation: {
           do {
+            print("Waiting for the VM to boot...")
             let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
             guard let ip = resolvedIP else {
               throw IPNotFound()
