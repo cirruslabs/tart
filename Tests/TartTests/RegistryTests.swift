@@ -1,5 +1,4 @@
 import XCTest
-import DockerClientSwift
 @testable import tart
 
 final class RegistryTests: XCTestCase {
