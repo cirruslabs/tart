@@ -33,7 +33,10 @@ final class RegistryTests: XCTestCase {
         XCTAssertEqual("sha256:d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", pushedBlobDigest)
 
         // Pull it
-        let pulledBlob = try await registry.pullBlob(pushedBlobDigest)
+        var pulledBlob = Data()
+        try await registry.pullBlob(pushedBlobDigest) { buffer in
+            pulledBlob.append(Data(buffer: buffer))
+        }
 
         // Ensure that both blobs are identical
         XCTAssertEqual(pushedBlob, pulledBlob)
@@ -48,7 +51,10 @@ final class RegistryTests: XCTestCase {
         let largeBlobDigest = try await registry.pushBlob(fromData: largeBlobToPush)
 
         // Pull it
-        let pulledLargeBlob = try await registry.pullBlob(largeBlobDigest)
+        var pulledLargeBlob = Data()
+        try await registry.pullBlob(largeBlobDigest) { buffer in
+            pulledLargeBlob.append(Data(buffer: buffer))       
+        }
 
         // Ensure that both blobs are identical
         XCTAssertEqual(largeBlobToPush, pulledLargeBlob)
