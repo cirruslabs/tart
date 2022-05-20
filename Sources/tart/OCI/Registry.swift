@@ -26,8 +26,8 @@ extension HTTPClientResponse.Body {
 }
 
 struct TokenResponse: Decodable {
-  static let defaultIssuedAt = Date()
-  static let defaultExpiresIn = 60
+  private static let defaultIssuedAt = Date()
+  private static let defaultExpiresIn = 60
 
   var token: String
   var expiresIn: Int?
