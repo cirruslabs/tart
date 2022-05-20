@@ -72,9 +72,13 @@ struct TokenResponse: Decodable {
   }
 }
 
-fileprivate let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
-
 class Registry {
+  let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
+  
+  deinit {
+    try! httpClient.syncShutdown()
+  }
+  
   var baseURL: URL
   var namespace: String
 
