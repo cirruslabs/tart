@@ -14,11 +14,18 @@ struct Run: AsyncParsableCommand {
   @Argument(help: "VM name")
   var name: String
 
-  @Flag var noGraphics: Bool = false
+  @Flag(help: ArgumentHelp(
+          "Don't open a UI window.",
+          discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
+  var noGraphics: Bool = false
 
-  @Flag var recovery: Bool = false
+  @Flag(help: "Boot into recovery mode") 
+  var recovery: Bool = false
   
-  @Flag var vnc: Bool = false
+  @Flag(help: ArgumentHelp(
+          "Use screen sharing instead of the built-in UI.",
+          discussion: "Useful since VNC supports copy/paste, drag and drop, etc.\nNote that Remote Login option should be enabled inside the VM.")) 
+  var vnc: Bool = false
 
   @MainActor
   func run() async throws {
