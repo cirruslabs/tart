@@ -40,6 +40,7 @@ struct Run: AsyncParsableCommand {
               throw IPNotFound()
             }
             let url = URL(string: "vnc://\(ip)")!
+            print("Opening \(url)")
             NSWorkspace.shared.open(url)
           } catch {
             print("Failed to get an IP for screen sharing: \(error)")
