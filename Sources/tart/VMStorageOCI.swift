@@ -64,16 +64,16 @@ class VMStorageOCI {
   func pull(_ name: RemoteName, registry: Registry) async throws {
     defaultLogger.appendNewLine("pulling manifest...")
 
-    let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference)
+    let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference.value)
 
     // Create directory for manifest's digest
     var digestName = name
-    digestName.reference = Digest.hash(manifestData)
+    digestName.reference = Reference(digest: Digest.hash(manifestData))
     if !exists(digestName) {
       let vmDir = try create(digestName)
       try await vmDir.pullFromRegistry(registry: registry, manifest: manifest)
     } else {
-      defaultLogger.appendNewLine("\(digestName.reference) image is already cached! creating a symlink...")   
+      defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }
 
     // Create directory for reference if it's different
@@ -92,7 +92,7 @@ extension URL {
   func appendingRemoteName(_ name: RemoteName) -> URL {
     var result: URL = self
 
-    for pathComponent in (name.host + "/" + name.namespace + "/" + name.reference).split(separator: "/") {
+    for pathComponent in (name.host + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
       result = result.appendingPathComponent(String(pathComponent))
     }
 

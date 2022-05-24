@@ -8,6 +8,10 @@ struct OCIManifest: Codable, Equatable {
   var mediaType: String = ociManifestMediaType
   var config: OCIManifestConfig
   var layers: [OCIManifestLayer] = Array()
+
+  func digest() throws -> String {
+    try Digest.hash(JSONEncoder().encode(self))
+  }
 }
 
 struct OCIManifestConfig: Codable, Equatable {
