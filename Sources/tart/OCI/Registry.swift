@@ -79,24 +79,33 @@ class Registry {
     try! httpClient.syncShutdown()
   }
   
-  var baseURL: URL
-  var namespace: String
+  let baseURL: URL
+  let namespace: String
+  let credentialsProvider: CredentialsProvider
 
   var currentAuthToken: TokenResponse? = nil
 
-  init(urlComponents: URLComponents, namespace: String) throws {
+  init(urlComponents: URLComponents,
+       namespace: String,
+       credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+  ) throws {
     baseURL = urlComponents.url!
     self.namespace = namespace
+    self.credentialsProvider = credentialsProvider
   }
 
-  convenience init(host: String, namespace: String) throws {
+  convenience init(
+          host: String,
+          namespace: String,
+          credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+  ) throws {
     var baseURLComponents = URLComponents()
 
     baseURLComponents.scheme = "https"
     baseURLComponents.host = host
     baseURLComponents.path = "/v2/"
 
-    try self.init(urlComponents: baseURLComponents, namespace: namespace)
+    try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProvider: credentialsProvider)
   }
 
   func ping() async throws {
@@ -285,7 +294,7 @@ class Registry {
 
     var headers: Dictionary<String, String> = Dictionary()
 
-    if let (user, password) = try Credentials.retrieveKeychain(host: baseURL.host!) {
+    if let (user, password) = try credentialsProvider.retrieve(host: baseURL.host!) {
       let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }

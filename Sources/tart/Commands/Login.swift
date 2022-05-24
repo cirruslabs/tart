@@ -10,9 +10,21 @@ struct Login: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let (user, password) = try Credentials.retrieveStdin()
+      let (user, password) = try StdinCredentials.retrieve()
+      let credentialsProvider = DictionaryCredentialsProvider([
+        host: (user, password)
+      ])
 
-      try Credentials.store(host: host, user: user, password: password)
+      do {
+        let registry = try Registry(host: host, namespace: "", credentialsProvider: credentialsProvider)
+        try await registry.ping()
+      } catch {
+        print("invalid credentials: \(error)")
+
+        Foundation.exit(1)
+      }
+
+      try KeychainCredentialsProvider().store(host: host, user: user, password: password)
 
       Foundation.exit(0)
     } catch {
