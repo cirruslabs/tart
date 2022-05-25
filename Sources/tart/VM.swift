@@ -185,6 +185,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         VZMacGraphicsDisplayConfiguration(
           widthInPixels: vmConfig.display.width,
           heightInPixels: vmConfig.display.height,
+          // Reasonable guess like https://developer.apple.com/documentation/coregraphics/1456599-cgdisplayscreensize    
           pixelsPerInch: 72
         )
       ]
