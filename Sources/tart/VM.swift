@@ -172,13 +172,23 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Display
     let graphicsDeviceConfiguration = VZMacGraphicsDeviceConfiguration()
-    graphicsDeviceConfiguration.displays = [
-      VZMacGraphicsDisplayConfiguration(
-        widthInPixels: vmConfig.display.width,
-        heightInPixels: vmConfig.display.height,
-        pixelsPerInch: vmConfig.display.dpi
+    if let hostMainScreen = NSScreen.main {
+      let vmScreenSize = NSSize(
+        width: vmConfig.display.width,
+        height: vmConfig.display.height
       )
-    ]
+      graphicsDeviceConfiguration.displays = [
+        VZMacGraphicsDisplayConfiguration(for: hostMainScreen, sizeInPoints: vmScreenSize)
+      ]
+    } else {
+      graphicsDeviceConfiguration.displays = [
+        VZMacGraphicsDisplayConfiguration(
+          widthInPixels: vmConfig.display.width,
+          heightInPixels: vmConfig.display.height,
+          pixelsPerInch: 72
+        )
+      ]
+    }
     configuration.graphicsDevices = [graphicsDeviceConfiguration]
 
     // Audio

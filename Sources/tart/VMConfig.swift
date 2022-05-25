@@ -29,7 +29,6 @@ enum CodingKeys: String, CodingKey {
 struct VMDisplayConfig: Codable {
   var width: Int = 1024
   var height: Int = 768
-  var dpi: Int = 72
 }
 
 struct VMConfig: Codable {
