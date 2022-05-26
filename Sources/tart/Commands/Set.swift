@@ -13,7 +13,7 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM memory size in megabytes")
   var memory: UInt16?
 
-  @Option(help: "VM display settings in a format of <width>x<height>(x<dpi>)?. For example, 1200x800 or 1200x800x72")
+  @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
   @Option(help: .hidden)
@@ -39,9 +39,6 @@ struct Set: AsyncParsableCommand {
         if (display.height > 0) {
           vmConfig.display.height = display.height
         }
-        if (display.dpi > 0) {
-          vmConfig.display.dpi = display.dpi
-        }
       }
 
       try vmConfig.save(toURL: vmDir.configURL)
@@ -66,8 +63,7 @@ extension VMDisplayConfig: ExpressibleByArgument {
     }
     self = VMDisplayConfig(
       width: parts[safe: 0] ?? 0,
-      height: parts[safe: 1] ?? 0,
-      dpi: parts[safe: 2] ?? 0
+      height: parts[safe: 1] ?? 0
     )
   }
 }
