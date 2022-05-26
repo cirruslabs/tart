@@ -64,20 +64,26 @@ class VMStorageOCI {
   func pull(_ name: RemoteName, registry: Registry) async throws {
     defaultLogger.appendNewLine("pulling manifest...")
 
-    let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference.value)
+    let (manifest, _) = try await registry.pullManifest(reference: name.reference.value)
 
-    // Create directory for manifest's digest
+    if let cacheToVMDir = try cache(name: name, digest: manifest.digest()) {
+      try await cacheToVMDir.pullFromRegistry(registry: registry, manifest: manifest)
+    }
+  }
+
+  func cache(name: RemoteName, digest: String) throws -> VMDirectory? {
+    var result: VMDirectory? = nil
+
     var digestName = name
-    digestName.reference = Reference(digest: Digest.hash(manifestData))
+    digestName.reference = Reference(digest: digest)
+
     if !exists(digestName) {
-      let vmDir = try create(digestName)
-      try await vmDir.pullFromRegistry(registry: registry, manifest: manifest)
+      result = try create(digestName)
     } else {
       defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }
 
-    // Create directory for reference if it's different
-    if digestName != name {
+    if name != digestName {
       // Overwrite the old symbolic link
       if FileManager.default.fileExists(atPath: vmURL(name).path) {
         try FileManager.default.removeItem(at: vmURL(name))
@@ -85,6 +91,8 @@ class VMStorageOCI {
 
       try FileManager.default.createSymbolicLink(at: vmURL(name), withDestinationURL: vmURL(digestName))
     }
+
+    return result
   }
 }
 

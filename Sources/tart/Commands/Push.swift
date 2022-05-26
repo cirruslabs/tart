@@ -36,40 +36,23 @@ struct Push: AsyncParsableCommand {
       })
 
       // Push VM
-      var pushedToRemoteNames = Set<RemoteName>()
-
       for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
         let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
 
-        let listOfTagsAndDigests = "{" + remoteNamesForRegistry.map{$0.reference.fullyQualified }
-                .joined(separator: ",") + "}"
         defaultLogger.appendNewLine("pushing \(localName) to "
-          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(listOfTagsAndDigests)...")
+          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
         let manifestDigest = try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference.value })
 
-        // Gather data to populate the local cache (if requested)
+        // Populate the local cache (if requested)
         if populateCache {
-          // User-specified RemoteNames
-          remoteNamesForRegistry.forEach { pushedToRemoteNames.insert($0) }
-          // Specification-derived RemoteNames
-          pushedToRemoteNames.insert(
-                  RemoteName(
-                          host: registryIdentifier.host,
-                          namespace: registryIdentifier.namespace,
-                          reference: Reference(digest: manifestDigest)
-                  )
-          )
-        }
-      }
+          for remoteName in remoteNamesForRegistry {
+            defaultLogger.appendNewLine("caching \(localName) as \(remoteName)...")
 
-      // Populate local cache (if requested)
-      if populateCache {
-        for pushedToRemoteName in pushedToRemoteNames {
-          defaultLogger.appendNewLine("caching \(localName) as \(pushedToRemoteName)...")
-
-          let ociVMDir = try VMStorageOCI().create(pushedToRemoteName, overwrite: true)
-          try localVMDir.clone(to: ociVMDir, generateMAC: false)
+            if let cacheToVMDir = try VMStorageOCI().cache(name: remoteName, digest: manifestDigest) {
+              try localVMDir.clone(to: cacheToVMDir, generateMAC: false)
+            }
+          }
         }
       }
 
@@ -78,6 +61,18 @@ struct Push: AsyncParsableCommand {
       print(error)
 
       Foundation.exit(1)
+    }
+  }
+}
+
+extension Collection where Element == RemoteName {
+  func referenceNames() -> String {
+    let references = self.map{ $0.reference.fullyQualified }
+
+    switch count {
+    case 0: return "∅"
+    case 1: return references.first!
+    default: return "{" + references.joined(separator: ",") + "}"
     }
   }
 }
