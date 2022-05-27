@@ -42,16 +42,15 @@ struct Push: AsyncParsableCommand {
         defaultLogger.appendNewLine("pushing \(localName) to "
           + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
-        let manifestDigest = try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference.value })
+        let pushedRemoteName = try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference.value })
 
         // Populate the local cache (if requested)
         if populateCache {
+          let ociStorage = VMStorageOCI()
+          let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
+          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
           for remoteName in remoteNamesForRegistry {
-            defaultLogger.appendNewLine("caching \(localName) as \(remoteName)...")
-
-            if let cacheToVMDir = try VMStorageOCI().cache(name: remoteName, digest: manifestDigest) {
-              try localVMDir.clone(to: cacheToVMDir, generateMAC: false)
-            }
+            try ociStorage.link(from: remoteName, to: pushedRemoteName)
           }
         }
       }

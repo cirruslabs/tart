@@ -85,14 +85,18 @@ class VMStorageOCI {
 
     if name != digestName {
       // Overwrite the old symbolic link
-      if FileManager.default.fileExists(atPath: vmURL(name).path) {
-        try FileManager.default.removeItem(at: vmURL(name))
-      }
-
-      try FileManager.default.createSymbolicLink(at: vmURL(name), withDestinationURL: vmURL(digestName))
+      try link(from: digestName, to: name)
     }
 
     return result
+  }
+
+  func link(from: RemoteName, to: RemoteName) throws {
+    if FileManager.default.fileExists(atPath: vmURL(to).path) {
+      try FileManager.default.removeItem(at: vmURL(to))
+    }
+
+    try FileManager.default.createSymbolicLink(at: vmURL(to), withDestinationURL: vmURL(from))
   }
 }
 
