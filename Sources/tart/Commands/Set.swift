@@ -1,7 +1,7 @@
 import ArgumentParser
 import Foundation
 
-struct SetCommand: AsyncParsableCommand {
+struct Set: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "set", abstract: "Modify VM's configuration")
 
   @Argument(help: "VM name")
