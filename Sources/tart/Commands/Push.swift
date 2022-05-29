@@ -12,6 +12,10 @@ struct Push: AsyncParsableCommand {
   @Argument(help: "remote VM name(s)")
   var remoteNames: [String]
 
+  @Flag(help: ArgumentHelp("cache pushed images locally",
+          discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
+  var populateCache: Bool = false
+
   func run() async throws {
     do {
       let localVMDir = try VMStorageLocal().open(localName)
@@ -35,12 +39,20 @@ struct Push: AsyncParsableCommand {
       for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
         let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
 
-        let listOfTagsAndDigests = "{" + remoteNamesForRegistry.map{$0.fullyQualifiedReference }
-                .joined(separator: ",") + "}"
         defaultLogger.appendNewLine("pushing \(localName) to "
-          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(listOfTagsAndDigests)...")
+          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
-        try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference })
+        let pushedRemoteName = try await localVMDir.pushToRegistry(registry: registry, references: remoteNamesForRegistry.map{ $0.reference.value })
+
+        // Populate the local cache (if requested)
+        if populateCache {
+          let ociStorage = VMStorageOCI()
+          let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
+          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
+          for remoteName in remoteNamesForRegistry {
+            try ociStorage.link(from: remoteName, to: pushedRemoteName)
+          }
+        }
       }
 
       Foundation.exit(0)
@@ -48,6 +60,18 @@ struct Push: AsyncParsableCommand {
       print(error)
 
       Foundation.exit(1)
+    }
+  }
+}
+
+extension Collection where Element == RemoteName {
+  func referenceNames() -> String {
+    let references = self.map{ $0.reference.fullyQualified }
+
+    switch count {
+    case 0: return "∅"
+    case 1: return references.first!
+    default: return "{" + references.joined(separator: ",") + "}"
     }
   }
 }

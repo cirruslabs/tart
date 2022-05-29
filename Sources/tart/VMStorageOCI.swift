@@ -64,27 +64,39 @@ class VMStorageOCI {
   func pull(_ name: RemoteName, registry: Registry) async throws {
     defaultLogger.appendNewLine("pulling manifest...")
 
-    let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference)
+    let (manifest, _) = try await registry.pullManifest(reference: name.reference.value)
 
-    // Create directory for manifest's digest
+    if let cacheToVMDir = try cache(name: name, digest: manifest.digest()) {
+      try await cacheToVMDir.pullFromRegistry(registry: registry, manifest: manifest)
+    }
+  }
+
+  func cache(name: RemoteName, digest: String) throws -> VMDirectory? {
+    var result: VMDirectory? = nil
+
     var digestName = name
-    digestName.reference = Digest.hash(manifestData)
+    digestName.reference = Reference(digest: digest)
+
     if !exists(digestName) {
-      let vmDir = try create(digestName)
-      try await vmDir.pullFromRegistry(registry: registry, manifest: manifest)
+      result = try create(digestName)
     } else {
-      defaultLogger.appendNewLine("\(digestName.reference) image is already cached! creating a symlink...")   
+      defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }
 
-    // Create directory for reference if it's different
-    if digestName != name {
+    if name != digestName {
       // Overwrite the old symbolic link
-      if FileManager.default.fileExists(atPath: vmURL(name).path) {
-        try FileManager.default.removeItem(at: vmURL(name))
-      }
-
-      try FileManager.default.createSymbolicLink(at: vmURL(name), withDestinationURL: vmURL(digestName))
+      try link(from: digestName, to: name)
     }
+
+    return result
+  }
+
+  func link(from: RemoteName, to: RemoteName) throws {
+    if FileManager.default.fileExists(atPath: vmURL(to).path) {
+      try FileManager.default.removeItem(at: vmURL(to))
+    }
+
+    try FileManager.default.createSymbolicLink(at: vmURL(to), withDestinationURL: vmURL(from))
   }
 }
 
@@ -92,7 +104,7 @@ extension URL {
   func appendingRemoteName(_ name: RemoteName) -> URL {
     var result: URL = self
 
-    for pathComponent in (name.host + "/" + name.namespace + "/" + name.reference).split(separator: "/") {
+    for pathComponent in (name.host + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
       result = result.appendingPathComponent(String(pathComponent))
     }
 

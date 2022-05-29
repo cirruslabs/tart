@@ -1,31 +1,57 @@
 import Foundation
 import Parsing
 
-struct Tail {
-  enum TailType {
+struct Reference: Comparable, Hashable, CustomStringConvertible {
+  enum ReferenceType: Comparable {
     case Tag
     case Digest
   }
 
-  var type: TailType
-  var value: String
-}
+  let type: ReferenceType
+  let value: String
 
-struct RemoteName: Comparable, CustomStringConvertible {
-  var host: String
-  var namespace: String
-  var reference: String = "latest"
-  var fullyQualifiedReference: String {
+  var fullyQualified: String {
     get {
-      if reference.starts(with: "sha256:") {
-        return "@" + reference
+      switch type {
+      case .Tag:
+        return ":" + value
+      case .Digest:
+        return "@" + value
       }
-
-      return ":" + reference
     }
   }
 
-  init(host: String, namespace: String, reference: String) {
+  init(tag: String) {
+    type = .Tag
+    value = tag
+  }
+
+  init(digest: String) {
+    type = .Digest
+    value = digest
+  }
+
+  static func <(lhs: Reference, rhs: Reference) -> Bool {
+    if lhs.type != rhs.type {
+      return lhs.type < rhs.type
+    } else {
+      return lhs.value < rhs.value
+    }
+  }
+
+  var description: String {
+    get {
+      fullyQualified
+    }
+  }
+}
+
+struct RemoteName: Comparable, Hashable, CustomStringConvertible {
+  var host: String
+  var namespace: String
+  var reference: Reference
+
+  init(host: String, namespace: String, reference: Reference) {
     self.host = host
     self.namespace = namespace
     self.reference = reference
@@ -58,13 +84,13 @@ struct RemoteName: Comparable, CustomStringConvertible {
           Parse {
             ":"
             csNormal.map {
-              Tail(type: .Tag, value: String($0))
+              Reference(tag: String($0))
             }
           }
           Parse {
             "@sha256:"
             csHex.map {
-              Tail(type: .Digest, value: "sha256:" + String($0))
+              Reference(digest: "sha256:" + String($0))
             }
           }
         }
@@ -76,9 +102,7 @@ struct RemoteName: Comparable, CustomStringConvertible {
 
     host = String(result.0)
     namespace = String(result.1)
-    if let tail = result.2 {
-      reference = tail.value
-    }
+    reference = result.2 ?? Reference(tag: "latest")
   }
 
   static func <(lhs: RemoteName, rhs: RemoteName) -> Bool {
@@ -92,7 +116,7 @@ struct RemoteName: Comparable, CustomStringConvertible {
   }
 
   var description: String {
-    "\(host)/\(namespace)\(fullyQualifiedReference)"
+    "\(host)/\(namespace)\(reference.fullyQualified)"
   }
 }
 

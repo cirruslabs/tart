@@ -98,7 +98,7 @@ extension VMDirectory {
     try nvram.close()
   }
 
-  func pushToRegistry(registry: Registry, references: [String]) async throws {
+  func pushToRegistry(registry: Registry, references: [String]) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -155,6 +155,9 @@ extension VMDirectory {
 
       _ = try await registry.pushManifest(reference: reference, manifest: manifest)
     }
+
+    let pushedReference = Reference(digest: try manifest.digest())
+    return RemoteName(host: registry.baseURL.host!, namespace: registry.namespace, reference: pushedReference)
   }
 }
 
