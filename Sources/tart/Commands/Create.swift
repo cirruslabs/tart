@@ -23,13 +23,15 @@ struct Create: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      let vmDir = try VMStorageLocal().create(name)
+      let tmpVMDir = try VMDirectory.temporary()
 
       if fromIPSW! == "latest" {
-        _ = try await VM(vmDir: vmDir, ipswURL: nil, diskSizeGB: diskSize)
+        _ = try await VM(vmDir: tmpVMDir, ipswURL: nil, diskSizeGB: diskSize)
       } else {
-        _ = try await VM(vmDir: vmDir, ipswURL: URL(fileURLWithPath: fromIPSW!), diskSizeGB: diskSize)
+        _ = try await VM(vmDir: tmpVMDir, ipswURL: URL(fileURLWithPath: fromIPSW!), diskSizeGB: diskSize)
       }
+
+      try VMStorageLocal().move(name, from: tmpVMDir)
 
       Foundation.exit(0)
     } catch {

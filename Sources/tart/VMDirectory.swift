@@ -24,6 +24,13 @@ struct VMDirectory {
     baseURL.lastPathComponent
   }
 
+  static func temporary() throws -> VMDirectory {
+    let tmpDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
+
+    return VMDirectory(baseURL: tmpDir)
+  }
+
   var initialized: Bool {
     FileManager.default.fileExists(atPath: configURL.path) &&
       FileManager.default.fileExists(atPath: diskURL.path) &&

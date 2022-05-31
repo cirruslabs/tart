@@ -11,6 +11,12 @@ struct Clone: AsyncParsableCommand {
   @Argument(help: "new VM name")
   var newName: String
 
+  func validate() throws {
+    if newName.contains("/") {
+      throw ValidationError("<new-name> should be a local name")
+    }
+  }
+
   func run() async throws {
     do {
       if let remoteName = try? RemoteName(sourceName), !VMStorageOCI().exists(remoteName) {
@@ -19,7 +25,9 @@ struct Clone: AsyncParsableCommand {
         try await VMStorageOCI().pull(remoteName, registry: registry)
       }
 
-      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
+      let tmpVMDir = try VMDirectory.temporary()
+      try VMStorageHelper.open(sourceName).clone(to: tmpVMDir, generateMAC: true)
+      try VMStorageLocal().move(newName, from: tmpVMDir)
 
       Foundation.exit(0)
     } catch {
