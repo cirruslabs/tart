@@ -13,21 +13,13 @@ struct Clone: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      if let remoteName = try? RemoteName(sourceName) {
-        if !VMStorageOCI().exists(remoteName) {
-          // Pull the VM in case it's OCI-based and doesn't exist locally yet
-          let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
-          try await VMStorageOCI().pull(remoteName, registry: registry)
-        }
-        let remoteVM = try VMStorageHelper.open(sourceName)
-
-        let remoteConfig = try VMConfig.init(fromURL: remoteVM.configURL)
-        let needToGenerateNewMAC = try localVMExistsWith(macAddress: remoteConfig.macAddress.string)
-
-        try remoteVM.clone(to: VMStorageLocal().create(newName), generateMAC: needToGenerateNewMAC)
-      } else {
-        try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
+      if let remoteName = try? RemoteName(sourceName), !VMStorageOCI().exists(remoteName) {
+        // Pull the VM in case it's OCI-based and doesn't exist locally yet
+        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+        try await VMStorageOCI().pull(remoteName, registry: registry)
       }
+
+      try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
 
       Foundation.exit(0)
     } catch {
@@ -35,16 +27,5 @@ struct Clone: AsyncParsableCommand {
 
       Foundation.exit(1)
     }
-  }
-
-  private func localVMExistsWith(macAddress: String) throws -> Bool {
-    var needToGenerateNewMAC = false
-    for (_, localDir) in try VMStorageLocal().list() {
-      let localConfig = try VMConfig.init(fromURL: localDir.configURL)
-      if localConfig.macAddress.string == macAddress {
-        needToGenerateNewMAC = true
-      }
-    }
-    return needToGenerateNewMAC
   }
 }
