@@ -33,7 +33,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Initialize the virtual machine and its configuration
     if withSoftnet {
-      softnet = try Softnet()
+      softnet = try Softnet(vmMACAddress: config.macAddress.string)
     }
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
@@ -128,7 +128,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Initialize the virtual machine and its configuration
     if withSoftnet {
-      softnet = try Softnet()
+      softnet = try Softnet(vmMACAddress: config.macAddress.string)
     }
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,

@@ -6,11 +6,12 @@ enum SoftnetError: Error {
 
 class Softnet {
   let binaryURL: URL
+  let vmMACAddress: String
 
   let vmFD: Int32
   let softnetFD: Int32
 
-  init() throws {
+  init(vmMACAddress: String) throws {
     let binaryName = "softnet"
 
     if let url = Self.resolveBinaryPath(binaryName) {
@@ -18,6 +19,8 @@ class Softnet {
     } else {
       throw SoftnetError.InitializationFailed(why: "\(binaryName) not found in PATH")
     }
+
+    self.vmMACAddress = vmMACAddress
 
     let fds = UnsafeMutablePointer<Int32>.allocate(capacity: MemoryLayout<Int>.stride * 2)
 
@@ -37,6 +40,7 @@ class Softnet {
     let proc = Process()
 
     proc.executableURL = binaryURL
+    proc.arguments = ["--vm-fd", String(STDIN_FILENO), "--vm-mac-address", vmMACAddress]
     proc.standardInput = FileHandle(fileDescriptor: softnetFD, closeOnDealloc: false)
 
     try proc.run()
