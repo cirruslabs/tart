@@ -11,23 +11,33 @@ struct Clone: AsyncParsableCommand {
   @Argument(help: "new VM name")
   var newName: String
 
+  func validate() throws {
+    if newName.contains("/") {
+      throw ValidationError("<new-name> should be a local name")
+    }
+  }
+
   func run() async throws {
     do {
-      if let remoteName = try? RemoteName(sourceName) {
-        if !VMStorageOCI().exists(remoteName) {
-          // Pull the VM in case it's OCI-based and doesn't exist locally yet
-          let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
-          try await VMStorageOCI().pull(remoteName, registry: registry)
-        }
-        let remoteVM = try VMStorageHelper.open(sourceName)
+      let ociStorage = VMStorageOCI()
+      let localStorage = VMStorageLocal()
 
-        let remoteConfig = try VMConfig.init(fromURL: remoteVM.configURL)
-        let needToGenerateNewMAC = try localVMExistsWith(macAddress: remoteConfig.macAddress.string)
-
-        try remoteVM.clone(to: VMStorageLocal().create(newName), generateMAC: needToGenerateNewMAC)
-      } else {
-        try VMStorageHelper.open(sourceName).clone(to: VMStorageLocal().create(newName), generateMAC: true)
+      if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
+        // Pull the VM in case it's OCI-based and doesn't exist locally yet
+        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+        try await ociStorage.pull(remoteName, registry: registry)
       }
+
+      let sourceVM = try VMStorageHelper.open(sourceName)
+      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
+
+      let tmpVMDir = try VMDirectory.temporary()
+      try await withTaskCancellationHandler(operation: {
+        try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
+        try localStorage.move(newName, from: tmpVMDir)
+      }, onCancel: {
+        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+      })
 
       Foundation.exit(0)
     } catch {
@@ -36,15 +46,16 @@ struct Clone: AsyncParsableCommand {
       Foundation.exit(1)
     }
   }
+}
 
-  private func localVMExistsWith(macAddress: String) throws -> Bool {
-    var needToGenerateNewMAC = false
-    for (_, localDir) in try VMStorageLocal().list() {
-      let localConfig = try VMConfig.init(fromURL: localDir.configURL)
-      if localConfig.macAddress.string == macAddress {
-        needToGenerateNewMAC = true
-      }
-    }
-    return needToGenerateNewMAC
+fileprivate extension VMDirectory {
+  func macAddress() throws -> String {
+    try VMConfig(fromURL: configURL).macAddress.string
+  }
+}
+
+fileprivate extension VMStorageLocal {
+  func hasVMsWithMACAddress(macAddress: String) throws -> Bool {
+    try list().contains { try $1.macAddress() == macAddress }
   }
 }

@@ -20,11 +20,15 @@ struct Root: AsyncParsableCommand {
     ])
 
   public static func main() async throws {
-    // Handle cancellation by Ctrl+C
+    // Ensure the default SIGINT handled is disabled,
+    // otherwise there's a race between two handlers
+    signal(SIGINT, SIG_IGN);
+    // Handle cancellation by Ctrl+C ourselves
     let task = withUnsafeCurrentTask { $0 }!
     let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
     sigintSrc.setEventHandler {
       task.cancel()
+      Darwin.exit(1)
     }
     sigintSrc.activate()
 

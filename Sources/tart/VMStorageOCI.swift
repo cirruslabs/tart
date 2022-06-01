@@ -27,6 +27,17 @@ class VMStorageOCI {
     return vmDir
   }
 
+  func move(_ name: RemoteName, from: VMDirectory) throws{
+    let targetURL = vmURL(name)
+
+    // Pre-create intermediate directories (e.g. creates ~/.tart/cache/OCIs/github.com/org/repo/
+    // for github.com/org/repo:latest)
+    try FileManager.default.createDirectory(at: targetURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true)
+
+    _ = try FileManager.default.replaceItemAt(targetURL, withItemAt: from.baseURL)
+  }
+
   func delete(_ name: RemoteName) throws {
     try FileManager.default.removeItem(at: vmURL(name))
   }
@@ -66,19 +77,17 @@ class VMStorageOCI {
 
     let (manifest, _) = try await registry.pullManifest(reference: name.reference.value)
 
-    if let cacheToVMDir = try cache(name: name, digest: manifest.digest()) {
-      try await cacheToVMDir.pullFromRegistry(registry: registry, manifest: manifest)
-    }
-  }
-
-  func cache(name: RemoteName, digest: String) throws -> VMDirectory? {
-    var result: VMDirectory? = nil
-
-    var digestName = name
-    digestName.reference = Reference(digest: digest)
+    var digestName = RemoteName(host: name.host, namespace: name.namespace,
+            reference: Reference(digest: try manifest.digest()))
 
     if !exists(digestName) {
-      result = try create(digestName)
+      let tmpVMDir = try VMDirectory.temporary()
+      try await withTaskCancellationHandler(operation: {
+        try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
+        try move(digestName, from: tmpVMDir)
+      }, onCancel: {
+        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+      })
     } else {
       defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }
@@ -87,8 +96,6 @@ class VMStorageOCI {
       // Overwrite the old symbolic link
       try link(from: digestName, to: name)
     }
-
-    return result
   }
 
   func link(from: RemoteName, to: RemoteName) throws {
