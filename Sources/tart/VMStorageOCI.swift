@@ -82,8 +82,12 @@ class VMStorageOCI {
 
     if !exists(digestName) {
       let tmpVMDir = try VMDirectory.temporary()
-      try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
-      try move(digestName, from: tmpVMDir)
+      try await withTaskCancellationHandler(operation: {
+        try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
+        try move(digestName, from: tmpVMDir)
+      }, onCancel: {
+        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+      })
     } else {
       defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }

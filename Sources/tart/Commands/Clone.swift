@@ -32,8 +32,12 @@ struct Clone: AsyncParsableCommand {
       let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
 
       let tmpVMDir = try VMDirectory.temporary()
-      try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
-      try localStorage.move(newName, from: tmpVMDir)
+      try await withTaskCancellationHandler(operation: {
+        try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
+        try localStorage.move(newName, from: tmpVMDir)
+      }, onCancel: {
+        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+      })
 
       Foundation.exit(0)
     } catch {

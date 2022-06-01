@@ -24,14 +24,17 @@ struct Create: AsyncParsableCommand {
   func run() async throws {
     do {
       let tmpVMDir = try VMDirectory.temporary()
+      try await withTaskCancellationHandler(operation: {
+        if fromIPSW! == "latest" {
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: nil, diskSizeGB: diskSize)
+        } else {
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: URL(fileURLWithPath: fromIPSW!), diskSizeGB: diskSize)
+        }
 
-      if fromIPSW! == "latest" {
-        _ = try await VM(vmDir: tmpVMDir, ipswURL: nil, diskSizeGB: diskSize)
-      } else {
-        _ = try await VM(vmDir: tmpVMDir, ipswURL: URL(fileURLWithPath: fromIPSW!), diskSizeGB: diskSize)
-      }
-
-      try VMStorageLocal().move(name, from: tmpVMDir)
+        try VMStorageLocal().move(name, from: tmpVMDir)
+      }, onCancel: {
+        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+      })
 
       Foundation.exit(0)
     } catch {
