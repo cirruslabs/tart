@@ -19,15 +19,21 @@ struct Clone: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      if let remoteName = try? RemoteName(sourceName), !VMStorageOCI().exists(remoteName) {
+      let ociStorage = VMStorageOCI()
+      let localStorage = VMStorageLocal()
+
+      if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
         // Pull the VM in case it's OCI-based and doesn't exist locally yet
         let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
-        try await VMStorageOCI().pull(remoteName, registry: registry)
+        try await ociStorage.pull(remoteName, registry: registry)
       }
 
+      let sourceVM = try VMStorageHelper.open(sourceName)
+      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
+
       let tmpVMDir = try VMDirectory.temporary()
-      try VMStorageHelper.open(sourceName).clone(to: tmpVMDir, generateMAC: true)
-      try VMStorageLocal().move(newName, from: tmpVMDir)
+      try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
+      try localStorage.move(newName, from: tmpVMDir)
 
       Foundation.exit(0)
     } catch {
@@ -35,5 +41,17 @@ struct Clone: AsyncParsableCommand {
 
       Foundation.exit(1)
     }
+  }
+}
+
+fileprivate extension VMDirectory {
+  func macAddress() throws -> String {
+    try VMConfig(fromURL: configURL).macAddress.string
+  }
+}
+
+fileprivate extension VMStorageLocal {
+  func hasVMsWithMACAddress(macAddress: String) throws -> Bool {
+    try list().contains { try $1.macAddress() == macAddress }
   }
 }
