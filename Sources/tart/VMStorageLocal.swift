@@ -28,7 +28,9 @@ class VMStorageLocal {
   }
 
   func move(_ name: String, from: VMDirectory) throws {
-    _ = try FileManager.default.replaceItemAt(vmURL(name), withItemAt: from.baseURL)
+    let newVmURL = vmURL(name)
+    _ = try FileManager.default.createDirectory(at: newVmURL, withIntermediateDirectories: true)
+    _ = try FileManager.default.replaceItemAt(newVmURL, withItemAt: from.baseURL)
   }
 
   func delete(_ name: String) throws {
