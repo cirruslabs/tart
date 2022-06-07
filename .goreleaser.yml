@@ -12,8 +12,8 @@ builds:
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build -c release --product tart
-    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
+    - swift build -c debug --product tart
+    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/debug/tart
 
 archives:
   - id: binary
