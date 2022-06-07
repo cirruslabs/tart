@@ -20,4 +20,7 @@ task:
   env:
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
+  info_script:
+    - xcodebuild -version
+    - swift -version
   release_script: goreleaser

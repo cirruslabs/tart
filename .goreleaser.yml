@@ -7,13 +7,13 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/{{ .Arch }}-apple-macosx/release/tart
+      path: .build/{{ .Arch }}-apple-macosx/debug/tart
 
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build -c release --product tart
-    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/release/tart
+    - swift build -c debug --product tart
+    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/arm64-apple-macosx/debug/tart
 
 archives:
   - id: binary
