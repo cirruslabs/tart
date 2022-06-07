@@ -7,7 +7,7 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/{{ .Arch }}-apple-macosx/release/tart
+      path: .build/{{ .Arch }}-apple-macosx/debug/tart
 
 before:
   hooks:
