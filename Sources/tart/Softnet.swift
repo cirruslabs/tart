@@ -5,22 +5,16 @@ enum SoftnetError: Error {
 }
 
 class Softnet {
-  let binaryURL: URL
-  let vmMACAddress: String
+  private let process = Process()
 
   let vmFD: Int32
-  let softnetFD: Int32
 
   init(vmMACAddress: String) throws {
     let binaryName = "softnet"
 
-    if let url = Self.resolveBinaryPath(binaryName) {
-      binaryURL = url
-    } else {
+    guard let executableURL = Self.resolveBinaryPath(binaryName) else {
       throw SoftnetError.InitializationFailed(why: "\(binaryName) not found in PATH")
     }
-
-    self.vmMACAddress = vmMACAddress
 
     let fds = UnsafeMutablePointer<Int32>.allocate(capacity: MemoryLayout<Int>.stride * 2)
 
@@ -30,20 +24,23 @@ class Softnet {
     }
 
     vmFD = fds[0]
-    softnetFD = fds[1]
+    let softnetFD = fds[1]
 
     try setSocketBuffers(vmFD, 1 * 1024 * 1024);
     try setSocketBuffers(softnetFD, 1 * 1024 * 1024);
+
+    process.executableURL = executableURL
+    process.arguments = ["--vm-fd", String(STDIN_FILENO), "--vm-mac-address", vmMACAddress]
+    process.standardInput = FileHandle(fileDescriptor: softnetFD, closeOnDealloc: false)
   }
 
   func run() throws {
-    let proc = Process()
+    try process.run()
+  }
 
-    proc.executableURL = binaryURL
-    proc.arguments = ["--vm-fd", String(STDIN_FILENO), "--vm-mac-address", vmMACAddress]
-    proc.standardInput = FileHandle(fileDescriptor: softnetFD, closeOnDealloc: false)
-
-    try proc.run()
+  func stop() throws {
+    process.interrupt()
+    process.waitUntilExit()
   }
 
   private static func resolveBinaryPath(_ name: String) -> URL? {

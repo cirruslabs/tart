@@ -173,6 +173,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         }
       }
     }
+
+    if let softnet = softnet {
+      try softnet.stop();
+    }
   }
 
   static func craftConfiguration(

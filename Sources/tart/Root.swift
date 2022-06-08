@@ -28,7 +28,6 @@ struct Root: AsyncParsableCommand {
     let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
     sigintSrc.setEventHandler {
       task.cancel()
-      Darwin.exit(1)
     }
     sigintSrc.activate()
 
