@@ -68,7 +68,7 @@ struct VMDirectory {
     try newVMConfig.save(toURL: to.configURL)
   }
 
-  func resizeDisk(_ sizeGB: UInt8) throws {
+  func resizeDisk(_ sizeGB: UInt16) throws {
     if !FileManager.default.fileExists(atPath: diskURL.path) {
       FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
     }

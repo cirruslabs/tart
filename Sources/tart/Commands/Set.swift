@@ -17,7 +17,7 @@ struct Set: AsyncParsableCommand {
   var display: VMDisplayConfig?
 
   @Option(help: .hidden)
-  var diskSize: UInt8?
+  var diskSize: UInt16?
 
   func run() async throws {
     do {

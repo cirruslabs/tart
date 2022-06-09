@@ -13,7 +13,7 @@ struct Create: AsyncParsableCommand {
   var fromIPSW: String?
 
   @Option(help: ArgumentHelp("Disk size in Gb")) 
-  var diskSize: UInt8 = 50
+  var diskSize: UInt16 = 50
 
   func validate() throws {
     if fromIPSW == nil {
