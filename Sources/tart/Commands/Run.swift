@@ -37,23 +37,7 @@ struct Run: AsyncParsableCommand {
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
-    await withThrowingTaskGroup(of: Void.self) { group in
-      if vnc {
-        group.addTask(operation: {
-          do {
-            print("Waiting for the VM to boot...")
-            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
-            guard let ip = resolvedIP else {
-              throw IPNotFound()
-            }
-            let url = URL(string: "vnc://\(ip)")!
-            print("Opening \(url)")
-            NSWorkspace.shared.open(url)
-          } catch {
-            print("Failed to get an IP for screen sharing: \(error)")
-          }
-        })
-      }
+    try await withThrowingTaskGroup(of: Void.self) { group in
       group.addTask {
         do {
           try await vm!.run(recovery)
@@ -69,12 +53,26 @@ struct Run: AsyncParsableCommand {
           Foundation.exit(1)
         }
       }
-
-      if noGraphics || vnc {
-        dispatchMain()
-      } else {
+      if vnc {
+        group.addTask(operation: {
+          do {
+            print("Waiting for the VM to boot...")
+            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
+            guard let ip = resolvedIP else {
+              throw IPNotFound()
+            }
+            let url = URL(string: "vnc://\(ip)")!
+            print("Opening \(url)")
+            NSWorkspace.shared.open(url)
+          } catch {
+            print("Failed to get an IP for screen sharing: \(error)")
+          }
+        })
+      } else if !noGraphics {
         runUI()
       }
+
+      try await group.waitForAll()
     }
   }
 
