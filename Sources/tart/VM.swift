@@ -78,7 +78,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return expectedIPSWLocation
   }
 
-  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt8) async throws {
+  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
 
     // Load the restore image and try to get the requirements
