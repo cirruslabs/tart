@@ -3,6 +3,7 @@ task:
   persistent_worker:
     labels:
       name: Mac-Mini-M1
+  build_script: swift test
   test_script: swift test
 
 task:
