@@ -1,14 +1,15 @@
-persistent_worker:
-  labels:
-    name: Mac-Mini-M1
-
 task:
-  name: Test
+  name: Test on Ventura
+  persistent_worker:
+    labels:
+      name: Mac-Mini-M1
   test_script: swift test
 
 task:
   name: Build
   only_if: $CIRRUS_TAG == ''
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
   build_script: swift build --product tart
   sign_script: codesign --sign - --entitlements Resources/tart.entitlements --force .build/debug/tart
   binary_artifacts:
@@ -17,9 +18,12 @@ task:
 task:
   name: Release
   only_if: $CIRRUS_TAG != ''
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode:14
   env:
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
+  install_script: brew install goreleaser/tap/goreleaser-pro
   info_script:
     - xcodebuild -version
     - swift -version
