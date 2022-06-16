@@ -31,48 +31,43 @@ struct Run: AsyncParsableCommand {
   func run() async throws {
     if recovery && vnc {
       print("You can't run in recovery and use VNC!")
-      Foundation.exit(1)      
+      Foundation.exit(1)
     }
     
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
-    try await withThrowingTaskGroup(of: Void.self) { group in
-      group.addTask {
-        do {
-          try await vm!.run(recovery)
+    Task {
+      do {
+        try await vm!.run(recovery)
 
-          Foundation.exit(0)
-        } catch {
-          if error.localizedDescription.contains("Failed to lock auxiliary storage.") {
-            print("Virtual machine \"\(name)\" is already running!")
-          } else {
-            print(error)
-          }
-
-          Foundation.exit(1)
+        Foundation.exit(0)
+      } catch {
+        if error.localizedDescription.contains("Failed to lock auxiliary storage.") {
+          print("Virtual machine \"\(name)\" is already running!")
+        } else {
+          print(error)
         }
-      }
-      if vnc {
-        group.addTask(operation: {
-          do {
-            print("Waiting for the VM to boot...")
-            let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
-            guard let ip = resolvedIP else {
-              throw IPNotFound()
-            }
-            let url = URL(string: "vnc://\(ip)")!
-            print("Opening \(url)")
-            NSWorkspace.shared.open(url)
-          } catch {
-            print("Failed to get an IP for screen sharing: \(error)")
-          }
-        })
-      } else if !noGraphics {
-        runUI()
-      }
 
-      try await group.waitForAll()
+        Foundation.exit(1)
+      }
+    }
+    if vnc {
+      do {
+        print("Waiting for the VM to boot...")
+        let resolvedIP = try await IP.resolveIP(vm!.config, secondsToWait: 60)
+        guard let ip = resolvedIP else {
+          throw IPNotFound()
+        }
+        let url = URL(string: "vnc://\(ip)")!
+        print("Opening \(url)")
+        NSWorkspace.shared.open(url)
+      } catch {
+        print("Failed to get an IP for screen sharing: \(error)")
+      }
+      vm?.wait()
+    } else if !noGraphics {
+      runUI()
     }
   }
 

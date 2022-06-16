@@ -78,6 +78,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return expectedIPSWLocation
   }
 
+  func wait() {
+    sema.wait()
+  }
+
   init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
 
