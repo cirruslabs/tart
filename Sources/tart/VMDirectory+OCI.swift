@@ -117,8 +117,10 @@ extension VMDirectory {
     // Read VM's compressed disk as chunks
     // and sequentially upload them as blobs
     let disk = try FileHandle(forReadingFrom: diskURL)
+    var diskReadBytes: UInt64 = 0
     let compressingFilter = try InputFilter<Data>(.compress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { _ in
       let data = try disk.read(upToCount: Self.bufferSizeBytes)
+      diskReadBytes += UInt64(data?.count ?? 0)
 
       progress.completedUnitCount += Int64(data?.count ?? 0)
 
@@ -146,7 +148,8 @@ extension VMDirectory {
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON)
     let manifest = OCIManifest(
             config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
-            layers: layers
+            layers: layers,
+            uncompressedDiskSize: diskReadBytes
     )
 
     // Manifest
