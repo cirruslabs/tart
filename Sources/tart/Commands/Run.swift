@@ -65,7 +65,9 @@ struct Run: AsyncParsableCommand {
       } catch {
         print("Failed to get an IP for screen sharing: \(error)")
       }
-      vm?.wait()
+      while !(vm?.inFinalState ?? false) {
+        try await Task.sleep(nanoseconds: 1_000_000)
+      }
     } else if !noGraphics {
       runUI()
     }

@@ -77,9 +77,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try data.write(to: expectedIPSWLocation, options: [.atomic])
     return expectedIPSWLocation
   }
-
-  func wait() {
-    sema.wait()
+  
+  var inFinalState: Bool {
+    get {
+      virtualMachine.state == VZVirtualMachine.State.stopped ||
+        virtualMachine.state == VZVirtualMachine.State.paused ||
+        virtualMachine.state == VZVirtualMachine.State.error
+      
+    }
   }
 
   init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16) async throws {
