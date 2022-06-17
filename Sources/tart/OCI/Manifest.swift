@@ -11,7 +11,7 @@ struct OCIManifest: Codable, Equatable {
   var mediaType: String = ociManifestMediaType
   var config: OCIManifestConfig
   var layers: [OCIManifestLayer] = Array()
-  var annotations: Dictionary<String, String> = Dictionary()
+  var annotations: Dictionary<String, String>?
 
   init(config: OCIManifestConfig, layers: [OCIManifestLayer], uncompressedDiskSize: UInt64? = nil) {
     self.config = config
@@ -29,7 +29,7 @@ struct OCIManifest: Codable, Equatable {
   }
 
   func uncompressedDiskSize() -> UInt64? {
-    guard let value = annotations[uncompressedDiskSizeAnnotation] else {
+    guard let value = annotations?[uncompressedDiskSizeAnnotation] else {
       return nil
     }
 
