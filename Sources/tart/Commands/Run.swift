@@ -28,12 +28,7 @@ struct Run: AsyncParsableCommand {
   var vnc: Bool = false
 
   @MainActor
-  func run() async throws {
-    if recovery && vnc {
-      print("You can't run in recovery and use VNC!")
-      Foundation.exit(1)
-    }
-    
+  func run() async throws {    
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir)
 
