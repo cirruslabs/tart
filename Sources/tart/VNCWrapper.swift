@@ -15,8 +15,19 @@ class VNCWrapper {
         vnc.start()
     }
 
-    func credentials() async throws -> (UInt16, String) {
-        (try await Self.waitForPort(vnc: vnc), password)
+    func open() async {
+        do {
+            let port = try await Self.waitForPort(vnc: vnc)
+
+            let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
+            print("Opening \(url)...")
+
+            if ProcessInfo.processInfo.environment["CI"] == nil {
+                NSWorkspace.shared.open(url)
+            }
+        } catch {
+            print("Failed to retrieve a VNC server port: \(error)")
+        }
     }
 
     func stop() throws {

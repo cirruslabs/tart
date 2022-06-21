@@ -43,16 +43,7 @@ struct Run: AsyncParsableCommand {
     let task = Task {
       do {
         if let vncWrapper = vncWrapper {
-          do {
-            let (port, password) = try await vncWrapper.credentials()
-            let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
-            print("Opening \(url)...")
-            if ProcessInfo.processInfo.environment["CI"] == nil {
-              NSWorkspace.shared.open(url)
-            }
-          } catch {
-            print("Failed to get an IP for screen sharing: \(error)")
-          }
+          await vncWrapper.open()
         }
 
         try await vm!.run(recovery)
