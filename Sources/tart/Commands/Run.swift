@@ -45,7 +45,8 @@ struct Run: AsyncParsableCommand {
       vncWrapper = VNCWrapper(virtualMachine: vm!.virtualMachine)
     }
 
-    // run VM in 
+    // run VM in a child task which supports proper cancelation
+    // https://github.com/apple/swift-evolution/blob/main/proposals/0317-async-let.md
     async let runTask: Never = runImpl()
     
     if let vncWrapper = vncWrapper {
