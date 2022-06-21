@@ -40,13 +40,25 @@ struct Run: AsyncParsableCommand {
         vncWrapper = VNCWrapper(virtualMachine: vm!.virtualMachine)
     }
 
-    let runTask = Task {
+    let task = Task {
       do {
+        if let vncWrapper = vncWrapper {
+          do {
+            let (port, password) = try await vncWrapper.credentials()
+            let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
+            print("Opening \(url)...")
+            if ProcessInfo.processInfo.environment["CI"] == nil {
+              NSWorkspace.shared.open(url)
+            }
+          } catch {
+            print("Failed to get an IP for screen sharing: \(error)")
+          }
+        }
+
         try await vm!.run(recovery)
 
-        // wait for VM to be in a final state before exit
-        while !(vm?.inFinalState ?? false) {
-          try await Task.sleep(nanoseconds: 1_000_000)
+        if let vncWrapper = vncWrapper {
+          try vncWrapper.stop()
         }
 
         Foundation.exit(0)
@@ -60,27 +72,16 @@ struct Run: AsyncParsableCommand {
         Foundation.exit(1)
       }
     }
-    if let vncWrapper = vncWrapper {
-      do {
-        let (port, password) = try await vncWrapper.credentials()
-        let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
-        print("Opening \(url)...")
-        if ProcessInfo.processInfo.environment["CI"] == nil {
-          NSWorkspace.shared.open(url)
-        }
-      } catch {
-        print("Failed to get an IP for screen sharing: \(error)")
+
+    await withTaskCancellationHandler(operation: {
+      if noGraphics || vnc {
+        dispatchMain()
+      } else {
+        runUI()
       }
-    } else if !noGraphics {
-      runUI()
-    }
-
-    // wait for VM to get into a final state
-    try await runTask.value
-
-    if let vncWrapper = vncWrapper {
-      try vncWrapper.stop()
-    }
+    }, onCancel: {
+      task.cancel()
+    })
   }
 
   private func runUI() {
