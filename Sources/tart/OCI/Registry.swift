@@ -200,6 +200,8 @@ class Registry {
     }
 
     for try await part in response.body {
+      try Task.checkCancellation()
+
       try handler(part)
     }
   }
