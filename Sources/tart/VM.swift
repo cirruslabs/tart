@@ -23,17 +23,24 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   // VM's config
   var config: VMConfig
 
-  init(vmDir: VMDirectory) throws {
+  var softnet: Softnet? = nil
+
+  init(vmDir: VMDirectory, withSoftnet: Bool = false) throws {
     let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
 
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
 
-    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
+    // Initialize the virtual machine and its configuration
+    if withSoftnet {
+      softnet = try Softnet(vmMACAddress: config.macAddress.string)
+    }
+
+    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
+      softnet: softnet)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
-
     virtualMachine.delegate = self
   }
 
@@ -87,7 +94,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
-  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16) async throws {
+  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16, withSoftnet: Bool = false) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
 
     // Load the restore image and try to get the requirements
@@ -120,11 +127,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
-    let configuration = try VM.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config)
+    if withSoftnet {
+      softnet = try Softnet(vmMACAddress: config.macAddress.string)
+    }
+
+    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
+      softnet: softnet)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
-
     virtualMachine.delegate = self
 
     // Run automated installation
@@ -143,6 +154,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run(_ recovery: Bool) async throws {
+    if let softnet = softnet {
+      try softnet.run()
+    }
+
     try await virtualMachine.start(recovery)
 
     await withTaskCancellationHandler(operation: {
@@ -158,9 +173,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         }
       }
     }
+
+    if let softnet = softnet {
+      try softnet.stop();
+    }
   }
 
-  static func craftConfiguration(diskURL: URL, auxStorage: VZMacAuxiliaryStorage, vmConfig: VMConfig) throws -> VZVirtualMachineConfiguration {
+  static func craftConfiguration(
+    diskURL: URL,
+    auxStorage: VZMacAuxiliaryStorage,
+    vmConfig: VMConfig,
+    softnet: Softnet? = nil
+  ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
     // Boot loader
@@ -212,7 +236,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()
-    vio.attachment = VZNATNetworkDeviceAttachment()
+
+    if let softnet = softnet {
+      let fh = FileHandle.init(fileDescriptor: softnet.vmFD)
+      vio.attachment = VZFileHandleNetworkDeviceAttachment(fileHandle: fh)
+    } else {
+      vio.attachment = VZNATNetworkDeviceAttachment()
+    }
     vio.macAddress = vmConfig.macAddress
     configuration.networkDevices = [vio]
 

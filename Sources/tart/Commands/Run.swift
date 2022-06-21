@@ -27,10 +27,12 @@ struct Run: AsyncParsableCommand {
           discussion: "Useful since VNC supports copy/paste, drag and drop, etc.\nNote that Remote Login option should be enabled inside the VM.")) 
   var vnc: Bool = false
 
+  @Flag var withSoftnet: Bool = false
+
   @MainActor
   func run() async throws {    
     let vmDir = try VMStorageLocal().open(name)
-    vm = try VM(vmDir: vmDir)
+    vm = try VM(vmDir: vmDir, withSoftnet: withSoftnet)
 
     var vncWrapper: VNCWrapper?
 
@@ -38,13 +40,16 @@ struct Run: AsyncParsableCommand {
         vncWrapper = VNCWrapper(virtualMachine: vm!.virtualMachine)
     }
 
-    let runTask = Task {
+    let task = Task {
       do {
+        if let vncWrapper = vncWrapper {
+          await vncWrapper.open()
+        }
+
         try await vm!.run(recovery)
 
-        // wait for VM to be in a final state before exit
-        while !(vm?.inFinalState ?? false) {
-          try await Task.sleep(nanoseconds: 1_000_000)
+        if let vncWrapper = vncWrapper {
+          try vncWrapper.stop()
         }
 
         Foundation.exit(0)
@@ -58,26 +63,17 @@ struct Run: AsyncParsableCommand {
         Foundation.exit(1)
       }
     }
-    if let vncWrapper = vncWrapper {
-      do {
-        let (port, password) = try await vncWrapper.credentials()
-        let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
-        print("Opening \(url)...")
-        if ProcessInfo.processInfo.environment["CI"] == nil {
-          NSWorkspace.shared.open(url)
-        }
-      } catch {
-        print("Failed to get an IP for screen sharing: \(error)")
-      }
-    } else if !noGraphics {
-      runUI()
+
+    let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
+    sigintSrc.setEventHandler {
+      task.cancel()
     }
+    sigintSrc.activate()
 
-    // wait for VM to get into a final state
-    try await runTask.value
-
-    if let vncWrapper = vncWrapper {
-      try vncWrapper.stop()
+    if noGraphics || vnc {
+      dispatchMain()
+    } else {
+      runUI()
     }
   }
 
