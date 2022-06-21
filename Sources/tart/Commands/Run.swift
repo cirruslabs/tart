@@ -73,15 +73,17 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    await withTaskCancellationHandler(operation: {
-      if noGraphics || vnc {
-        dispatchMain()
-      } else {
-        runUI()
-      }
-    }, onCancel: {
+    let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
+    sigintSrc.setEventHandler {
       task.cancel()
-    })
+    }
+    sigintSrc.activate()
+
+    if noGraphics || vnc {
+      dispatchMain()
+    } else {
+      runUI()
+    }
   }
 
   private func runUI() {
