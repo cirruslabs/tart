@@ -43,7 +43,16 @@ struct Run: AsyncParsableCommand {
     let task = Task {
       do {
         if let vncWrapper = vncWrapper {
-          await vncWrapper.open()
+          let port = try await vncWrapper.waitForPort()
+
+          let url = URL(string: "vnc://:\(vncWrapper.password)@127.0.0.1:\(port)")!
+
+          if noGraphics || ProcessInfo.processInfo.environment["CI"] != nil {
+            print("VNC server is running at \(url)")
+          } else {
+            print("Opening \(url)...")
+            NSWorkspace.shared.open(url)
+          }
         }
 
         try await vm!.run(recovery)
