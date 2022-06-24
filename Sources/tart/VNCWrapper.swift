@@ -3,7 +3,7 @@ import Dynamic
 import Virtualization
 
 class VNCWrapper {
-    private let password: String
+    let password: String
     private let vnc: Dynamic
 
     init(virtualMachine: VZVirtualMachine) {
@@ -15,21 +15,6 @@ class VNCWrapper {
         vnc.start()
     }
 
-    func open() async {
-        do {
-            let port = try await Self.waitForPort(vnc: vnc)
-
-            let url = URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
-            print("Opening \(url)...")
-
-            if ProcessInfo.processInfo.environment["CI"] == nil {
-                NSWorkspace.shared.open(url)
-            }
-        } catch {
-            print("Failed to retrieve a VNC server port: \(error)")
-        }
-    }
-
     func stop() throws {
         vnc.stop()
     }
@@ -38,7 +23,7 @@ class VNCWrapper {
         try? stop()
     }
 
-    private static func waitForPort(vnc: Dynamic) async throws -> UInt16 {
+    func waitForPort() async throws -> UInt16 {
         while true {
             // Port is 0 shortly after start(),
             // but will be initialized later
