@@ -24,8 +24,16 @@ struct OCIManifest: Codable, Equatable {
     }
   }
 
+  init(fromJSON: Data) throws {
+    self = try Config.jsonDecoder().decode(Self.self, from: fromJSON)
+  }
+
+  func toJSON() throws -> Data {
+    try Config.jsonEncoder().encode(self)
+  }
+
   func digest() throws -> String {
-    try Digest.hash(JSONEncoder().encode(self))
+    try Digest.hash(toJSON())
   }
 
   func uncompressedDiskSize() -> UInt64? {
@@ -34,6 +42,15 @@ struct OCIManifest: Codable, Equatable {
     }
 
     return UInt64(value)
+  }
+}
+
+struct OCIConfig: Codable {
+  var architecture: String = "arm64"
+  var os: String = "darwin"
+
+  func toJSON() throws -> Data {
+    try Config.jsonEncoder().encode(self)
   }
 }
 
