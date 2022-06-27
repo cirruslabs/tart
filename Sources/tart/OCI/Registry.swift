@@ -34,7 +34,7 @@ struct TokenResponse: Decodable {
   var issuedAt: Date?
 
   static func parse(fromData: Data) throws -> Self {
-    let decoder = JSONDecoder()
+    let decoder = Config.jsonDecoder()
 
     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
@@ -116,7 +116,7 @@ class Registry {
   }
 
   func pushManifest(reference: String, manifest: OCIManifest) async throws -> String {
-    let manifestJSON = try JSONEncoder().encode(manifest)
+    let manifestJSON = try manifest.toJSON()
 
     let response = try await endpointRequest(.PUT, "\(namespace)/manifests/\(reference)",
       headers: ["Content-Type": manifest.mediaType],
@@ -139,7 +139,7 @@ class Registry {
     }
 
     let manifestData = try await response.body.readResponse()
-    let manifest = try JSONDecoder().decode(OCIManifest.self, from: manifestData)
+    let manifest = try OCIManifest(fromJSON: manifestData)
 
     return (manifest, manifestData)
   }

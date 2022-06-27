@@ -139,12 +139,7 @@ extension VMDirectory {
     layers.append(OCIManifestLayer(mediaType: Self.nvramMediaType, size: nvram.count, digest: nvramDigest))
 
     // Craft a stub OCI config for Docker Hub compatibility
-    struct OCIConfig: Codable {
-      var architecture: String = "arm64"
-      var os: String = "darwin"
-    }
-
-    let ociConfigJSON = try JSONEncoder().encode(OCIConfig())
+    let ociConfigJSON = try OCIConfig().toJSON()
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON)
     let manifest = OCIManifest(
             config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
