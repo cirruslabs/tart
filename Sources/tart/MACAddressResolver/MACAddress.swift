@@ -1,6 +1,6 @@
 import Foundation
 
-struct MACAddress: Equatable, CustomStringConvertible {
+struct MACAddress: Equatable, Hashable, CustomStringConvertible {
   var mac: [UInt8] = Array(repeating: 0, count: 6)
 
   init?(fromString: String) {
