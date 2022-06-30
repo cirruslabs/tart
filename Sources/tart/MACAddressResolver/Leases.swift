@@ -39,6 +39,9 @@ class Leases {
     self.leases = leases
   }
 
+  /// Parse leases from the host cache similarly to the PLCache_read() function found in Apple's Open Source releases.
+  ///
+  /// [1]: https://github.com/apple-opensource/bootp/blob/master/bootplib/NICache.c#L285-L391
   private static func retrieveRawLeases(_ dhcpdLeasesContents: String) throws -> [[String : String]] {
     var rawLeases: [[String : String]] = Array()
 
