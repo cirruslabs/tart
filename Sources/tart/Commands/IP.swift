@@ -38,7 +38,7 @@ struct IP: AsyncParsableCommand {
     let vmMacAddress = MACAddress(fromString: config.macAddress.string)!
 
     repeat {
-      if let ip = try ARPCache.ResolveMACAddress(macAddress: vmMacAddress) {
+      if let ip = try Leases().resolveMACAddress(macAddress: vmMacAddress) {
         return ip
       }
 
