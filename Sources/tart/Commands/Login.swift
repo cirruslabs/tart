@@ -8,9 +8,32 @@ struct Login: AsyncParsableCommand {
   @Argument(help: "host")
   var host: String
 
+  @Option(help: "username")
+  var username: String
+
+  @Flag(help: "password-stdin")
+  var passwordStdin: Bool = false
+
+  func validate() throws {
+    let usernameProvided = !username.isEmpty
+    let passwordProvided = passwordStdin
+
+    if usernameProvided != passwordProvided {
+      throw ValidationError("both --username and --password-stdin are required")
+    }
+  }
+
   func run() async throws {
     do {
-      let (user, password) = try StdinCredentials.retrieve()
+      var user: String
+      var password: String
+
+      if !username.isEmpty {
+        user = username
+        password = readLine()!
+      } else {
+        (user, password) = try StdinCredentials.retrieve()
+      }
       let credentialsProvider = DictionaryCredentialsProvider([
         host: (user, password)
       ])
