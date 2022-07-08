@@ -11,7 +11,7 @@ final class TokenResponseTests: XCTestCase {
     let expectedTokenExpiresAtRange = Date()...Date().addingTimeInterval(60)
     XCTAssertTrue(expectedTokenExpiresAtRange.contains(tokenResponse.tokenExpiresAt))
 
-    XCTAssertTrue(tokenResponse.isValid)
+    XCTAssertTrue(tokenResponse.isValid())
   }
 
   func testExpirationBasic() throws {
@@ -23,9 +23,9 @@ final class TokenResponseTests: XCTestCase {
     let expectedTokenExpiresAtRange = Date()...Date().addingTimeInterval(2)
     XCTAssertTrue(expectedTokenExpiresAtRange.contains(tokenResponse.tokenExpiresAt))
 
-    XCTAssertTrue(tokenResponse.isValid)
+    XCTAssertTrue(tokenResponse.isValid())
     _ = XCTWaiter.wait(for: [expectation(description: "Wait 3 seconds for the token to become invalid")], timeout: 2)
-    XCTAssertFalse(tokenResponse.isValid)
+    XCTAssertFalse(tokenResponse.isValid())
   }
 
   func testExpirationWithIssuedAt() throws {
@@ -33,6 +33,6 @@ final class TokenResponseTests: XCTestCase {
     let tokenResponse = try TokenResponse.parse(fromData: tokenResponseRaw)
 
     XCTAssertEqual(Date(timeIntervalSince1970: 3600), tokenResponse.tokenExpiresAt)
-    XCTAssertFalse(tokenResponse.isValid)
+    XCTAssertFalse(tokenResponse.isValid())
   }
 }
