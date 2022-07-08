@@ -55,6 +55,31 @@ config from above will just work in Cirrus CI and your tasks will be executed in
 
 **Note:** Cirrus CI only allows [images managed and regularly updated by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
 
+### Retrieving artifacts from within Tart VMs
+
+In many cases there is a need to retrieve particular files or a folder from within a Tart virtual machine.
+For example, the below `.cirrus.yml` configuration defines a single task that builds a `tart` binary and
+exposes it via [`artifacts` instruction](https://cirrus-ci.org/guide/writing-tasks/#artifacts-instruction):
+
+```yaml
+task:
+  name: Build
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode:latest
+  build_script: swift build --product tart
+  binary_artifacts:
+    path: .build/debug/tart
+```
+
+Running Cirrus CLI with `--artifacts-dir` will write defined `artifacts` to the provided local directory on the host:
+
+```bash
+cirrus run --artifacts-dir artifacts
+```
+
+Note that all retrieved artifacts will be prefixed with the associated task name and `artifacts` instruction name.
+For the example above, `tart` binary will be saved to `$PWD/artifacts/Build/binary/.build/debug/tart`.
+
 ## Virtual Machine Management
 
 ### Creating from scratch
