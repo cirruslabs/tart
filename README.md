@@ -71,7 +71,7 @@ task:
     path: .build/debug/tart
 ```
 
-Running Cirrus CLI with `--artifacts-dir` will retrieve defined `artifacts` to the passed local directory on the host.
+Running Cirrus CLI with `--artifacts-dir` will write defined `artifacts` to the provided local directory on the host:
 
 ```bash
 cirrus run --artifacts-dir artifacts
