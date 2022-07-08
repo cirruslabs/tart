@@ -9,13 +9,13 @@ struct Login: AsyncParsableCommand {
   var host: String
 
   @Option(help: "username")
-  var username: String
+  var username: String?
 
   @Flag(help: "password-stdin")
   var passwordStdin: Bool = false
 
   func validate() throws {
-    let usernameProvided = !username.isEmpty
+    let usernameProvided = username != nil
     let passwordProvided = passwordStdin
 
     if usernameProvided != passwordProvided {
@@ -28,7 +28,7 @@ struct Login: AsyncParsableCommand {
       var user: String
       var password: String
 
-      if !username.isEmpty {
+      if let username = username {
         user = username
         password = readLine()!
       } else {
