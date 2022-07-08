@@ -25,7 +25,7 @@ extension HTTPClientResponse.Body {
   }
 }
 
-struct TokenResponse: Decodable {
+struct TokenResponse: Decodable, Authentication {
   let defaultIssuedAt = Date()
   let defaultExpiresIn = 60
 
@@ -65,10 +65,12 @@ struct TokenResponse: Decodable {
     }
   }
 
-  var isValid: Bool {
-    get {
-      Date() < tokenExpiresAt
-    }
+  func header() -> (String, String) {
+    ("Authorization", "Bearer \(token)")
+  }
+
+  func isValid() -> Bool {
+    Date() < tokenExpiresAt
   }
 }
 
@@ -83,7 +85,7 @@ class Registry {
   let namespace: String
   let credentialsProvider: CredentialsProvider
 
-  var currentAuthToken: TokenResponse? = nil
+  var currentAuthToken: Authentication? = nil
 
   init(urlComponents: URLComponents,
        namespace: String,
@@ -245,7 +247,7 @@ class Registry {
     }
 
     // Invalidate token if it has expired
-    if currentAuthToken?.isValid == false {
+    if currentAuthToken?.isValid() == false {
       currentAuthToken = nil
     }
 
@@ -266,6 +268,15 @@ class Registry {
     }
 
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
+
+    if wwwAuthenticate.scheme == "Basic" {
+      if let (user, password) = try credentialsProvider.retrieve(host: baseURL.host!) {
+        currentAuthToken = BasicAuthentication(user: user, password: password)
+      }
+
+      return
+    }
+
     if wwwAuthenticate.scheme != "Bearer" {
       throw RegistryError.AuthFailed(why: "WWW-Authenticate header's authentication scheme "
         + "\"\(wwwAuthenticate.scheme)\" is unsupported, expected \"Bearer\" scheme")
@@ -316,7 +327,8 @@ class Registry {
     var request = request
 
     if let token = currentAuthToken {
-      request.headers.add(name: "Authorization", value: "Bearer \(token.token)")
+      let (name, value) = token.header()
+      request.headers.add(name: name, value: value)
     }
 
     return try await httpClient.execute(request, deadline: .distantFuture)
