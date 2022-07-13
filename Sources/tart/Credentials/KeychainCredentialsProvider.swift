@@ -34,21 +34,34 @@ class KeychainCredentialsProvider: CredentialsProvider {
     }
 
     func store(host: String, user: String, password: String) throws {
+        let passwordData = password.data(using: .utf8)
         let attributes: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
                                          kSecAttrAccount as String: user,
                                          kSecAttrProtocol as String: kSecAttrProtocolHTTPS,
                                          kSecAttrServer as String: host,
-                                         kSecValueData as String: password,
+                                         kSecValueData as String: passwordData,
                                          kSecAttrLabel as String: "Tart Credentials",
         ]
 
         let status = SecItemAdd(attributes as CFDictionary, nil)
 
         switch status {
-        case errSecSuccess, errSecDuplicateItem:
+        case errSecSuccess:
             return
+        case errSecDuplicateItem:
+            let status = SecItemUpdate(attributes as CFDictionary,
+                [kSecValueData as String : passwordData] as CFDictionary)
+            if status != errSecSuccess {
+              throw CredentialsProviderError.Failed(message: "Keychain failed to update item: \(status.explanation())")
+            }
         default:
-            throw CredentialsProviderError.Failed(message: "Keychain returned unsuccessful status \(status)")
+            throw CredentialsProviderError.Failed(message: "Keychain failed to add item: \(status.explanation())")
         }
     }
+}
+
+extension OSStatus {
+  func explanation() -> CFString {
+    SecCopyErrorMessageString(self, nil) ?? "Unknown status code \(self)." as CFString
+  }
 }
