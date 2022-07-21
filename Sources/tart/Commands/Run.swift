@@ -24,41 +24,57 @@ struct Run: AsyncParsableCommand {
   
   @Flag(help: ArgumentHelp(
           "Use screen sharing instead of the built-in UI.",
-          discussion: "Useful since VNC supports copy/paste, drag and drop, etc.\nNote that Remote Login option should be enabled inside the VM.")) 
+          discussion: "Useful since Screen Sharing supports copy/paste, drag and drop, etc.\n"
+            + "Note that Remote Login option should be enabled inside the VM."))
   var vnc: Bool = false
 
+  @Flag(help: ArgumentHelp(
+    "Use Virtualization.Framework's VNC server instead of the build-in UI.",
+    discussion: "Useful since this type of VNC is available in recovery mode and in macOS installation.\n"
+      + "Note that this feature is experimental and there may be bugs present when using VNC."))
+  var vncExperimental: Bool = false
+
   @Flag var withSoftnet: Bool = false
+
+  func validate() throws {
+    if vnc && vncExperimental {
+      throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
+    }
+  }
 
   @MainActor
   func run() async throws {    
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(vmDir: vmDir, withSoftnet: withSoftnet)
 
-    var vncWrapper: VNCWrapper?
-
-    if vnc {
-        vncWrapper = VNCWrapper(virtualMachine: vm!.virtualMachine)
-    }
+    let vncImpl: VNC? = try {
+      if vnc {
+        let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
+        return ScreenSharingVNC(vmConfig: vmConfig)
+      } else if vncExperimental {
+        return FullFledgedVNC(virtualMachine: vm!.virtualMachine)
+      } else {
+        return nil
+      }
+    }()
 
     let task = Task {
       do {
-        if let vncWrapper = vncWrapper {
-          let port = try await vncWrapper.waitForPort()
-
-          let url = URL(string: "vnc://:\(vncWrapper.password)@127.0.0.1:\(port)")!
+        if let vncImpl = vncImpl {
+          let vncURL = try await vncImpl.waitForURL()
 
           if noGraphics || ProcessInfo.processInfo.environment["CI"] != nil {
-            print("VNC server is running at \(url)")
+            print("VNC server is running at \(vncURL)")
           } else {
-            print("Opening \(url)...")
-            NSWorkspace.shared.open(url)
+            print("Opening \(vncURL)...")
+            NSWorkspace.shared.open(vncURL)
           }
         }
 
         try await vm!.run(recovery)
 
-        if let vncWrapper = vncWrapper {
-          try vncWrapper.stop()
+        if let vncImpl = vncImpl {
+          try vncImpl.stop()
         }
 
         Foundation.exit(0)
@@ -79,7 +95,7 @@ struct Run: AsyncParsableCommand {
     }
     sigintSrc.activate()
 
-    if noGraphics || vnc {
+    if noGraphics || vnc || vncExperimental {
       dispatchMain()
     } else {
       runUI()
