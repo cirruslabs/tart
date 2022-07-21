@@ -81,10 +81,10 @@ struct Run: AsyncParsableCommand {
       } catch {
         if error.localizedDescription.contains("Failed to lock auxiliary storage.") {
           print("Virtual machine \"\(name)\" is already running!")
-        } else {
-          print(error)
+          Foundation.exit(2)
         }
 
+        print(error)
         Foundation.exit(1)
       }
     }
