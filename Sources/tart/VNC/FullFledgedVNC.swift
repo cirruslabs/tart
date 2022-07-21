@@ -2,7 +2,7 @@ import Foundation
 import Dynamic
 import Virtualization
 
-class VNCWrapper {
+class FullFledgedVNC: VNC {
     let password: String
     private let vnc: Dynamic
 
@@ -15,24 +15,24 @@ class VNCWrapper {
         vnc.start()
     }
 
+    func waitForURL() async throws -> URL {
+      while true {
+        // Port is 0 shortly after start(),
+        // but will be initialized later
+        if let port = vnc.port.asUInt16, port != 0 {
+          return URL(string: "vnc://:\(password)@127.0.0.1:\(port)")!
+        }
+
+        // Wait 50 ms.
+        try await Task.sleep(nanoseconds: 50_000_000)
+      }
+    }
+
     func stop() throws {
         vnc.stop()
     }
 
     deinit {
         try? stop()
-    }
-
-    func waitForPort() async throws -> UInt16 {
-        while true {
-            // Port is 0 shortly after start(),
-            // but will be initialized later
-            if let port = vnc.port.asUInt16, port != 0 {
-                return port
-            }
-
-            // Wait 50 ms.
-            try await Task.sleep(nanoseconds: 50_000_000)
-        }
     }
 }
