@@ -25,7 +25,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   var softnet: Softnet? = nil
 
-  init(vmDir: VMDirectory, withSoftnet: Bool = false) throws {
+  init(vmDir: VMDirectory,
+       withSoftnet: Bool = false,
+       additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
+  ) throws {
     let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
 
     name = vmDir.name
@@ -37,7 +40,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
-      softnet: softnet)
+      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -94,7 +97,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
-  init(vmDir: VMDirectory, ipswURL: URL?, diskSizeGB: UInt16, withSoftnet: Bool = false) async throws {
+  init(
+    vmDir: VMDirectory,
+    ipswURL: URL?,
+    diskSizeGB: UInt16,
+    withSoftnet: Bool = false,
+    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
+  ) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
 
     // Load the restore image and try to get the requirements
@@ -132,7 +141,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
-      softnet: softnet)
+      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -183,7 +192,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     diskURL: URL,
     auxStorage: VZMacAuxiliaryStorage,
     vmConfig: VMConfig,
-    softnet: Softnet? = nil
+    softnet: Softnet? = nil,
+    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment]
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -247,9 +257,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.networkDevices = [vio]
 
     // Storage
-    let attachment = try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
-    let storage = VZVirtioBlockDeviceConfiguration(attachment: attachment)
-    configuration.storageDevices = [storage]
+    var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)]
+    attachments.append(contentsOf: additionalDiskAttachments)
+    configuration.storageDevices = attachments.map { VZVirtioBlockDeviceConfiguration(attachment: $0) }
 
     // Entropy
     configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
