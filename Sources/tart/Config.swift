@@ -1,11 +1,23 @@
 import Foundation
 
 struct Config {
-  public static let tartHomeDir: URL = FileManager.default
-          .homeDirectoryForCurrentUser
-          .appendingPathComponent(".tart", isDirectory: true)
+  let tartHomeDir: URL
+  let tartCacheDir: URL
 
-  public static let tartCacheDir: URL = tartHomeDir.appendingPathComponent("cache", isDirectory: true)
+  init() {
+    var tartHomeDir: URL
+
+    if let customTartHome = ProcessInfo.processInfo.environment["TART_HOME"] {
+      tartHomeDir = URL(fileURLWithPath: customTartHome)
+    } else {
+      tartHomeDir = FileManager.default
+              .homeDirectoryForCurrentUser
+              .appendingPathComponent(".tart", isDirectory: true)
+    }
+
+    self.tartHomeDir = tartHomeDir
+    tartCacheDir = tartHomeDir.appendingPathComponent("cache", isDirectory: true)
+  }
 
   static func jsonEncoder() -> JSONEncoder {
     let encoder = JSONEncoder()
