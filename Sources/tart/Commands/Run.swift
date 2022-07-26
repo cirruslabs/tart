@@ -36,7 +36,12 @@ struct Run: AsyncParsableCommand {
 
   @Flag var withSoftnet: Bool = false
 
-  @Option(help: "Additional disk attachments with an optional read-only specifier (e.g. --disk=\"disk.bin\" --disk=\"disk.bin:ro\")")
+  @Option(help: ArgumentHelp("""
+    Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"disk.bin:ro\")
+    """, discussion: """
+    Learn how to create a disk image using Disk Utility here:
+    https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+    """))
   var disk: [String] = []
 
   func validate() throws {
