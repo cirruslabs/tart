@@ -36,6 +36,14 @@ struct Run: AsyncParsableCommand {
 
   @Flag var withSoftnet: Bool = false
 
+  @Option(help: ArgumentHelp("""
+    Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"disk.bin:ro\")
+    """, discussion: """
+    Learn how to create a disk image using Disk Utility here:
+    https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+    """))
+  var disk: [String] = []
+
   func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -43,9 +51,13 @@ struct Run: AsyncParsableCommand {
   }
 
   @MainActor
-  func run() async throws {    
+  func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
-    vm = try VM(vmDir: vmDir, withSoftnet: withSoftnet)
+    vm = try VM(
+      vmDir: vmDir,
+      withSoftnet: withSoftnet,
+      additionalDiskAttachments: additionalDiskAttachments()
+    )
 
     let vncImpl: VNC? = try {
       if vnc {
@@ -100,6 +112,27 @@ struct Run: AsyncParsableCommand {
     } else {
       runUI()
     }
+  }
+
+  func additionalDiskAttachments() throws -> [VZDiskImageStorageDeviceAttachment] {
+    var result: [VZDiskImageStorageDeviceAttachment] = []
+    let readOnlySuffix = ":ro"
+
+    for rawDisk in disk {
+      if rawDisk.hasSuffix(readOnlySuffix) {
+        result.append(try VZDiskImageStorageDeviceAttachment(
+          url: URL(fileURLWithPath: String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count))),
+          readOnly: true
+        ))
+      } else {
+        result.append(try VZDiskImageStorageDeviceAttachment(
+          url: URL(fileURLWithPath: rawDisk),
+          readOnly: false
+        ))
+      }
+    }
+
+    return result
   }
 
   private func runUI() {
