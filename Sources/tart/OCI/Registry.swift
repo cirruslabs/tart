@@ -159,7 +159,8 @@ class Registry {
     return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
-  public func pushBlob(fromData: Data, chunkSize: Int = 10 * 1024 * 1024) async throws -> String {
+  // default chunk is 4MB since it's the maximum for GitHub Packages
+  public func pushBlob(fromData: Data, chunkSize: Int = 4 * 1000 * 1000) async throws -> String {
     // Initiate a blob upload
     let postResponse = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
@@ -199,7 +200,7 @@ class Registry {
         .PATCH, uploadLocation,
         headers: [
           "Content-Type": "application/octet-stream",
-          "Content-Range": "\(uploadedBytes)-\(uploadedBytes + chunk.count)",
+          "Content-Range": "\(uploadedBytes)-\(uploadedBytes + chunk.count - 1)",
         ],
         body: chunk
       )
