@@ -77,11 +77,11 @@ struct TokenResponse: Decodable, Authentication {
 
 class Registry {
   private let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
-  
+
   deinit {
     try! httpClient.syncShutdown()
   }
-  
+
   let baseURL: URL
   let namespace: String
   let credentialsProvider: CredentialsProvider
@@ -98,9 +98,9 @@ class Registry {
   }
 
   convenience init(
-          host: String,
-          namespace: String,
-          credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+    host: String,
+    namespace: String,
+    credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
   ) throws {
     var baseURLComponents = URLComponents()
 
@@ -172,47 +172,62 @@ class Registry {
     // Figure out where to upload the blob
     var uploadLocation = try uploadLocationFromResponse(postResponse)
 
-    // Upload the blob
-    let headers = [
-      "Content-Type": "application/octet-stream",
-    ]
-
     let digest = Digest.hash(fromData)
-    
+
     if (fromData.count <= chunkSize) {
       // Upload in one request
-      let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: [("digest", digest)], body: fromData)
+      let putResponse = try await rawRequest(
+        .PUT, uploadLocation,
+        headers: ["Content-Type": "application/octet-stream"],
+        parameters: [("digest", digest)],
+        body: fromData
+      )
       if putResponse.status != .created {
         let body = try await putResponse.body.readTextResponse()
         throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
           code: putResponse.status.code, details: body ?? "")
       }
       return digest
-    } else {
-      // Otherwise upload in chunks
-      // We need to collect digests of all the chunks for the final PUT
-      var chunkDigestParameters: [(String, String)] = []
-      for chunk in fromData.chunks(ofCount: chunkSize) {
-        let patchResponse = try await rawRequest(.PATCH, uploadLocation, headers: headers, body: chunk)
-        if patchResponse.status != .created {
-          let body = try await patchResponse.body.readTextResponse()
-          throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PATCH) to \(uploadLocation)",
-            code: patchResponse.status.code, details: body ?? "")
-        }
-        chunkDigestParameters.append(("digest", Digest.hash(chunk)))
-        // Update location for the next chunk
-        uploadLocation = try uploadLocationFromResponse(patchResponse)
-      }
-
-      // Finish upload
-      let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: chunkDigestParameters, body: Data.init())
-      if putResponse.status != .created {
-        let body = try await putResponse.body.readTextResponse()
-        throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PUT) to \(uploadLocation)",
-          code: putResponse.status.code, details: body ?? "")
-      }
-      return putResponse.headers.first(name: "Docker-Content-Digest") ?? digest
     }
+
+    // Otherwise upload in chunks
+    // We need to collect digests of all the chunks for the final PUT plus include the overall digest
+    var chunkDigestParameters: [(String, String)] = [("digest", digest)]
+    var uploadedBytes = 0
+    for chunk in fromData.chunks(ofCount: chunkSize) {
+      let patchResponse = try await rawRequest(
+        .PATCH, uploadLocation,
+        headers: [
+          "Content-Type": "application/octet-stream",
+          "Content-Range": "\(uploadedBytes)-\(uploadedBytes + chunk.count)",
+        ],
+        body: chunk
+      )
+      // By specification Accepted should be returned but some registries use other codes
+      if patchResponse.status != .ok && patchResponse.status != .created && patchResponse.status != .accepted {
+        let body = try await patchResponse.body.readTextResponse()
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PATCH) to \(uploadLocation)",
+          code: patchResponse.status.code, details: body ?? "")
+      }
+      uploadedBytes += chunk.count
+      chunkDigestParameters.append(("digest", Digest.hash(chunk)))
+      // Update location for the next chunk
+      uploadLocation = try uploadLocationFromResponse(patchResponse)
+    }
+
+    // Finish upload
+    let putResponse = try await rawRequest(
+      .PUT, uploadLocation,
+      headers: ["Content-Type": "application/octet-stream"],
+      parameters: chunkDigestParameters,
+      body: Data.init()
+    )
+    if putResponse.status != .created {
+      let body = try await putResponse.body.readTextResponse()
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PUT) to \(uploadLocation)",
+        code: putResponse.status.code, details: body ?? "")
+    }
+    return putResponse.headers.first(name: "Docker-Content-Digest") ?? digest
   }
 
   public func pullBlob(_ digest: String, handler: (ByteBuffer) throws -> Void) async throws {
