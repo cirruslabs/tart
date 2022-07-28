@@ -2,6 +2,7 @@ import Foundation
 import NIOCore
 import NIOHTTP1
 import AsyncHTTPClient
+import Algorithms
 
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: UInt, details: String = "")
@@ -158,7 +159,7 @@ class Registry {
     return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
-  public func pushBlob(fromData: Data, chunkSize: Int = 5 * 1024 * 1024) async throws -> String {
+  public func pushBlob(fromData: Data, chunkSize: Int = 10 * 1024 * 1024) async throws -> String {
     // Initiate a blob upload
     let postResponse = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
@@ -169,28 +170,49 @@ class Registry {
     }
 
     // Figure out where to upload the blob
-    let uploadLocation = try uploadLocationFromResponse(postResponse)
+    var uploadLocation = try uploadLocationFromResponse(postResponse)
 
     // Upload the blob
     let headers = [
-      "Content-Length": "\(fromData.count)",
       "Content-Type": "application/octet-stream",
     ]
 
     let digest = Digest.hash(fromData)
-    let parameters = [
-      "digest": digest,
-    ]
+    
+    if (fromData.count <= chunkSize) {
+      // Upload in one request
+      let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: [("digest", digest)], body: fromData)
+      if putResponse.status != .created {
+        let body = try await putResponse.body.readTextResponse()
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
+          code: putResponse.status.code, details: body ?? "")
+      }
+      return digest
+    } else {
+      // Otherwise upload in chunks
+      // We need to collect digests of all the chunks for the final PUT
+      var chunkDigestParameters: [(String, String)] = []
+      for chunk in fromData.chunks(ofCount: chunkSize) {
+        let patchResponse = try await rawRequest(.PATCH, uploadLocation, headers: headers, body: chunk)
+        if patchResponse.status != .created {
+          let body = try await patchResponse.body.readTextResponse()
+          throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PATCH) to \(uploadLocation)",
+            code: patchResponse.status.code, details: body ?? "")
+        }
+        chunkDigestParameters.append(("digest", Digest.hash(chunk)))
+        // Update location for the next chunk
+        uploadLocation = try uploadLocationFromResponse(patchResponse)
+      }
 
-    let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: parameters,
-      body: fromData)
-    if putResponse.status != .created {
-      let body = try await postResponse.body.readTextResponse()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
-              code: putResponse.status.code, details: body ?? "")
+      // Finish upload
+      let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: chunkDigestParameters, body: Data.init())
+      if putResponse.status != .created {
+        let body = try await putResponse.body.readTextResponse()
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob (PUT) to \(uploadLocation)",
+          code: putResponse.status.code, details: body ?? "")
+      }
+      return putResponse.headers.first(name: "Docker-Content-Digest") ?? digest
     }
-
-    return digest
   }
 
   public func pullBlob(_ digest: String, handler: (ByteBuffer) throws -> Void) async throws {
@@ -212,7 +234,7 @@ class Registry {
     _ method: HTTPMethod,
     _ endpoint: String,
     headers: Dictionary<String, String> = Dictionary(),
-    parameters: Dictionary<String, String> = Dictionary(),
+    parameters: [(String, String)] = [],
     body: Data? = nil
   ) async throws -> HTTPClientResponse {
     let url = URL(string: endpoint, relativeTo: baseURL)!
@@ -225,7 +247,7 @@ class Registry {
     _ method: HTTPMethod,
     _ urlComponents: URLComponents,
     headers: Dictionary<String, String> = Dictionary(),
-    parameters: Dictionary<String, String> = Dictionary(),
+    parameters: [(String, String)] = [],
     body: Data? = nil
   ) async throws -> HTTPClientResponse {
     var urlComponents = urlComponents
@@ -243,6 +265,7 @@ class Registry {
       request.headers.add(name: key, value: value)
     }
     if body != nil {
+      request.headers.add(name: "Content-Length", value: "\(body!.count)")
       request.body = HTTPClientRequest.Body.bytes(body!)
     }
 

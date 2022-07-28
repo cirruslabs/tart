@@ -104,6 +104,7 @@ extension VMDirectory {
     // Read VM's config and push it as blob
     let config = try VMConfig(fromURL: configURL)
     let configJSON = try JSONEncoder().encode(config)
+    defaultLogger.appendNewLine("pushing config...")
     let configDigest = try await registry.pushBlob(fromData: configJSON)
     layers.append(OCIManifestLayer(mediaType: Self.configMediaType, size: configJSON.count, digest: configDigest))
 
