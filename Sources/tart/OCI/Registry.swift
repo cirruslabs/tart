@@ -159,8 +159,7 @@ class Registry {
     return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
-  // default chunk is 4MB since it's the maximum for GitHub Packages
-  public func pushBlob(fromData: Data, chunkSize: Int = 4 * 1000 * 1000) async throws -> String {
+  public func pushBlob(fromData: Data, chunkSizeMb: Int = 0) async throws -> String {
     // Initiate a blob upload
     let postResponse = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
@@ -176,7 +175,7 @@ class Registry {
     let digest = Digest.hash(fromData)
 
     var uploadedBytes = 0
-    let chunks = fromData.chunks(ofCount: chunkSize)
+    let chunks = fromData.chunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
     for (index, chunk) in chunks.enumerated() {
       let lastChunk = index == (chunks.count - 1)
       let response = try await rawRequest(
