@@ -233,7 +233,7 @@ class Registry {
   ) async throws -> HTTPClientResponse {
     var urlComponents = urlComponents
 
-    if urlComponents.queryItems == nil {
+    if urlComponents.queryItems == nil && !parameters.isEmpty {
       urlComponents.queryItems = []
     }
     urlComponents.queryItems?.append(contentsOf: parameters.map { key, value -> URLQueryItem in
