@@ -39,15 +39,16 @@ struct TokenResponse: Decodable, Authentication {
 
     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-    // RFC3339 date formatter from Apple's documentation[1]
-    //
-    // [1]: https://developer.apple.com/documentation/foundation/dateformatter
-    let dateFormatter = DateFormatter()
-    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    let dateFormatter = ISO8601DateFormatter()
+    dateFormatter.formatOptions = [.withInternetDateTime]
     dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
 
-    decoder.dateDecodingStrategy = .formatted(dateFormatter)
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let dateString = try container.decode(String.self)
+
+      return dateFormatter.date(from: dateString) ?? Date()
+    }
 
     return try decoder.decode(TokenResponse.self, from: fromData)
   }
