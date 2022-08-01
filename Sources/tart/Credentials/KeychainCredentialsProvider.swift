@@ -35,27 +35,30 @@ class KeychainCredentialsProvider: CredentialsProvider {
 
     func store(host: String, user: String, password: String) throws {
         let passwordData = password.data(using: .utf8)
-        let attributes: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
-                                         kSecAttrAccount as String: user,
-                                         kSecAttrProtocol as String: kSecAttrProtocolHTTPS,
-                                         kSecAttrServer as String: host,
-                                         kSecValueData as String: passwordData,
-                                         kSecAttrLabel as String: "Tart Credentials",
+        let key: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
+                                  kSecAttrProtocol as String: kSecAttrProtocolHTTPS,
+                                  kSecAttrServer as String: host,
+                                  kSecAttrLabel as String: "Tart Credentials",
+        ]
+        let value: [String: Any] = [kSecAttrAccount as String: user,
+                                    kSecValueData as String: passwordData,
         ]
 
-        let status = SecItemAdd(attributes as CFDictionary, nil)
+        let status = SecItemCopyMatching(key as CFDictionary, nil)
 
         switch status {
+        case errSecItemNotFound:
+            let status = SecItemAdd(key.merging(value) { (current, _) in current } as CFDictionary, nil)
+            if status != errSecSuccess {
+              throw CredentialsProviderError.Failed(message: "Keychain failed to add item: \(status.explanation())")
+            }
         case errSecSuccess:
-            return
-        case errSecDuplicateItem:
-            let status = SecItemUpdate(attributes as CFDictionary,
-                [kSecValueData as String : passwordData] as CFDictionary)
+            let status = SecItemUpdate(key as CFDictionary, value as CFDictionary)
             if status != errSecSuccess {
               throw CredentialsProviderError.Failed(message: "Keychain failed to update item: \(status.explanation())")
             }
         default:
-            throw CredentialsProviderError.Failed(message: "Keychain failed to add item: \(status.explanation())")
+            throw CredentialsProviderError.Failed(message: "Keychain failed to find item: \(status.explanation())")
         }
     }
 }
