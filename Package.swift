@@ -14,6 +14,7 @@ let package = Package(
     .package(url: "https://github.com/mhdhejazi/Dynamic", branch: "master"),
     .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
     .package(url: "https://github.com/swift-server/async-http-client", from: "1.10.0"),
+    .package(url: "https://github.com/malcommac/SwiftDate", from: "6.3.1")
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -21,6 +22,7 @@ let package = Package(
       .product(name: "AsyncHTTPClient", package: "async-http-client"),
       .product(name: "Dynamic", package: "Dynamic"),
       .product(name: "Parsing", package: "swift-parsing"),
+      .product(name: "SwiftDate", package: "SwiftDate"),
     ]),
     .testTarget(name: "TartTests", dependencies: ["tart"])
   ]

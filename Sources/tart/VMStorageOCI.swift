@@ -1,6 +1,6 @@
 import Foundation
 
-class VMStorageOCI {
+class VMStorageOCI: PrunableStorage {
   let baseURL = Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
 
   private func vmURL(_ name: RemoteName) -> URL {
@@ -15,6 +15,8 @@ class VMStorageOCI {
     let vmDir = VMDirectory(baseURL: vmURL(name))
 
     try vmDir.validate()
+
+    try vmDir.baseURL.updateAccessDate()
 
     return vmDir
   }
@@ -42,8 +44,8 @@ class VMStorageOCI {
     try FileManager.default.removeItem(at: vmURL(name))
   }
 
-  func list() throws -> [(String, VMDirectory)] {
-    var result: [(String, VMDirectory)] = Array()
+  func list() throws -> [(String, VMDirectory, Bool)] {
+    var result: [(String, VMDirectory, Bool)] = Array()
 
     guard let enumerator = FileManager.default.enumerator(at: baseURL,
       includingPropertiesForKeys: [.isSymbolicLinkKey], options: [.producesRelativePathURLs]) else {
@@ -60,16 +62,21 @@ class VMStorageOCI {
       let parts = [foundURL.deletingLastPathComponent().relativePath, foundURL.lastPathComponent]
       var name: String
 
-      if try foundURL.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink! {
+      let isSymlink = try foundURL.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink!
+      if isSymlink {
         name = parts.joined(separator: ":")
       } else {
         name = parts.joined(separator: "@")
       }
 
-      result.append((name, vmDir))
+      result.append((name, vmDir, isSymlink))
     }
 
     return result
+  }
+
+  func prunables() throws -> [Prunable] {
+    try list().filter { (_, _, isSymlink) in !isSymlink }.map { (_, vmDir, _) in vmDir }
   }
 
   func pull(_ name: RemoteName, registry: Registry) async throws {
@@ -82,6 +89,19 @@ class VMStorageOCI {
 
     if !exists(digestName) {
       let tmpVMDir = try VMDirectory.temporary()
+
+      // Try to reclaim some cache space if we know the VM size in advance
+      if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
+        let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)
+
+        let attrs = try tmpVMDir.baseURL.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        let availableCapacityBytes = UInt64(attrs.volumeAvailableCapacityForImportantUsage!)
+
+        if availableCapacityBytes < requiredCapacityBytes {
+          try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
+        }
+      }
+
       try await withTaskCancellationHandler(operation: {
         try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
         try move(digestName, from: tmpVMDir)
