@@ -2,6 +2,7 @@ import Foundation
 import NIOCore
 import NIOHTTP1
 import AsyncHTTPClient
+import NIOPosix
 
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: UInt, details: String = "")
@@ -75,8 +76,10 @@ struct TokenResponse: Decodable, Authentication {
 }
 
 class Registry {
-  private let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
-  
+  private let httpClient = HTTPClient(
+    eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup(numberOfThreads: 1))
+  )
+
   deinit {
     try! httpClient.syncShutdown()
   }
