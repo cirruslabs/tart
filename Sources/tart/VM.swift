@@ -237,7 +237,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Audio
     let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
-    soundDeviceConfiguration.streams = [VZVirtioSoundDeviceInputStreamConfiguration(), VZVirtioSoundDeviceOutputStreamConfiguration()]
+    let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
+    inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
+    let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
+    outputAudioStreamConfiguration.sink = VZHostAudioOutputStreamSink()
+    soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
     configuration.audioDevices = [soundDeviceConfiguration]
 
     // Keyboard and mouse
