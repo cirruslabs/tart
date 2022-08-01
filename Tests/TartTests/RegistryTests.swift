@@ -42,13 +42,13 @@ final class RegistryTests: XCTestCase {
         XCTAssertEqual(pushedBlob, pulledBlob)
     }
 
-    func testPushPullBlobHuge() async throws {
+    func testPushPullBlobHugeInChunks() async throws {
         // Generate a large enough blob
         let fh = FileHandle(forReadingAtPath: "/dev/urandom")!
         let largeBlobToPush = try fh.read(upToCount: 768 * 1024 * 1024)!
 
         // Push it
-        let largeBlobDigest = try await registry.pushBlob(fromData: largeBlobToPush)
+        let largeBlobDigest = try await registry.pushBlob(fromData: largeBlobToPush, chunkSizeMb: 10)
 
         // Pull it
         var pulledLargeBlob = Data()
