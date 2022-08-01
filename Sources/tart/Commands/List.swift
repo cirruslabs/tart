@@ -10,7 +10,7 @@ struct List: AsyncParsableCommand {
       print("Source\tName")
 
       displayTable("local", try VMStorageLocal().list())
-      displayTable("oci", try VMStorageOCI().list())
+      displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
 
       Foundation.exit(0)
     } catch {

@@ -55,14 +55,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
-
-    let ipswCacheFolder = Config().tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
-    try FileManager.default.createDirectory(at: ipswCacheFolder, withIntermediateDirectories: true)
-
-    let expectedIPSWLocation = ipswCacheFolder.appendingPathComponent("\(image.buildVersion).ipsw", isDirectory: false)
+    let expectedIPSWLocation = try IPSWCache().locationFor(image: image)
 
     if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
       defaultLogger.appendNewLine("Using cached *.ipsw file...")
+      try expectedIPSWLocation.updateAccessDate()
       return expectedIPSWLocation
     }
 
