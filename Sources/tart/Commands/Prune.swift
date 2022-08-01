@@ -12,7 +12,7 @@ struct Prune: AsyncParsableCommand {
   var olderThan: UInt?
 
   @Option(help: ArgumentHelp("Remove least recently used cache entries that do not fit the specified cache size budget n, expressed in gigabytes",
-    discussion: "For example, --cache-budget=50 will effectively shrink all caches to a total size of 50 gigabytes.",
+    discussion: "For example, --cache-budget=50 will effectively shrink all caches to a total size of 50 gigabytes or less.",
     valueName: "n"))
   var cacheBudget: UInt?
 
