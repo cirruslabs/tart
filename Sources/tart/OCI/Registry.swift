@@ -229,7 +229,8 @@ class Registry {
     _ urlComponents: URLComponents,
     headers: Dictionary<String, String> = Dictionary(),
     parameters: Dictionary<String, String> = Dictionary(),
-    body: Data? = nil
+    body: Data? = nil,
+    doAuth: Bool = true
   ) async throws -> HTTPClientResponse {
     var urlComponents = urlComponents
 
@@ -315,7 +316,7 @@ class Registry {
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
 
-    let response = try await rawRequest(.GET, authenticateURL, headers: headers)
+    let response = try await rawRequest(.GET, authenticateURL, headers: headers, doAuth: false)
     if response.status != .ok {
       let body = try await response.body.readTextResponse() ?? ""
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.status.code) "
