@@ -39,15 +39,16 @@ struct TokenResponse: Decodable, Authentication {
 
     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-    // RFC3339 date formatter from Apple's documentation[1]
-    //
-    // [1]: https://developer.apple.com/documentation/foundation/dateformatter
-    let dateFormatter = DateFormatter()
-    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    let dateFormatter = ISO8601DateFormatter()
+    dateFormatter.formatOptions = [.withInternetDateTime]
     dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
 
-    decoder.dateDecodingStrategy = .formatted(dateFormatter)
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let dateString = try container.decode(String.self)
+
+      return dateFormatter.date(from: dateString) ?? Date()
+    }
 
     return try decoder.decode(TokenResponse.self, from: fromData)
   }
@@ -229,11 +230,12 @@ class Registry {
     _ urlComponents: URLComponents,
     headers: Dictionary<String, String> = Dictionary(),
     parameters: Dictionary<String, String> = Dictionary(),
-    body: Data? = nil
+    body: Data? = nil,
+    doAuth: Bool = true
   ) async throws -> HTTPClientResponse {
     var urlComponents = urlComponents
 
-    if urlComponents.queryItems == nil {
+    if urlComponents.queryItems == nil && !parameters.isEmpty {
       urlComponents.queryItems = []
     }
     urlComponents.queryItems?.append(contentsOf: parameters.map { key, value -> URLQueryItem in
@@ -315,7 +317,7 @@ class Registry {
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
 
-    let response = try await rawRequest(.GET, authenticateURL, headers: headers)
+    let response = try await rawRequest(.GET, authenticateURL, headers: headers, doAuth: false)
     if response.status != .ok {
       let body = try await response.body.readTextResponse() ?? ""
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.status.code) "
