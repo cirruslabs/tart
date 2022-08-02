@@ -188,8 +188,8 @@ class Registry {
         parameters: lastChunk ? [("digest", digest)] : [],
         body: chunk
       )
-      // some registries use other codes
-      if response.status != .ok && response.status != .created && response.status != .accepted {
+      let expectedStatus: HTTPResponseStatus = lastChunk ? .created : .accepted
+      if response.status != expectedStatus {
         let body = try await response.body.readTextResponse()
         throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
           code: response.status.code, details: body ?? "")
