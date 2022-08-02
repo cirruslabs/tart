@@ -30,7 +30,9 @@ struct Login: AsyncParsableCommand {
 
       if let username = username {
         user = username
-        password = readLine()!
+
+        let passwordData = FileHandle.standardInput.readDataToEndOfFile()
+        password = String(decoding: passwordData, as: UTF8.self)
       } else {
         (user, password) = try StdinCredentials.retrieve()
       }
