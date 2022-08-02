@@ -7,7 +7,7 @@ struct UninitializedVMDirectoryError: Error {
 struct AlreadyInitializedVMDirectoryError: Error {
 }
 
-struct VMDirectory {
+struct VMDirectory: Prunable {
   var baseURL: URL
 
   var configURL: URL {
@@ -76,5 +76,17 @@ struct VMDirectory {
     // macOS considers kilo being 1000 and not 1024
     try diskFileHandle.truncate(atOffset: UInt64(sizeGB) * 1000 * 1000 * 1000)
     try diskFileHandle.close()
+  }
+
+  func delete() throws {
+    try FileManager.default.removeItem(at: baseURL)
+  }
+
+  func accessDate() throws -> Date {
+    try baseURL.accessDate()
+  }
+
+  func sizeBytes() throws -> Int {
+    try configURL.sizeBytes() + diskURL.sizeBytes() + nvramURL.sizeBytes()
   }
 }
