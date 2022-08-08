@@ -98,13 +98,14 @@ extension VMDirectory {
     try nvram.close()
   }
 
-  func pushToRegistry(registry: Registry, references: [String]) async throws -> RemoteName {
+  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
     let config = try VMConfig(fromURL: configURL)
     let configJSON = try JSONEncoder().encode(config)
-    let configDigest = try await registry.pushBlob(fromData: configJSON)
+    defaultLogger.appendNewLine("pushing config...")
+    let configDigest = try await registry.pushBlob(fromData: configJSON, chunkSizeMb: chunkSizeMb)
     layers.append(OCIManifestLayer(mediaType: Self.configMediaType, size: configJSON.count, digest: configDigest))
 
     // Progress
@@ -126,21 +127,21 @@ extension VMDirectory {
 
       return data
     }
-    while let chunk = try compressingFilter.readData(ofLength: Self.layerLimitBytes) {
-      let chunkDigest = try await registry.pushBlob(fromData: chunk)
-      layers.append(OCIManifestLayer(mediaType: Self.diskMediaType, size: chunk.count, digest: chunkDigest))
+    while let compressedLayerData = try compressingFilter.readData(ofLength: Self.layerLimitBytes) {
+      let layerDigest = try await registry.pushBlob(fromData: compressedLayerData, chunkSizeMb: chunkSizeMb)
+      layers.append(OCIManifestLayer(mediaType: Self.diskMediaType, size: compressedLayerData.count, digest: layerDigest))
     }
 
     // Read VM's NVRAM and push it as blob
     defaultLogger.appendNewLine("pushing NVRAM...")
 
     let nvram = try FileHandle(forReadingFrom: nvramURL).readToEnd()!
-    let nvramDigest = try await registry.pushBlob(fromData: nvram)
+    let nvramDigest = try await registry.pushBlob(fromData: nvram, chunkSizeMb: chunkSizeMb)
     layers.append(OCIManifestLayer(mediaType: Self.nvramMediaType, size: nvram.count, digest: nvramDigest))
 
     // Craft a stub OCI config for Docker Hub compatibility
     let ociConfigJSON = try OCIConfig().toJSON()
-    let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON)
+    let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON, chunkSizeMb: chunkSizeMb)
     let manifest = OCIManifest(
             config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
             layers: layers,
