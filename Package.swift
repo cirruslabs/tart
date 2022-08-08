@@ -13,7 +13,7 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.2"),
     .package(url: "https://github.com/mhdhejazi/Dynamic", branch: "master"),
     .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
-    .package(url: "https://github.com/swift-server/async-http-client", from: "1.11.1"),
+    .package(url: "https://github.com/swift-server/async-http-client", from: "1.11.4"),
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
   ],
   targets: [
