@@ -189,7 +189,7 @@ class Registry {
           "Content-Type": "application/octet-stream",
           "Content-Range": "\(uploadedBytes)-\(uploadedBytes + chunk.count - 1)",
         ],
-        parameters: lastChunk ? [("digest", digest)] : [],
+        parameters: lastChunk ? ["digest": digest] : [:],
         body: chunk
       )
       let expectedStatus: HTTPResponseStatus = lastChunk ? .created : .accepted
@@ -225,7 +225,7 @@ class Registry {
     _ method: HTTPMethod,
     _ endpoint: String,
     headers: Dictionary<String, String> = Dictionary(),
-    parameters: [(String, String)] = [],
+    parameters: Dictionary<String, String> = Dictionary(),
     body: Data? = nil
   ) async throws -> HTTPClientResponse {
     let url = URL(string: endpoint, relativeTo: baseURL)!
