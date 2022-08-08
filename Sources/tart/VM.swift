@@ -167,7 +167,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       try softnet.run()
     }
 
-    try await virtualMachine.start(recovery)
+    DispatchQueue.main.sync {
+      Task {
+        let startOptions = VZMacOSVirtualMachineStartOptions()
+        startOptions.startUpFromMacOSRecovery = recovery
+        try await virtualMachine.start(options: startOptions)
+      }
+    }
 
     await withTaskCancellationHandler(operation: {
       sema.wait()

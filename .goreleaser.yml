@@ -32,11 +32,11 @@ brews:
     tap:
       owner: cirruslabs
       name: homebrew-cli
-    caveats: See the Github repository for more information
+    caveats: See the GitHub repository for more information
     homepage: https://github.com/cirruslabs/tart
     description: Run macOS VMs on Apple Silicon
     skip_upload: auto
     dependencies:
       - "cirruslabs/cli/softnet"
     custom_block: |
-      depends_on :macos => :monterey
+      depends_on :macos => :ventura
