@@ -258,7 +258,7 @@ class Registry {
 
     var response = try await authAwareRequest(request: request)
 
-    if response.status == .unauthorized {
+    if doAuth && response.status == .unauthorized {
       try await auth(response: response)
       response = try await authAwareRequest(request: request)
     }
