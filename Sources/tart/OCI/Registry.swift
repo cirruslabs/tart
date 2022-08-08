@@ -2,6 +2,7 @@ import Foundation
 import NIOCore
 import NIOHTTP1
 import AsyncHTTPClient
+import Algorithms
 import NIOPosix
 
 enum RegistryError: Error {
@@ -84,7 +85,7 @@ class Registry {
   deinit {
     try! httpClient.syncShutdown()
   }
-  
+
   let baseURL: URL
   let namespace: String
   let credentialsProvider: CredentialsProvider
@@ -101,9 +102,9 @@ class Registry {
   }
 
   convenience init(
-          host: String,
-          namespace: String,
-          credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+    host: String,
+    namespace: String,
+    credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
   ) throws {
     var baseURLComponents = URLComponents()
 
@@ -162,7 +163,7 @@ class Registry {
     return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
-  public func pushBlob(fromData: Data, chunkSize: Int = 5 * 1024 * 1024) async throws -> String {
+  public func pushBlob(fromData: Data, chunkSizeMb: Int = 0) async throws -> String {
     // Initiate a blob upload
     let postResponse = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
@@ -173,27 +174,35 @@ class Registry {
     }
 
     // Figure out where to upload the blob
-    let uploadLocation = try uploadLocationFromResponse(postResponse)
-
-    // Upload the blob
-    let headers = [
-      "Content-Length": "\(fromData.count)",
-      "Content-Type": "application/octet-stream",
-    ]
+    var uploadLocation = try uploadLocationFromResponse(postResponse)
 
     let digest = Digest.hash(fromData)
-    let parameters = [
-      "digest": digest,
-    ]
 
-    let putResponse = try await rawRequest(.PUT, uploadLocation, headers: headers, parameters: parameters,
-      body: fromData)
-    if putResponse.status != .created {
-      let body = try await postResponse.body.readTextResponse()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
-              code: putResponse.status.code, details: body ?? "")
+    var uploadedBytes = 0
+    let chunks = fromData.chunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
+    for (index, chunk) in chunks.enumerated() {
+      let lastChunk = index == (chunks.count - 1)
+      let response = try await rawRequest(
+        lastChunk ? .PUT : .PATCH, 
+        uploadLocation,
+        headers: [
+          "Content-Type": "application/octet-stream",
+          "Content-Range": "\(uploadedBytes)-\(uploadedBytes + chunk.count - 1)",
+        ],
+        parameters: lastChunk ? [("digest", digest)] : [],
+        body: chunk
+      )
+      let expectedStatus: HTTPResponseStatus = lastChunk ? .created : .accepted
+      if response.status != expectedStatus {
+        let body = try await response.body.readTextResponse()
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
+          code: response.status.code, details: body ?? "")
+      }
+      uploadedBytes += chunk.count
+      // Update location for the next chunk
+      uploadLocation = try uploadLocationFromResponse(response)
     }
-
+    
     return digest
   }
 
@@ -216,7 +225,7 @@ class Registry {
     _ method: HTTPMethod,
     _ endpoint: String,
     headers: Dictionary<String, String> = Dictionary(),
-    parameters: Dictionary<String, String> = Dictionary(),
+    parameters: [(String, String)] = [],
     body: Data? = nil
   ) async throws -> HTTPClientResponse {
     let url = URL(string: endpoint, relativeTo: baseURL)!
@@ -248,6 +257,7 @@ class Registry {
       request.headers.add(name: key, value: value)
     }
     if body != nil {
+      request.headers.add(name: "Content-Length", value: "\(body!.count)")
       request.body = HTTPClientRequest.Body.bytes(body!)
     }
 
