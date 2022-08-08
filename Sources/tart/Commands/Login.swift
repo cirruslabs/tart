@@ -14,6 +14,9 @@ struct Login: AsyncParsableCommand {
   @Flag(help: "password-stdin")
   var passwordStdin: Bool = false
 
+  @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
+  var insecure: Bool = false
+
   func validate() throws {
     let usernameProvided = username != nil
     let passwordProvided = passwordStdin
@@ -41,7 +44,8 @@ struct Login: AsyncParsableCommand {
       ])
 
       do {
-        let registry = try Registry(host: host, namespace: "", credentialsProvider: credentialsProvider)
+        let registry = try Registry(host: host, namespace: "", insecure: insecure,
+          credentialsProvider: credentialsProvider)
         try await registry.ping()
       } catch {
         print("invalid credentials: \(error)")

@@ -12,6 +12,9 @@ struct Push: AsyncParsableCommand {
   @Argument(help: "remote VM name(s)")
   var remoteNames: [String]
 
+  @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
+  var insecure: Bool = false
+
   @Option(help: ArgumentHelp("chunk size in MB if registry supports chunked uploads",
     discussion: """
                 By default monolithic method is used for uploading blobs to the registry but some registries support a more efficient chunked method.
@@ -45,7 +48,8 @@ struct Push: AsyncParsableCommand {
 
       // Push VM
       for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
-        let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace)
+        let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace,
+          insecure: insecure)
 
         defaultLogger.appendNewLine("pushing \(localName) to "
           + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
