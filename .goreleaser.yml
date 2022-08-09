@@ -39,4 +39,4 @@ brews:
     dependencies:
       - "cirruslabs/cli/softnet"
     custom_block: |
-      depends_on :macos => :ventura
+      depends_on :macos => :monterey
