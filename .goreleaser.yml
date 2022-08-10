@@ -40,3 +40,9 @@ brews:
       - "cirruslabs/cli/softnet"
     custom_block: |
       depends_on :macos => :monterey
+      
+      on_macos do
+        unless Hardware::CPU.arm?
+          odie "Tart only works on Apple Silicon!"
+        end
+      end
