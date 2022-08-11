@@ -169,14 +169,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     DispatchQueue.main.sync {
       Task {
-        if (recovery) {
+        if #available(macOS 13, *) {
           // new API introduced in Ventura
           let startOptions = VZMacOSVirtualMachineStartOptions()
           startOptions.startUpFromMacOSRecovery = recovery
           try await virtualMachine.start(options: startOptions)
         } else {
           // use method that also available on Monterey
-          try await virtualMachine.start()
+          try await virtualMachine.start(recovery)
         }
       }
     }
