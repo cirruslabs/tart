@@ -104,13 +104,11 @@ class Registry {
   convenience init(
     host: String,
     namespace: String,
+    insecure: Bool = false,
     credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
   ) throws {
-    var baseURLComponents = URLComponents()
-
-    baseURLComponents.scheme = "https"
-    baseURLComponents.host = host
-    baseURLComponents.path = "/v2/"
+    let proto = insecure ? "http" : "https"
+    let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
 
     try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProvider: credentialsProvider)
   }
