@@ -5,6 +5,7 @@ import Dynamic
 // Kudos to @saagarjha's VirtualApple for finding about _VZVirtualMachineStartOptions
 
 extension VZVirtualMachine {
+  @available(macOS 12, *)
   func start(_ recovery: Bool) async throws {
     if !recovery {
       // just use the regular API
