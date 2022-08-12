@@ -175,7 +175,27 @@ class Registry {
     var uploadLocation = try uploadLocationFromResponse(postResponse)
 
     let digest = Digest.hash(fromData)
+    
+    if chunkSizeMb == 0 {
+      // monolithic upload
+      let response = try await rawRequest(
+        .PUT,
+        uploadLocation,
+        headers: [
+          "Content-Type": "application/octet-stream",
+        ],
+        parameters: ["digest": digest],
+        body: fromData
+      )
+      if response.status != .created {
+        let body = try await response.body.readTextResponse()
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
+          code: response.status.code, details: body ?? "")
+      }
+      return digest
+    }
 
+    // chunked upload
     var uploadedBytes = 0
     let chunks = fromData.chunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
     for (index, chunk) in chunks.enumerated() {
