@@ -191,7 +191,7 @@ class Registry {
       )
       if response.status != .created {
         let body = try await response.body.readTextResponse()
-        throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
+        throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
           code: response.status.code, details: body ?? "")
       }
       return digest
