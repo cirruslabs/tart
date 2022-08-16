@@ -11,6 +11,9 @@ struct Clone: AsyncParsableCommand {
   @Argument(help: "new VM name")
   var newName: String
 
+  @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
+  var insecure: Bool = false
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -24,7 +27,7 @@ struct Clone: AsyncParsableCommand {
 
       if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
         // Pull the VM in case it's OCI-based and doesn't exist locally yet
-        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
         try await ociStorage.pull(remoteName, registry: registry)
       }
 
