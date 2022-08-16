@@ -8,6 +8,9 @@ struct Pull: AsyncParsableCommand {
   @Argument(help: "remote VM name")
   var remoteName: String
 
+  @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
+  var insecure: Bool = false
+
   func run() async throws {
     do {
       // Be more liberal when accepting local image as argument,
@@ -19,7 +22,7 @@ struct Pull: AsyncParsableCommand {
       }
 
       let remoteName = try RemoteName(remoteName)
-      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace)
+      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
 
       defaultLogger.appendNewLine("pulling \(remoteName)...")
 
