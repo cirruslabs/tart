@@ -125,7 +125,7 @@ extension VMDirectory {
       let data = mappedDisk.subdata(in: mappedDiskReadOffset ..< mappedDiskReadOffset + bytesRead)
       mappedDiskReadOffset += bytesRead
 
-      progress.completedUnitCount += Int64(bytesRead)
+      progress.completedUnitCount = Int64(mappedDiskReadOffset)
 
       return data
     }
