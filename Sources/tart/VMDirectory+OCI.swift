@@ -119,11 +119,11 @@ extension VMDirectory {
     // and sequentially upload them as blobs
     let mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
     let mappedDiskSize = mappedDisk.count
-    var mappedDiskOffset = 0
+    var mappedDiskReadOffset = 0
     let compressingFilter = try InputFilter(.compress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { (length: Int) -> Data? in
-      let bytesRead = min(length, mappedDiskSize - mappedDiskOffset)
-      let data = mappedDisk.subdata(in: mappedDiskOffset ..< mappedDiskOffset + bytesRead)
-      mappedDiskOffset += bytesRead
+      let bytesRead = min(length, mappedDiskSize - mappedDiskReadOffset)
+      let data = mappedDisk.subdata(in: mappedDiskReadOffset ..< mappedDiskReadOffset + bytesRead)
+      mappedDiskReadOffset += bytesRead
 
       progress.completedUnitCount += Int64(bytesRead)
 
@@ -147,7 +147,7 @@ extension VMDirectory {
     let manifest = OCIManifest(
             config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
             layers: layers,
-            uncompressedDiskSize: UInt64(mappedDiskOffset)
+            uncompressedDiskSize: UInt64(mappedDiskReadOffset)
     )
 
     // Manifest
