@@ -16,14 +16,21 @@ struct IP: AsyncParsableCommand {
     do {
       let vmDir = try VMStorageLocal().open(name)
       let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
+      let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
-      guard let ip = try await IP.resolveIP(vmConfig, secondsToWait: wait) else {
+      guard let ipViaDHCP = try await IP.resolveIP(vmMACAddress, secondsToWait: wait) else {
         print("no IP address found, is your VM running?")
 
         Foundation.exit(1)
       }
 
-      print(ip)
+      if let ipViaARP = try ARPCache.ResolveMACAddress(macAddress: vmMACAddress), ipViaARP != ipViaDHCP {
+        fputs("WARNING: DHCP lease and ARP cache entries for MAC address \(vmMACAddress) differ: "
+          + "got \(ipViaDHCP) and \(ipViaARP) respectively, consider reporting this case to"
+          + " https://github.com/cirruslabs/tart/issues/172\n", stderr)
+      }
+
+      print(ipViaDHCP)
 
       Foundation.exit(0)
     } catch {
@@ -33,12 +40,11 @@ struct IP: AsyncParsableCommand {
     }
   }
 
-  static public func resolveIP(_ config: VMConfig, secondsToWait: UInt16) async throws -> IPv4Address? {
+  static public func resolveIP(_ vmMACAddress: MACAddress, secondsToWait: UInt16) async throws -> IPv4Address? {
     let waitUntil = Calendar.current.date(byAdding: .second, value: Int(secondsToWait), to: Date.now)!
-    let vmMacAddress = MACAddress(fromString: config.macAddress.string)!
 
     repeat {
-      if let ip = try Leases().resolveMACAddress(macAddress: vmMacAddress) {
+      if let ip = try Leases().resolveMACAddress(macAddress: vmMACAddress) {
         return ip
       }
 
