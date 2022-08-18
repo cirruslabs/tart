@@ -20,6 +20,6 @@ extension URL {
 
 extension Date {
   func asTimeval() -> timeval {
-    timeval(tv_sec: timeIntervalSince1970.toUnit(.second)!, tv_usec: 0)
+    timeval(tv_sec: Int(timeIntervalSince1970), tv_usec: 0)
   }
 }
