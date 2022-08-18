@@ -20,6 +20,10 @@ struct VMDirectory: Prunable {
     baseURL.appendingPathComponent("nvram.bin")
   }
 
+  var explicitlyPulledMark: URL {
+    baseURL.appendingPathComponent(".explicitly-pulled")
+  }
+
   var name: String {
     baseURL.lastPathComponent
   }
@@ -88,5 +92,13 @@ struct VMDirectory: Prunable {
 
   func sizeBytes() throws -> Int {
     try configURL.sizeBytes() + diskURL.sizeBytes() + nvramURL.sizeBytes()
+  }
+
+  func markExplicitlyPulled() {
+    FileManager.default.createFile(atPath: explicitlyPulledMark.path, contents: nil)
+  }
+
+  func isExplicitlyPulled() -> Bool {
+    FileManager.default.fileExists(atPath: explicitlyPulledMark.path)
   }
 }

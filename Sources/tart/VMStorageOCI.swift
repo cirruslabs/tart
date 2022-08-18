@@ -42,6 +42,44 @@ class VMStorageOCI: PrunableStorage {
 
   func delete(_ name: RemoteName) throws {
     try FileManager.default.removeItem(at: vmURL(name))
+    try gc()
+  }
+
+  func gc() throws {
+    var refCounts = Dictionary<URL, UInt>()
+
+    guard let enumerator = FileManager.default.enumerator(at: baseURL,
+            includingPropertiesForKeys: [.isSymbolicLinkKey]) else {
+      return
+    }
+
+    for case let foundURL as URL in enumerator {
+      let isSymlink = try foundURL.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink!
+
+      // Perform garbage collection for tag-based images
+      // with broken outgoing references
+      if isSymlink && foundURL == foundURL.resolvingSymlinksInPath() {
+        try FileManager.default.removeItem(at: foundURL)
+        continue
+      }
+
+      let vmDir = VMDirectory(baseURL: foundURL.resolvingSymlinksInPath())
+      if !vmDir.initialized {
+        continue
+      }
+
+      refCounts[vmDir.baseURL] = (refCounts[vmDir.baseURL] ?? 0) + (isSymlink ? 1 : 0)
+    }
+
+    // Perform garbage collection for digest-based images
+    // with no incoming references
+    for (baseURL, incRefCount) in refCounts {
+      let vmDir = VMDirectory(baseURL: baseURL)
+
+      if !vmDir.isExplicitlyPulled() && incRefCount == 0 {
+        try FileManager.default.removeItem(at: baseURL)
+      }
+    }
   }
 
   func list() throws -> [(String, VMDirectory, Bool)] {
@@ -113,8 +151,12 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if name != digestName {
-      // Overwrite the old symbolic link
+      // Create new or overwrite the old symbolic link
       try link(from: digestName, to: name)
+    } else {
+      // Ensure that images pulled by content digest
+      // are excluded from garbage collection
+      VMDirectory(baseURL: vmURL(name)).markExplicitlyPulled()
     }
   }
 
