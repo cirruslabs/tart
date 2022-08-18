@@ -10,7 +10,8 @@ class ScreenSharingVNC: VNC {
   }
 
   func waitForURL() async throws -> URL {
-    let ip = try await IP.resolveIP(vmConfig, secondsToWait: 60)
+    let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
+    let ip = try await IP.resolveIP(vmMACAddress, secondsToWait: 60)
 
     if let ip = ip {
       return URL(string: "vnc://\(ip)")!
