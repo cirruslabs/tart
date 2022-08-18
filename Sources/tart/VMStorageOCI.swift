@@ -82,10 +82,10 @@ class VMStorageOCI: PrunableStorage {
   func pull(_ name: RemoteName, registry: Registry) async throws {
     defaultLogger.appendNewLine("pulling manifest...")
 
-    let (manifest, _) = try await registry.pullManifest(reference: name.reference.value)
+    let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference.value)
 
-    var digestName = RemoteName(host: name.host, namespace: name.namespace,
-            reference: Reference(digest: try manifest.digest()))
+    let digestName = RemoteName(host: name.host, namespace: name.namespace,
+            reference: Reference(digest: Digest.hash(manifestData)))
 
     if !exists(digestName) {
       let tmpVMDir = try VMDirectory.temporary()
