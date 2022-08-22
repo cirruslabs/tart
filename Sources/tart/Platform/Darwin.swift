@@ -51,12 +51,10 @@ struct Darwin: Platform {
     }
 
     func platform(nvramURL: URL) -> VZPlatformConfiguration {
-        let auxStorage = VZMacAuxiliaryStorage(contentsOf: nvramURL)
-
         let result = VZMacPlatformConfiguration()
 
         result.machineIdentifier = ecid
-        result.auxiliaryStorage = auxStorage
+        result.auxiliaryStorage = VZMacAuxiliaryStorage(contentsOf: nvramURL)
         result.hardwareModel = hardwareModel
 
         return result
