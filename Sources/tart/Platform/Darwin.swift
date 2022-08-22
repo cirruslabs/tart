@@ -23,6 +23,7 @@ struct Darwin: Platform {
                     in: container,
                     debugDescription: "failed to initialize VZMacMachineIdentifier using the provided value")
         }
+        self.ecid = ecid
 
         let encodedHardwareModel = try container.decode(String.self, forKey: .hardwareModel)
         guard let data = Data.init(base64Encoded: encodedHardwareModel) else {
@@ -31,8 +32,6 @@ struct Darwin: Platform {
         guard let hardwareModel = VZMacHardwareModel.init(dataRepresentation: data) else {
             throw DecodingError.dataCorruptedError(forKey: .hardwareModel, in: container, debugDescription: "")
         }
-
-        self.ecid = ecid
         self.hardwareModel = hardwareModel
     }
 
