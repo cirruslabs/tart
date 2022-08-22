@@ -10,6 +10,9 @@ struct NoMainScreenFoundError: Error {
 struct DownloadFailed: Error {
 }
 
+struct UnsupportedOSError: Error {
+}
+
 struct UnsupportedArchitectureError: Error {
 }
 
@@ -166,6 +169,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
+  @available(macOS 13, *)
   static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
     // Create NVRAM
     _ = try VZEFIVariableStore(creatingVariableStoreAt: vmDir.nvramURL)

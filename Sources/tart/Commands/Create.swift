@@ -37,7 +37,11 @@ struct Create: AsyncParsableCommand {
         }
 
         if linux {
-          _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
+          if #available(macOS 13, *) {
+            _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
+          } else {
+            throw UnsupportedOSError()
+          }
         }
 
         try VMStorageLocal().move(name, from: tmpVMDir)

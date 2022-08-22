@@ -1,5 +1,6 @@
 import Virtualization
 
+@available(macOS 13, *)
 struct Linux: Platform {
     func os() -> OS {
         .linux
