@@ -166,6 +166,8 @@ class VMStorageOCI: PrunableStorage {
     }
 
     try FileManager.default.createSymbolicLink(at: vmURL(to), withDestinationURL: vmURL(from))
+
+    try gc()
   }
 }
 
