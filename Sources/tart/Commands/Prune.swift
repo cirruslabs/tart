@@ -16,6 +16,9 @@ struct Prune: AsyncParsableCommand {
     valueName: "n"))
   var cacheBudget: UInt?
 
+  @Flag(help: .hidden)
+  var gc: Bool = false
+
   func validate() throws {
     if olderThan == nil && cacheBudget == nil {
       throw ValidationError("at least one criteria must be specified")
@@ -24,6 +27,10 @@ struct Prune: AsyncParsableCommand {
 
   func run() async throws {
     do {
+      if gc {
+        try VMStorageOCI().gc()
+      }
+
       // Clean up cache entries based on last accessed date
       if let olderThan = olderThan {
         let olderThanInterval = Int(exactly: olderThan)!.days.timeInterval
