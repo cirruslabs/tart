@@ -46,8 +46,8 @@ struct OCIManifest: Codable, Equatable {
 }
 
 struct OCIConfig: Codable {
-  var architecture: String = "arm64"
-  var os: String = "darwin"
+  var architecture: Architecture = .arm64
+  var os: OS = .darwin
 
   func toJSON() throws -> Data {
     try Config.jsonEncoder().encode(self)

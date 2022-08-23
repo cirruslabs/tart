@@ -10,6 +10,12 @@ struct NoMainScreenFoundError: Error {
 struct DownloadFailed: Error {
 }
 
+struct UnsupportedOSError: Error {
+}
+
+struct UnsupportedArchitectureError: Error {
+}
+
 class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   // Virtualization.Framework's virtual machine
   @Published var virtualMachine: VZVirtualMachine
@@ -29,17 +35,20 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        withSoftnet: Bool = false,
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
   ) throws {
-    let auxStorage = VZMacAuxiliaryStorage(contentsOf: vmDir.nvramURL)
-
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
+
+    if config.arch != CurrentArchitecture() {
+      throw UnsupportedArchitectureError()
+    }
 
     // Initialize the virtual machine and its configuration
     if withSoftnet {
       softnet = try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
+    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
+      nvramURL: vmDir.nvramURL, vmConfig: config,
       softnet: softnet, additionalDiskAttachments: additionalDiskAttachments)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -116,7 +125,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Create NVRAM
-    let auxStorage = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
+    _ = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
 
     // Create disk
     try vmDir.resizeDisk(diskSizeGB)
@@ -124,7 +133,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     name = vmDir.name
     // Create config
     config = VMConfig(
-      hardwareModel: requirements.hardwareModel,
+      platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
       cpuCountMin: requirements.minimumSupportedCPUCount,
       memorySizeMin: requirements.minimumSupportedMemorySize
     )
@@ -137,8 +146,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       softnet = try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, auxStorage: auxStorage, vmConfig: config,
-      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments)
+    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
+      vmConfig: config, softnet: softnet,
+      additionalDiskAttachments: additionalDiskAttachments)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -157,6 +167,21 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
         }
       }
     }
+  }
+
+  @available(macOS 13, *)
+  static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
+    // Create NVRAM
+    _ = try VZEFIVariableStore(creatingVariableStoreAt: vmDir.nvramURL)
+
+    // Create disk
+    try vmDir.resizeDisk(diskSizeGB)
+
+    // Create config
+    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
+    try config.save(toURL: vmDir.configURL)
+
+    return try VM(vmDir: vmDir)
   }
 
   func run(_ recovery: Bool) async throws {
@@ -199,7 +224,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   static func craftConfiguration(
     diskURL: URL,
-    auxStorage: VZMacAuxiliaryStorage,
+    nvramURL: URL,
     vmConfig: VMConfig,
     softnet: Softnet? = nil,
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment]
@@ -207,42 +232,17 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let configuration = VZVirtualMachineConfiguration()
 
     // Boot loader
-    configuration.bootLoader = VZMacOSBootLoader()
+    configuration.bootLoader = try vmConfig.platform.bootLoader(nvramURL: nvramURL)
 
     // CPU and memory
     configuration.cpuCount = vmConfig.cpuCount
     configuration.memorySize = vmConfig.memorySize
 
     // Platform
-    let platform = VZMacPlatformConfiguration()
-
-    platform.machineIdentifier = vmConfig.ecid
-    platform.auxiliaryStorage = auxStorage
-    platform.hardwareModel = vmConfig.hardwareModel
-
-    configuration.platform = platform
+    configuration.platform = vmConfig.platform.platform(nvramURL: nvramURL)
 
     // Display
-    let graphicsDeviceConfiguration = VZMacGraphicsDeviceConfiguration()
-    if let hostMainScreen = NSScreen.main {
-      let vmScreenSize = NSSize(
-        width: vmConfig.display.width,
-        height: vmConfig.display.height
-      )
-      graphicsDeviceConfiguration.displays = [
-        VZMacGraphicsDisplayConfiguration(for: hostMainScreen, sizeInPoints: vmScreenSize)
-      ]
-    } else {
-      graphicsDeviceConfiguration.displays = [
-        VZMacGraphicsDisplayConfiguration(
-          widthInPixels: vmConfig.display.width,
-          heightInPixels: vmConfig.display.height,
-          // Reasonable guess like https://developer.apple.com/documentation/coregraphics/1456599-cgdisplayscreensize    
-          pixelsPerInch: 72
-        )
-      ]
-    }
-    configuration.graphicsDevices = [graphicsDeviceConfiguration]
+    configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
 
     // Audio
     let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()

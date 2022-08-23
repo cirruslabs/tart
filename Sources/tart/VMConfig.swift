@@ -16,14 +16,18 @@ class LessThanMinimalResourcesError: NSObject, LocalizedError {
 
 enum CodingKeys: String, CodingKey {
   case version
-  case ecid
-  case hardwareModel
+  case os
+  case arch
   case cpuCountMin
   case cpuCount
   case memorySizeMin
   case memorySize
   case macAddress
   case display
+
+  // macOS-specific keys
+  case ecid
+  case hardwareModel
 }
 
 struct VMDisplayConfig: Codable {
@@ -33,25 +37,25 @@ struct VMDisplayConfig: Codable {
 
 struct VMConfig: Codable {
   var version: Int = 1
-  var ecid: VZMacMachineIdentifier
-  var hardwareModel: VZMacHardwareModel
+  var os: OS
+  var arch: Architecture
+  var platform: Platform
   var cpuCountMin: Int
   private(set) var cpuCount: Int
   var memorySizeMin: UInt64
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
-  
   var display: VMDisplayConfig = VMDisplayConfig()
 
   init(
-    ecid: VZMacMachineIdentifier = VZMacMachineIdentifier(),
-    hardwareModel: VZMacHardwareModel,
-    cpuCountMin: Int,
-    memorySizeMin: UInt64,
-    macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
+          platform: Platform,
+          cpuCountMin: Int,
+          memorySizeMin: UInt64,
+          macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
-    self.ecid = ecid
-    self.hardwareModel = hardwareModel
+    self.os = platform.os()
+    self.arch = CurrentArchitecture()
+    self.platform = platform
     self.macAddress = macAddress
     self.cpuCountMin = cpuCountMin
     self.memorySizeMin = memorySizeMin
@@ -81,29 +85,18 @@ struct VMConfig: Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     version = try container.decode(Int.self, forKey: .version)
-
-    let encodedECID = try container.decode(String.self, forKey: .ecid)
-    guard let data = Data.init(base64Encoded: encodedECID) else {
-      throw DecodingError.dataCorruptedError(forKey: .ecid,
-                in: container,
-                debugDescription: "failed to initialize Data using the provided value")
+    os = try container.decodeIfPresent(OS.self, forKey: .os) ?? .darwin
+    arch = try container.decodeIfPresent(Architecture.self, forKey: .arch) ?? .arm64
+    switch os {
+    case .darwin:
+      platform = try Darwin(from: decoder)
+    case .linux:
+      if #available(macOS 13, *) {
+        platform = try Linux(from: decoder)
+      } else {
+        throw UnsupportedOSError()
+      }
     }
-    guard let ecid = VZMacMachineIdentifier.init(dataRepresentation: data) else {
-      throw DecodingError.dataCorruptedError(forKey: .ecid,
-                in: container,
-                debugDescription: "failed to initialize VZMacMachineIdentifier using the provided value")
-    }
-    self.ecid = ecid
-
-    let encodedHardwareModel = try container.decode(String.self, forKey: .hardwareModel)
-    guard let data = Data.init(base64Encoded: encodedHardwareModel) else {
-      throw DecodingError.dataCorruptedError(forKey: .hardwareModel, in: container, debugDescription: "")
-    }
-    guard let hardwareModel = VZMacHardwareModel.init(dataRepresentation: data) else {
-      throw DecodingError.dataCorruptedError(forKey: .hardwareModel, in: container, debugDescription: "")
-    }
-    self.hardwareModel = hardwareModel
-
     cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
     cpuCount = try container.decode(Int.self, forKey: .cpuCount)
     memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
@@ -125,8 +118,9 @@ struct VMConfig: Codable {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
     try container.encode(version, forKey: .version)
-    try container.encode(ecid.dataRepresentation.base64EncodedString(), forKey: .ecid)
-    try container.encode(hardwareModel.dataRepresentation.base64EncodedString(), forKey: .hardwareModel)
+    try container.encode(os, forKey: .os)
+    try container.encode(arch, forKey: .arch)
+    try platform.encode(to: encoder)
     try container.encode(cpuCountMin, forKey: .cpuCountMin)
     try container.encode(cpuCount, forKey: .cpuCount)
     try container.encode(memorySizeMin, forKey: .memorySizeMin)
