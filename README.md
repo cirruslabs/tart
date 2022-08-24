@@ -1,6 +1,6 @@
 ![Tart – open source virtualization for your automation needs](Resources/TartSocial.png)
 
-*Tart* is a virtualization toolset to build, run and manage virtual machines on Apple Silicon.
+*Tart* is a virtualization toolset to build, run and manage macOS and Linux virtual machines on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
 
 * Tart uses Apple's own `Virtualization.Framework` for [near-native performance](https://browser.geekbench.com/v5/cpu/compare/14966395?baseline=14966339).
@@ -84,6 +84,11 @@ For the example above, `tart` binary will be saved to `$PWD/artifacts/Build/bina
 
 ### Creating from scratch
 
+Tart supports macOS and Linux virtual machines. All commands like `run` and `pull` work the same way regarding of the underlying OS a particular VM image has.
+The only difference is how such VM images are created. Please check sections below for [macOS](#creating-a-macos-vm-image-from-scratch) and [Linux](#creating-a-linux-vm-image-from-scratch) instructions.
+
+#### Creating a macOS VM image from scratch
+
 Tart can create VMs from `*.ipsw` files. You can download a specific `*.ipsw` file [here](https://ipsw.me/) or you can
 use `latest` instead of a path to `*.ipsw` to download the latest available version:
 
@@ -99,6 +104,27 @@ After the initial booting of the VM you'll need to manually go through the macOS
 3. Disable Lock Screen. Preferences -> Lock Screen -> disable "Require Password" after 5.
 4. Disable Screen Saver.
 5. Run `sudo visudo` in Terminal, find `%admin ALL=(ALL) ALL` add `admin ALL=(ALL) NOPASSWD: ALL` to allow sudo without a password.
+
+#### Creating a Linux VM image from scratch
+
+```bash
+# Create a bare VM
+tart create --linux ubuntu
+
+# Install Ubuntu
+tart run --disk focal-desktop-arm64.iso ubuntu
+
+# Run VM
+tart run ubuntu
+```
+
+After the initial setup please make sure your VM can be SSH-ed into by running the following commands inside your VM:
+
+```shell
+sudo apt update
+sudo apt install -y openssh-server
+sudo ufw allow ssh
+```
 
 ### Configuring a VM
 
