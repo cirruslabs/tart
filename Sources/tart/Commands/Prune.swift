@@ -20,8 +20,8 @@ struct Prune: AsyncParsableCommand {
   var gc: Bool = false
 
   func validate() throws {
-    if olderThan == nil && cacheBudget == nil {
-      throw ValidationError("at least one criteria must be specified")
+    if olderThan == nil && cacheBudget == nil && !gc {
+      throw ValidationError("at least one pruning criteria must be specified")
     }
   }
 
