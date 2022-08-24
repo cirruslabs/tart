@@ -10,7 +10,8 @@ struct NoMainScreenFoundError: Error {
 struct DownloadFailed: Error {
 }
 
-struct UnsupportedOSError: Error {
+struct UnsupportedOSError: Error, CustomStringConvertible {
+  private(set) var description: String = "error: Linux VMs are only supported on macOS 13.0 (Ventura) or newer"
 }
 
 struct UnsupportedArchitectureError: Error {
