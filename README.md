@@ -191,9 +191,19 @@ tart push my-local-vm-name acme.io/remoteorg/name:latest acme.io/remoteorg/name:
 
 #### Pulling a Remote Image
 
+You can either pull an image:
+
 ```shell
-tart pull acme.io/remoteorg/name:latest my-local-vm-name
+tart pull acme.io/remoteorg/name:latest
 ```
+
+...or instantiate a VM from a remote image:
+
+```shell
+tart clone acme.io/remoteorg/name:latest my-local-vm-name
+```
+
+This invocation calls the `tart pull` implicitly (if the image is not being present) before doing the actual cloning.
 
 ## FAQ
 
