@@ -256,7 +256,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Keyboard and mouse
     configuration.keyboards = [VZUSBKeyboardConfiguration()]
-    configuration.pointingDevices = [VZUSBScreenCoordinatePointingDeviceConfiguration()]
+    configuration.pointingDevices = vmConfig.platform.pointingDevices(vmConfig: vmConfig)
 
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()
@@ -277,6 +277,22 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Entropy
     configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
+    
+    // copy/paste
+    if #available(macOS 13, *) {
+      let consoleDevice = VZVirtioConsoleDeviceConfiguration()
+
+      let spiceAgentPort = VZVirtioConsolePortConfiguration()
+      spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
+
+      let spiceAgentPortAttachment = VZSpiceAgentPortAttachment()
+      spiceAgentPortAttachment.sharesClipboard = true
+      spiceAgentPort.attachment = spiceAgentPortAttachment
+      
+      consoleDevice.ports[0] = spiceAgentPort
+
+      configuration.consoleDevices = [consoleDevice]
+    }
 
     try configuration.validate()
 

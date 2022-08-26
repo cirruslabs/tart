@@ -122,7 +122,7 @@ After the initial setup please make sure your VM can be SSH-ed into by running t
 
 ```shell
 sudo apt update
-sudo apt install -y openssh-server
+sudo apt install -y openssh-server spice-vdagent
 sudo ufw allow ssh
 ```
 

@@ -5,4 +5,5 @@ protocol Platform: Codable {
     func bootLoader(nvramURL: URL) throws -> VZBootLoader
     func platform(nvramURL: URL) -> VZPlatformConfiguration
     func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration
+    func pointingDevices(vmConfig: VMConfig) -> [VZPointingDeviceConfiguration]
 }
