@@ -256,7 +256,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Keyboard and mouse
     configuration.keyboards = [VZUSBKeyboardConfiguration()]
-    configuration.pointingDevices = vmConfig.platform.pointingDevices(vmConfig: vmConfig)
+    configuration.pointingDevices = vmConfig.platform.pointingDevices()
 
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()

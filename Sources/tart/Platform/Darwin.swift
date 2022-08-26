@@ -85,7 +85,7 @@ struct Darwin: Platform {
         return result
     }
 
-    func pointingDevices(vmConfig: VMConfig) -> [VZPointingDeviceConfiguration] {
+    func pointingDevices() -> [VZPointingDeviceConfiguration] {
         if #available(macOS 13, *) {
             // Trackpad is only supported starting with macOS Ventura
             // macOS Monterey will continue using a USB device == .darwin 
