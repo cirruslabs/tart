@@ -12,7 +12,12 @@ class VMStorageLocal {
   }
 
   func open(_ name: String) throws -> VMDirectory {
-    let vmDir = VMDirectory(baseURL: vmURL(name))
+    // support having a path as name for use cases like Vagrant Provider which manages locations of VMs on it's own
+    var isDir:ObjCBool = true
+    let nameIsPath = FileManager.default.fileExists(atPath: name, isDirectory: &isDir)
+    let vmDir = VMDirectory(
+      baseURL: nameIsPath ?  URL(fileURLWithPath: name) : vmURL(name)
+    )
 
     try vmDir.validate()
 
