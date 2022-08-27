@@ -30,4 +30,8 @@ struct Linux: Platform {
 
         return result
     }
+
+    func pointingDevices() -> [VZPointingDeviceConfiguration] {
+        [VZUSBScreenCoordinatePointingDeviceConfiguration()]
+    }
 }
