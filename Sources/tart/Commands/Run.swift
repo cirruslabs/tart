@@ -37,12 +37,20 @@ struct Run: AsyncParsableCommand {
   @Flag var withSoftnet: Bool = false
 
   @Option(help: ArgumentHelp("""
-    Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"disk.bin:ro\")
+    Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
     """, discussion: """
     Learn how to create a disk image using Disk Utility here:
     https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
-    """))
+    """, valueName: "path[:ro]"))
   var disk: [String] = []
+
+  @Option(help: ArgumentHelp("""
+                             Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\")
+                             """, discussion: """
+                                              All shared directories are automatically mounted to "/Volumes/My Shared Files" directory on macOS,
+                                              while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
+                                              """, valueName: "name:path[:ro]"))
+  var dir: [String] = []
 
   func validate() throws {
     if vnc && vncExperimental {
@@ -56,7 +64,8 @@ struct Run: AsyncParsableCommand {
     vm = try VM(
       vmDir: vmDir,
       withSoftnet: withSoftnet,
-      additionalDiskAttachments: additionalDiskAttachments()
+      additionalDiskAttachments: additionalDiskAttachments(),
+      directoryShares: directoryShares()
     )
 
     let vncImpl: VNC? = try {
@@ -130,6 +139,34 @@ struct Run: AsyncParsableCommand {
           readOnly: false
         ))
       }
+    }
+
+    return result
+  }
+
+  func directoryShares() throws -> [DirectoryShare] {
+    var result: [DirectoryShare] = []
+
+    for rawDir in dir {
+      let splits = rawDir.split(maxSplits: 2) { $0 == ":" }
+
+      if splits.count < 2 {
+        throw ValidationError("invalid --dir syntax: should at least include name and path, colon-separated")
+      }
+
+      var readOnly: Bool = false
+
+      if splits.count == 3 {
+        if splits[2] == "ro" {
+          readOnly = true
+        } else {
+          throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
+        }
+      }
+
+      let (name, path) = (String(splits[0]), String(splits[1]))
+
+      result.append(DirectoryShare(name: name, path: URL(fileURLWithPath: path), readOnly: readOnly))
     }
 
     return result

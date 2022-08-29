@@ -34,7 +34,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   init(vmDir: VMDirectory,
        withSoftnet: Bool = false,
-       additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
+       additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
+       directoryShares: [DirectoryShare] = []
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -50,7 +51,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
       nvramURL: vmDir.nvramURL, vmConfig: config,
-      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments)
+      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments,
+            directoryShares: directoryShares)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -149,7 +151,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
       vmConfig: config, softnet: softnet,
-      additionalDiskAttachments: additionalDiskAttachments)
+      additionalDiskAttachments: additionalDiskAttachments,
+      directoryShares: [])
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -228,7 +231,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     nvramURL: URL,
     vmConfig: VMConfig,
     softnet: Softnet? = nil,
-    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment]
+    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
+    directoryShares: [DirectoryShare]
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -278,6 +282,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Entropy
     configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
 
+    // Directory share
+    if #available(macOS 13, *) {
+      var directories: [String : VZSharedDirectory] = Dictionary()
+      directoryShares.forEach { directories[$0.name] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
+
+      let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
+      let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
+      sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
+
+      configuration.directorySharingDevices = [sharingDevice]
+    }
+
     try configuration.validate()
 
     return configuration
@@ -297,4 +313,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     print("virtual machine's network attachment \(networkDevice) has been disconnected with error: \(error)")
     sema.signal()
   }
+}
+
+struct DirectoryShare {
+  let name: String
+  let path: URL
+  let readOnly: Bool
 }
