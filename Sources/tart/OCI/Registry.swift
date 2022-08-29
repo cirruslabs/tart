@@ -88,29 +88,29 @@ class Registry {
 
   let baseURL: URL
   let namespace: String
-  let credentialsProvider: CredentialsProvider
+  let credentialsProviders: [CredentialsProvider]
 
   var currentAuthToken: Authentication? = nil
 
   init(urlComponents: URLComponents,
        namespace: String,
-       credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+       credentialsProviders: [CredentialsProvider] = [HelperProgramCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
     baseURL = urlComponents.url!
     self.namespace = namespace
-    self.credentialsProvider = credentialsProvider
+    self.credentialsProviders = credentialsProviders
   }
 
   convenience init(
     host: String,
     namespace: String,
     insecure: Bool = false,
-    credentialsProvider: CredentialsProvider = KeychainCredentialsProvider()
+    credentialsProviders: [CredentialsProvider] = [HelperProgramCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
     let proto = insecure ? "http" : "https"
     let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
 
-    try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProvider: credentialsProvider)
+    try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProviders: credentialsProviders)
   }
 
   func ping() async throws {
@@ -303,7 +303,7 @@ class Registry {
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
 
     if wwwAuthenticate.scheme == "Basic" {
-      if let (user, password) = try credentialsProvider.retrieve(host: baseURL.host!) {
+      if let (user, password) = try lookupCredentials(host: baseURL.host!) {
         currentAuthToken = BasicAuthentication(user: user, password: password)
       }
 
@@ -340,7 +340,7 @@ class Registry {
 
     var headers: Dictionary<String, String> = Dictionary()
 
-    if let (user, password) = try credentialsProvider.retrieve(host: baseURL.host!) {
+    if let (user, password) = try lookupCredentials(host: baseURL.host!) {
       let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
@@ -354,6 +354,15 @@ class Registry {
 
     let bodyData = try await response.body.readResponse()
     currentAuthToken = try TokenResponse.parse(fromData: bodyData)
+  }
+
+  private func lookupCredentials(host: String) throws -> (String, String)? {
+    for provider in credentialsProviders {
+      if let (user, password) = try provider.retrieve(host: host) {
+        return (user, password)
+      }
+    }
+    return nil
   }
 
   private func authAwareRequest(request: HTTPClientRequest) async throws -> HTTPClientResponse {

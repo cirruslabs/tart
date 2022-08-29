@@ -12,7 +12,7 @@ class Softnet {
   init(vmMACAddress: String) throws {
     let binaryName = "softnet"
 
-    guard let executableURL = Self.resolveBinaryPath(binaryName) else {
+    guard let executableURL = resolveBinaryPath(binaryName) else {
       throw SoftnetError.InitializationFailed(why: "\(binaryName) not found in PATH")
     }
 
@@ -41,23 +41,6 @@ class Softnet {
   func stop() throws {
     process.interrupt()
     process.waitUntilExit()
-  }
-
-  private static func resolveBinaryPath(_ name: String) -> URL? {
-    guard let path = ProcessInfo.processInfo.environment["PATH"] else {
-      return nil
-    }
-
-    for pathComponent in path.split(separator: ":") {
-      let url = URL(fileURLWithPath: String(pathComponent))
-              .appendingPathComponent(name, isDirectory: false)
-
-      if FileManager.default.fileExists(atPath: url.path) {
-        return url
-      }
-    }
-
-    return nil
   }
 
   private func setSocketBuffers(_ fd: Int32, _ sizeBytes: Int) throws {
