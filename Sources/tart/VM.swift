@@ -292,6 +292,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
 
       configuration.directorySharingDevices = [sharingDevice]
+    } else if !directoryShares.isEmpty {
+      throw UnsupportedOSError()
     }
 
     try configuration.validate()
