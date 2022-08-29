@@ -40,7 +40,7 @@ struct Create: AsyncParsableCommand {
           if #available(macOS 13, *) {
             _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
           } else {
-            throw UnsupportedOSError()
+            throw UnsupportedOSError("Linux VMs", "are")
           }
         }
 

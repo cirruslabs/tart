@@ -11,7 +11,11 @@ struct DownloadFailed: Error {
 }
 
 struct UnsupportedOSError: Error, CustomStringConvertible {
-  private(set) var description: String = "error: Linux VMs are only supported on macOS 13.0 (Ventura) or newer"
+  let description: String
+
+  init(_ what: String, _ plural: String) {
+    description = "error: \(what) \(plural) only supported on macOS 13.0 (Ventura) or newer"
+  }
 }
 
 struct UnsupportedArchitectureError: Error {
@@ -293,7 +297,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
       configuration.directorySharingDevices = [sharingDevice]
     } else if !directoryShares.isEmpty {
-      throw UnsupportedOSError()
+      throw UnsupportedOSError("directory sharing", "is")
     }
 
     try configuration.validate()
