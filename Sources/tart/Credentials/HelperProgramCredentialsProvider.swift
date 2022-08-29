@@ -7,8 +7,8 @@ class HelperProgramCredentialsProvider: CredentialsProvider {
       return nil
     }
     let config = try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: dockerConfigURL))
-    
-    if let helperProgram = config.credHelpers[host] {
+
+    if let helperProgram = config.credHelpers?[host] {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
     }
 
@@ -54,7 +54,7 @@ class HelperProgramCredentialsProvider: CredentialsProvider {
 }
 
 struct DockerConfig: Codable {
-  var credHelpers: Dictionary<String, String> = Dictionary()
+  var credHelpers: Dictionary<String, String>? = Dictionary()
 }
 
 struct DockerGetOutput: Codable {
