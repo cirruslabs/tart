@@ -18,7 +18,7 @@ task:
 
 task:
   name: Release
-  # only_if: $CIRRUS_TAG != ''
+  only_if: $CIRRUS_TAG != ''
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
   env:
@@ -41,4 +41,4 @@ task:
     - security find-identity -v
     - xcodebuild -version
     - swift -version
-  release_script: goreleaser release --snapshot --rm-dist
+  release_script: goreleaser
