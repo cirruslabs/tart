@@ -8,4 +8,5 @@ apple_id {
 
 sign {
   application_identity = "Developer ID Application: Fedor Korotkov"
+  entitlements_file = "Resources/tart.entitlements"
 }
