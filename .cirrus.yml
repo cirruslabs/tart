@@ -34,7 +34,7 @@ task:
     - echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
     - security create-keychain -p password101 build.keychain
     - security default-keychain -s build.keychain
-    - security unlock-keychain -p <your-password> build.keychain
+    - security unlock-keychain -p password101 build.keychain
     - security import certificate.p12 -k build.keychain -P password101 -T /usr/bin/codesign
     - security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k password101 build.keychain
   info_script:
