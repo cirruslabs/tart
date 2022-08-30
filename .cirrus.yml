@@ -22,10 +22,23 @@ task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
   env:
+    MACOS_CERTIFICATE: ENCRYPTED[0dcc39b6d243b7eafba4412741c41dcb6779ebcbc40d78e54dbbb92632e64cdd5b665595e3c1251d746d9e6a124e4121]
+    AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
-  install_script: brew install go goreleaser/tap/goreleaser-pro
+  install_script: 
+    - brew install go goreleaser/tap/goreleaser-pro
+    - brew install mitchellh/gon/gon
+  setup_script:
+    - cd $HOME
+    - echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+    - security create-keychain -p password101 build.keychain
+    - security default-keychain -s build.keychain
+    - security unlock-keychain -p password101 build.keychain
+    - security import certificate.p12 -k build.keychain -P password101 -T /usr/bin/codesign
+    - security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k password101 build.keychain
   info_script:
+    - security find-identity -v
     - xcodebuild -version
     - swift -version
   release_script: goreleaser

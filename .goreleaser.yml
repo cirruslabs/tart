@@ -8,6 +8,8 @@ builds:
       - arm64
     prebuilt:
       path: .build/{{ .Arch }}-apple-macosx/debug/tart
+    hooks:
+      post: gon gon.hcl
 
 before:
   hooks:
