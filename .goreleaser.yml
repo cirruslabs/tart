@@ -9,13 +9,9 @@ builds:
     prebuilt:
       path: .build/arm64-apple-macosx/debug/tart 
     hooks:
-      post: | 
-        gon gon.hcl
-        mkdir -p .ci/pkg/
-        cp .build/arm64-apple-macosx/debug/tart .ci/pkg/
-        pkgbuild --root .ci/pkg --version "${CIRRUS_TAG:-0}" --install-location /usr/local/bin/ --identifier com.github.cirruslabs.tart --sign "Developer ID Installer: Fedor Korotkov (9M2P8L4D89)" Tart.pkg
-        xcrun notarytool submit Tart.pkg --keychain-profile "notarytool" --wait
-        xcrun stapler staple Tart.pkg
+      post: 
+        - gon gon.hcl
+        - .ci/create-pkg.sh
 
 before:
   hooks:
@@ -32,7 +28,7 @@ archives:
 release:
   prerelease: auto
   extra_files:
-    - glob: Tart.pkg
+    - glob: ./dist/Tart.pkg
 
 brews:
   - name: tart
