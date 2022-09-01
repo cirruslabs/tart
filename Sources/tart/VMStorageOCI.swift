@@ -132,7 +132,7 @@ class VMStorageOCI: PrunableStorage {
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
         let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)
 
-        let attrs = try tmpVMDir.baseURL.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        let attrs = try Config().tartCacheDir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
         let availableCapacityBytes = UInt64(attrs.volumeAvailableCapacityForImportantUsage!)
 
         if availableCapacityBytes < requiredCapacityBytes {
