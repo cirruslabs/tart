@@ -101,7 +101,7 @@ struct Prune: AsyncParsableCommand {
         break
       }
 
-      cacheReclaimedBytes -= try prunable.sizeBytes()
+      cacheReclaimedBytes += try prunable.sizeBytes()
       try prunable.delete()
     }
   }
