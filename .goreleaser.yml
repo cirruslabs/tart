@@ -28,7 +28,7 @@ archives:
 release:
   prerelease: auto
   extra_files:
-    - glob: ./dist/Tart.pkg
+    - glob: ./dist/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
