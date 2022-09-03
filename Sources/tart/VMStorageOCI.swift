@@ -1,7 +1,7 @@
 import Foundation
 
 class VMStorageOCI: PrunableStorage {
-  let baseURL = Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
+  let baseURL = try! Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
 
   private func vmURL(_ name: RemoteName) -> URL {
     baseURL.appendingRemoteName(name)

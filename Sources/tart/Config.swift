@@ -4,7 +4,7 @@ struct Config {
   let tartHomeDir: URL
   let tartCacheDir: URL
 
-  init() {
+  init() throws {
     var tartHomeDir: URL
 
     if let customTartHome = ProcessInfo.processInfo.environment["TART_HOME"] {
@@ -17,6 +17,8 @@ struct Config {
 
     self.tartHomeDir = tartHomeDir
     tartCacheDir = tartHomeDir.appendingPathComponent("cache", isDirectory: true)
+
+    try FileManager.default.createDirectory(at: tartCacheDir, withIntermediateDirectories: true)
   }
 
   static func jsonEncoder() -> JSONEncoder {
