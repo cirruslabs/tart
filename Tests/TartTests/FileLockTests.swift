@@ -21,9 +21,7 @@ final class FileLockTests: XCTestCase {
         try firstLock.lock()
 
         let secondLock = try! FileLock(lockURL: url)
-        XCTAssertThrowsError(try secondLock.trylock()) { error in
-            XCTAssertEqual(error as! FileLockError, FileLockError.AlreadyLocked)
-        }
+        XCTAssertFalse(try secondLock.trylock())
     }
 
     private func temporaryFile() -> URL {

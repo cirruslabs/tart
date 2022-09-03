@@ -8,39 +8,41 @@ enum FileLockError: Error, Equatable {
 
 class FileLock {
     let url: URL
-    let fh: FileHandle
+    let fd: Int32
 
     init(lockURL: URL) throws {
         url = lockURL
-        fh = try FileHandle(forWritingTo: lockURL)
+        fd = open(lockURL.path, 0)
     }
 
     deinit {
-        try! fh.close()
+        close(fd)
     }
 
-    func trylock() throws {
+    func trylock() throws -> Bool {
         try flockWrapper(LOCK_EX | LOCK_NB)
     }
 
     func lock() throws {
-        try flockWrapper(LOCK_EX)
+        _ = try flockWrapper(LOCK_EX)
     }
 
     func unlock() throws {
-        try flockWrapper(LOCK_UN)
+        _ = try flockWrapper(LOCK_UN)
     }
 
-    func flockWrapper(_ operation: Int32) throws {
-        let ret = flock(fh.fileDescriptor, operation)
+    func flockWrapper(_ operation: Int32) throws -> Bool {
+        let ret = flock(fd, operation)
         if ret != 0 {
             let details = Errno(rawValue: CInt(errno))
 
             if (operation & LOCK_NB) != 0 && details == .wouldBlock {
-                throw FileLockError.AlreadyLocked
+                return false
             }
 
             throw FileLockError.Failed("failed to lock \(url): \(details)")
         }
+
+        return true
     }
 }

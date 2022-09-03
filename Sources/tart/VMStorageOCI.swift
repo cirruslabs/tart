@@ -7,6 +7,10 @@ class VMStorageOCI: PrunableStorage {
     baseURL.appendingRemoteName(name)
   }
 
+  private func hostDirectoryURL(_ name: RemoteName) -> URL {
+    baseURL.appendingHost(name)
+  }
+
   func exists(_ name: RemoteName) -> Bool {
     VMDirectory(baseURL: vmURL(name)).initialized
   }
@@ -125,6 +129,24 @@ class VMStorageOCI: PrunableStorage {
     let digestName = RemoteName(host: name.host, namespace: name.namespace,
             reference: Reference(digest: Digest.hash(manifestData)))
 
+    // Ensure that host directory for given RemoteName exists in OCI storage
+    let hostDirectoryURL = hostDirectoryURL(digestName)
+    try FileManager.default.createDirectory(at: hostDirectoryURL, withIntermediateDirectories: true)
+
+    // Acquire a lock on it to prevent concurrent pulls for a single host
+    let lock = try FileLock(lockURL: hostDirectoryURL)
+
+    let sucessfullyLocked = try lock.trylock()
+    if !sucessfullyLocked {
+      print("waiting for lock...")
+      try lock.lock()
+    }
+    defer { try! lock.unlock() }
+
+    if Task.isCancelled {
+      throw CancellationError()
+    }
+
     if !exists(digestName) {
       let tmpVMDir = try VMDirectory.temporary()
 
@@ -180,5 +202,9 @@ extension URL {
     }
 
     return result
+  }
+
+  func appendingHost(_ name: RemoteName) -> URL {
+    self.appendingPathComponent(name.host, isDirectory: true)
   }
 }
