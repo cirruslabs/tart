@@ -55,6 +55,18 @@ public protocol ReferenceListener: ParseTreeListener {
 	 */
 	func exitNamespace(_ ctx: ReferenceParser.NamespaceContext)
 	/**
+	 * Enter a parse tree produced by {@link ReferenceParser#namespace_component}.
+	 - Parameters:
+	   - ctx: the parse tree
+	 */
+	func enterNamespace_component(_ ctx: ReferenceParser.Namespace_componentContext)
+	/**
+	 * Exit a parse tree produced by {@link ReferenceParser#namespace_component}.
+	 - Parameters:
+	   - ctx: the parse tree
+	 */
+	func exitNamespace_component(_ ctx: ReferenceParser.Namespace_componentContext)
+	/**
 	 * Enter a parse tree produced by {@link ReferenceParser#reference}.
 	 - Parameters:
 	   - ctx: the parse tree
@@ -79,17 +91,17 @@ public protocol ReferenceListener: ParseTreeListener {
 	 */
 	func exitTag(_ ctx: ReferenceParser.TagContext)
 	/**
-	 * Enter a parse tree produced by {@link ReferenceParser#tag_separator}.
+	 * Enter a parse tree produced by {@link ReferenceParser#separator}.
 	 - Parameters:
 	   - ctx: the parse tree
 	 */
-	func enterTag_separator(_ ctx: ReferenceParser.Tag_separatorContext)
+	func enterSeparator(_ ctx: ReferenceParser.SeparatorContext)
 	/**
-	 * Exit a parse tree produced by {@link ReferenceParser#tag_separator}.
+	 * Exit a parse tree produced by {@link ReferenceParser#separator}.
 	 - Parameters:
 	   - ctx: the parse tree
 	 */
-	func exitTag_separator(_ ctx: ReferenceParser.Tag_separatorContext)
+	func exitSeparator(_ ctx: ReferenceParser.SeparatorContext)
 	/**
 	 * Enter a parse tree produced by {@link ReferenceParser#name}.
 	 - Parameters:

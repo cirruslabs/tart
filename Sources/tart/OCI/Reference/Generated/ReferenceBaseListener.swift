@@ -67,6 +67,19 @@ open class ReferenceBaseListener: ReferenceListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	open func enterNamespace_component(_ ctx: ReferenceParser.Namespace_componentContext) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	open func exitNamespace_component(_ ctx: ReferenceParser.Namespace_componentContext) { }
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	open func enterReference(_ ctx: ReferenceParser.ReferenceContext) { }
 	/**
 	 * {@inheritDoc}
@@ -93,13 +106,13 @@ open class ReferenceBaseListener: ReferenceListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	open func enterTag_separator(_ ctx: ReferenceParser.Tag_separatorContext) { }
+	open func enterSeparator(_ ctx: ReferenceParser.SeparatorContext) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	open func exitTag_separator(_ ctx: ReferenceParser.Tag_separatorContext) { }
+	open func exitSeparator(_ ctx: ReferenceParser.SeparatorContext) { }
 
 	/**
 	 * {@inheritDoc}
