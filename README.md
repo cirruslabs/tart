@@ -8,6 +8,22 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 * Use Tart Packer Plugin to automate VM creation.
 * Built-in CI integration.
 
+*Tart* is already adopted by several automation services:
+
+<p align="center">
+  <a href="https://cirrus-ci.org/guide/macOS/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/CirrusCI.png" height="65"/>
+  </a>
+  <a href="https://codemagic.io/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Codemagic.png" height="65"/>
+  </a>
+  <a href="https://testingbot.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/TestingBot.png" height="65"/>
+  </a>
+</p>
+
+## Usage
+
 Try running a Tart VM on your Apple Silicon device running macOS Monterey or later (will download a 25 GB image):
 
 ```shell
