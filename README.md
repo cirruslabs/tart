@@ -10,9 +10,17 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 
 *Tart* is already adopted by several automation services:
 
-[![Cirrus CI](Resources/Users/CirrusCI.png)](https://cirrus-ci.org/guide/macOS/)
-[![Codemagic](Resources/Users/Codemagic.png)](https://codemagic.io/)
-[![TestingBot](Resources/Users/TestingBot.png)](https://testingbot.com/)
+<p align="center">
+  <a href="https://cirrus-ci.org/guide/macOS/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/CirrusCI.png" height="65"/>
+  </a>
+  <a href="https://codemagic.io/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Codemagic.png" height="65"/>
+  </a>
+  <a href="https://testingbot.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/TestingBot.png" height="65"/>
+  </a>
+</p>
 
 ## Usage
 
