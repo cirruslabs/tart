@@ -44,4 +44,8 @@ final class RemoteNameTests: XCTestCase {
     // Port must be specified when ":" is used
     XCTAssertEqual(try? RemoteName("127.0.0.1:/a/b").host, nil)
   }
+
+  func testNoPathTraversal() throws {
+    XCTAssertEqual(try? RemoteName("ghcr.io/a/../b/c:latest"), nil)
+  }
 }
