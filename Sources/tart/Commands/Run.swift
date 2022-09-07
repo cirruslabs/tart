@@ -126,8 +126,9 @@ struct Run: AsyncParsableCommand {
   func additionalDiskAttachments() throws -> [VZDiskImageStorageDeviceAttachment] {
     var result: [VZDiskImageStorageDeviceAttachment] = []
     let readOnlySuffix = ":ro"
+    let expandedDiskPaths = disk.map { NSString(string:$0).expandingTildeInPath }
 
-    for rawDisk in disk {
+    for rawDisk in expandedDiskPaths {
       if rawDisk.hasSuffix(readOnlySuffix) {
         result.append(try VZDiskImageStorageDeviceAttachment(
           url: URL(fileURLWithPath: String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count))),
