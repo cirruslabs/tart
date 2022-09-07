@@ -166,7 +166,7 @@ struct Run: AsyncParsableCommand {
 
       let (name, path) = (String(splits[0]), String(splits[1]))
 
-      result.append(DirectoryShare(name: name, path: URL(fileURLWithPath: path), readOnly: readOnly))
+      result.append(DirectoryShare(name: name, path: URL(fileURLWithPath: NSString(string: path).expandingTildeInPath), readOnly: readOnly))
     }
 
     return result
