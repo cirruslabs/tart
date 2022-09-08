@@ -268,3 +268,21 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
   Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
   doesn't support nested virtualization.
 </details>
+
+<details>
+  <summary>Changing the default NAT subnet</summary>
+
+  To change the default network to `192.168.77.1`:
+
+  ```
+  sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Address -string 192.168.77.1
+  ```
+
+  Note that even through a network would normally be specified as `192.168.77.0`, the [vmnet framework](https://developer.apple.com/documentation/vmnet) seems to treat this as a starting address too and refuses to pick up such network-like values.
+
+  The default subnet mask `255.255.255.0` should suffice for most use-cases, however, you can also change it to `255.255.0.0`, for example:
+
+  ```
+  sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
+  ```
+</details>
