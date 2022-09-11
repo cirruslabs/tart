@@ -29,7 +29,7 @@ struct VMDirectory: Prunable {
   }
 
   static func temporary() throws -> VMDirectory {
-    let tmpDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let tmpDir = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
 
     return VMDirectory(baseURL: tmpDir)
