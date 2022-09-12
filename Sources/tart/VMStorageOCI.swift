@@ -159,7 +159,7 @@ class VMStorageOCI: PrunableStorage {
 
         // There is a suspicious that occasionally capacity is returned as zero which can't be true.
         // Let's validate to avoid unnecessary pruning.
-        if 0 < availableCapacityBytes < requiredCapacityBytes {
+        if 0 < availableCapacityBytes && availableCapacityBytes < requiredCapacityBytes {
           try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
         }
       }
