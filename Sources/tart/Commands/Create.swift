@@ -27,6 +27,11 @@ struct Create: AsyncParsableCommand {
   func run() async throws {
     do {
       let tmpVMDir = try VMDirectory.temporary()
+
+      // Lock the temporary VM directory to prevent it's garbage collection
+      let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
+      try tmpVMDirLock.lock()
+
       try await withTaskCancellationHandler(operation: {
         if let fromIPSW = fromIPSW {
           if fromIPSW == "latest" {

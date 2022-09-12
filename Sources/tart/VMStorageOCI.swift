@@ -150,6 +150,10 @@ class VMStorageOCI: PrunableStorage {
     if !exists(digestName) {
       let tmpVMDir = try VMDirectory.temporary()
 
+      // Lock the temporary VM directory to prevent it's garbage collection
+      let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
+      try tmpVMDirLock.lock()
+
       // Try to reclaim some cache space if we know the VM size in advance
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
         let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)

@@ -34,6 +34,11 @@ struct Clone: AsyncParsableCommand {
       let sourceVM = try VMStorageHelper.open(sourceName)
 
       let tmpVMDir = try VMDirectory.temporary()
+
+      // Lock the temporary VM directory to prevent it's garbage collection
+      let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
+      try tmpVMDirLock.lock()
+
       try await withTaskCancellationHandler(operation: {
         let lock = try FileLock(lockURL: Config().tartHomeDir)
         try lock.lock()
