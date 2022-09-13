@@ -238,8 +238,8 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 <details>
   <summary>Why Tart is free and open sourced?</summary>
 
-  Tart is a relatively small project, and it didn't feel right to try to monetize it.
-  Apple did all the heavy lifting with their `Virtualization.Framework`.
+  Apple did all the heavy lifting with their `Virtualization.Framework` and it just felt right to develop Tart in the open.
+  Please consider [becoming a sponsor](https://github.com/sponsors/cirruslabs) if you find Tart saving a substantial amount of money on licensing and engineering hours for your company.
 </details>
 
 <details>
