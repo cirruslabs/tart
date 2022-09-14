@@ -34,10 +34,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   // VM's config
   var config: VMConfig
 
-  var softnet: Softnet? = nil
+  var network: Network
 
   init(vmDir: VMDirectory,
-       withSoftnet: Bool = false,
+       network: Network = NetworkShared(),
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
        directoryShares: [DirectoryShare] = []
   ) throws {
@@ -49,13 +49,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Initialize the virtual machine and its configuration
-    if withSoftnet {
-      softnet = try Softnet(vmMACAddress: config.macAddress.string)
-    }
-
+    self.network = network
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
       nvramURL: vmDir.nvramURL, vmConfig: config,
-      softnet: softnet, additionalDiskAttachments: additionalDiskAttachments,
+      network: network, additionalDiskAttachments: additionalDiskAttachments,
             directoryShares: directoryShares)
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -114,7 +111,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     vmDir: VMDirectory,
     ipswURL: URL?,
     diskSizeGB: UInt16,
-    withSoftnet: Bool = false,
+    network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
   ) async throws {
     let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
@@ -149,12 +146,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try config.save(toURL: vmDir.configURL)
 
     // Initialize the virtual machine and its configuration
-    if withSoftnet {
-      softnet = try Softnet(vmMACAddress: config.macAddress.string)
-    }
-
+    self.network = network
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-      vmConfig: config, softnet: softnet,
+      vmConfig: config, network: network,
       additionalDiskAttachments: additionalDiskAttachments,
       directoryShares: [])
     virtualMachine = VZVirtualMachine(configuration: configuration)
@@ -193,9 +187,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run(_ recovery: Bool) async throws {
-    if let softnet = softnet {
-      try softnet.run()
-    }
+    try network.run()
 
     DispatchQueue.main.sync {
       Task {
@@ -225,16 +217,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
-    if let softnet = softnet {
-      try softnet.stop();
-    }
+    try network.stop()
   }
 
   static func craftConfiguration(
     diskURL: URL,
     nvramURL: URL,
     vmConfig: VMConfig,
-    softnet: Softnet? = nil,
+    network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
     directoryShares: [DirectoryShare]
   ) throws -> VZVirtualMachineConfiguration {
@@ -268,13 +258,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()
-
-    if let softnet = softnet {
-      let fh = FileHandle.init(fileDescriptor: softnet.vmFD)
-      vio.attachment = VZFileHandleNetworkDeviceAttachment(fileHandle: fh)
-    } else {
-      vio.attachment = VZNATNetworkDeviceAttachment()
-    }
+    vio.attachment = network.attachment()
     vio.macAddress = vmConfig.macAddress
     configuration.networkDevices = [vio]
 

@@ -54,9 +54,20 @@ struct Run: AsyncParsableCommand {
                                               """, valueName: "name:path[:ro]"))
   var dir: [String] = []
 
+  @Option(help: ArgumentHelp("""
+                             Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
+                             """, discussion: """
+                                              Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
+                                              """, valueName: "interface name"))
+  var netBridged: String?
+
   func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
+    }
+
+    if withSoftnet && netBridged != nil {
+      throw ValidationError("--with-softnet and --net-bridged are mutually exclusive")
     }
   }
 
@@ -65,7 +76,7 @@ struct Run: AsyncParsableCommand {
     let vmDir = try VMStorageLocal().open(name)
     vm = try VM(
       vmDir: vmDir,
-      withSoftnet: withSoftnet,
+      network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalDiskAttachments: additionalDiskAttachments(),
       directoryShares: directoryShares()
     )
@@ -122,6 +133,47 @@ struct Run: AsyncParsableCommand {
       dispatchMain()
     } else {
       runUI()
+    }
+  }
+
+  func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
+    if withSoftnet {
+      let config = try VMConfig.init(fromURL: vmDir.configURL)
+
+      return try Softnet(vmMACAddress: config.macAddress.string)
+    }
+
+    if let netBridged = netBridged {
+      let matchingInterfaces = VZBridgedNetworkInterface.networkInterfaces.filter { interface in
+        interface.identifier == netBridged || interface.localizedDisplayName == netBridged
+      }
+
+      if matchingInterfaces.isEmpty {
+        let available = bridgeInterfaces().joined(separator: ", ")
+        throw ValidationError("no bridge interfaces matched \"\(netBridged)\", "
+          + "available interfaces: \(available)")
+      }
+
+      if matchingInterfaces.count > 1 {
+        throw ValidationError("more than one bridge interface matched \"\(netBridged)\", "
+          + "consider refining the search criteria")
+      }
+
+      return NetworkBridged(interface: matchingInterfaces.first!)
+    }
+
+    return nil
+  }
+
+  func bridgeInterfaces() -> [String] {
+    VZBridgedNetworkInterface.networkInterfaces.map { interface in
+      var bridgeDescription = interface.identifier
+
+      if let localizedDisplayName = interface.localizedDisplayName {
+        bridgeDescription += " (or \"\(localizedDisplayName)\")"
+      }
+
+      return bridgeDescription
     }
   }
 
