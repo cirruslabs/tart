@@ -32,6 +32,10 @@ class VMStorageLocal {
     _ = try FileManager.default.replaceItemAt(vmURL(name), withItemAt: from.baseURL)
   }
 
+  func rename(_ name: String, _ newName: String) throws {
+    _ = try FileManager.default.replaceItemAt(vmURL(newName), withItemAt: vmURL(name))
+  }
+
   func delete(_ name: String) throws {
     try FileManager.default.removeItem(at: vmURL(name))
   }
