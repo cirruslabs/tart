@@ -1,6 +1,5 @@
 import ArgumentParser
 import Foundation
-import SystemConfiguration
 
 struct Rename: AsyncParsableCommand {
     static var configuration = CommandConfiguration(abstract: "Clone a VM")
