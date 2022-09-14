@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 struct Rename: AsyncParsableCommand {
-    static var configuration = CommandConfiguration(abstract: "Clone a VM")
+    static var configuration = CommandConfiguration(abstract: "Rename a VM")
 
     @Argument(help: "VM name")
     var name: String
