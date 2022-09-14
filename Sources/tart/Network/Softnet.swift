@@ -1,10 +1,11 @@
 import Foundation
+import Virtualization
 
 enum SoftnetError: Error {
   case InitializationFailed(why: String)
 }
 
-class Softnet {
+class Softnet: Network {
   private let process = Process()
 
   let vmFD: Int32
@@ -56,5 +57,10 @@ class Softnet {
     if ret != 0 {
       throw SoftnetError.InitializationFailed(why: "setsockopt(SO_SNDBUF) returned \(ret)")
     }
+  }
+
+  func attachment() -> VZNetworkDeviceAttachment {
+    let fh = FileHandle.init(fileDescriptor: vmFD)
+    return VZFileHandleNetworkDeviceAttachment(fileHandle: fh)
   }
 }
