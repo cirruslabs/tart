@@ -15,7 +15,7 @@ struct Run: AsyncParsableCommand {
   var name: String
 
   @Flag(help: ArgumentHelp(
-          "Don't open an UI window.",
+          "Don't open a UI window.",
           discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
   var noGraphics: Bool = false
 
