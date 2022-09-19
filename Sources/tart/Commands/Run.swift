@@ -15,9 +15,12 @@ struct Run: AsyncParsableCommand {
   var name: String
 
   @Flag(help: ArgumentHelp(
-          "Don't open a UI window.",
+          "Don't open an UI window.",
           discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
   var noGraphics: Bool = false
+
+  @Flag(help: "Force open an UI window, even when VNC is enabled.")
+  var graphics: Bool = false
 
   @Flag(help: "Boot into recovery mode") 
   var recovery: Bool = false
@@ -68,6 +71,10 @@ struct Run: AsyncParsableCommand {
 
     if withSoftnet && netBridged != nil {
       throw ValidationError("--with-softnet and --net-bridged are mutually exclusive")
+    }
+
+    if graphics && noGraphics {
+      throw ValidationError("--graphics and --no-graphics are mutually exclusive")
     }
   }
 
@@ -129,7 +136,8 @@ struct Run: AsyncParsableCommand {
     }
     sigintSrc.activate()
 
-    if noGraphics || vnc || vncExperimental {
+    let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
+    if noGraphics || useVNCWithoutGraphics {
       dispatchMain()
     } else {
       runUI()
