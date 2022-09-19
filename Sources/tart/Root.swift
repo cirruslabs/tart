@@ -33,6 +33,9 @@ struct Root: AsyncParsableCommand {
     }
     sigintSrc.activate()
 
+    // Set line-buffered output for stdout
+    setlinebuf(stdout)
+
     // Parse and run command
     do {
       var command = try parseAsRoot()
