@@ -47,8 +47,9 @@ struct IP: AsyncParsableCommand {
       if let ip = try Leases().resolveMACAddress(macAddress: vmMACAddress) {
         return ip
       }
-
-      try await Task.sleep(nanoseconds: 1_000_000)
+      
+      // wait a second
+      try await Task.sleep(nanoseconds: 1_000_000_000)
     } while Date.now < waitUntil
 
     return nil
