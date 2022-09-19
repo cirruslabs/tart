@@ -19,7 +19,7 @@ struct Run: AsyncParsableCommand {
           discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
   var noGraphics: Bool = false
 
-  @Flag(help: "Force open an UI window, even when VNC is enabled.")
+  @Flag(help: "Force open a UI window, even when VNC is enabled.")
   var graphics: Bool = false
 
   @Flag(help: "Boot into recovery mode") 
