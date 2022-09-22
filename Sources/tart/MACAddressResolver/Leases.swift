@@ -19,14 +19,21 @@ enum LeasesError: Error {
 class Leases {
   private let leases: [MACAddress : Lease]
 
-  convenience init() throws {
+  convenience init?() throws {
     try self.init(URL(fileURLWithPath: "/var/db/dhcpd_leases"))
   }
 
-  convenience init(_ fromURL: URL) throws {
-    let fileContents = try String(contentsOf: fromURL, encoding: .utf8)
+  convenience init?(_ fromURL: URL) throws {
+    do {
+      let urlContents = try String(contentsOf: fromURL, encoding: .utf8)
+      try self.init(urlContents)
+    } catch {
+      if error.isFileNotFound() {
+        return nil
+      }
 
-    try self.init(fileContents)
+      throw error
+    }
   }
 
   init(_ fromString: String) throws {

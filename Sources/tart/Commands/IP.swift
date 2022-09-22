@@ -44,10 +44,10 @@ struct IP: AsyncParsableCommand {
     let waitUntil = Calendar.current.date(byAdding: .second, value: Int(secondsToWait), to: Date.now)!
 
     repeat {
-      if let ip = try Leases().resolveMACAddress(macAddress: vmMACAddress) {
+      if let leases = try Leases(), let ip = try leases.resolveMACAddress(macAddress: vmMACAddress) {
         return ip
       }
-      
+
       // wait a second
       try await Task.sleep(nanoseconds: 1_000_000_000)
     } while Date.now < waitUntil
