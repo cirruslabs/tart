@@ -9,8 +9,8 @@ class IPSWCache: PrunableStorage {
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
   }
 
-  func locationFor(image: VZMacOSRestoreImage) -> URL {
-    baseURL.appendingPathComponent("\(image.buildVersion).ipsw", isDirectory: false)
+  func locationFor(fileName: String) -> URL {
+    baseURL.appendingPathComponent(fileName, isDirectory: false)
   }
 
   func prunables() throws -> [Prunable] {

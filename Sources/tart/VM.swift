@@ -60,15 +60,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     virtualMachine.delegate = self
   }
 
-  static func retrieveLatestIPSW() async throws -> URL {
-    defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
-    let image = try await withCheckedThrowingContinuation { continuation in
-      VZMacOSRestoreImage.fetchLatestSupported() { result in
-        continuation.resume(with: result)
-      }
-    }
-
-    let expectedIPSWLocation = try IPSWCache().locationFor(image: image)
+  static func retrieveIPSW(remoteURL: URL, fileName: String) async throws -> URL {
+    let expectedIPSWLocation = try IPSWCache().locationFor(fileName: fileName)
 
     if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
       defaultLogger.appendNewLine("Using cached *.ipsw file...")
@@ -79,7 +72,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     defaultLogger.appendNewLine("Fetching \(expectedIPSWLocation.lastPathComponent)...")
 
     let data: Data = try await withCheckedThrowingContinuation { continuation in
-      let downloadedTask = URLSession.shared.dataTask(with: image.url) { data, response, error in
+      let downloadedTask = URLSession.shared.dataTask(with: remoteURL) { data, response, error in
         if error != nil {
           continuation.resume(throwing: error!)
           return
@@ -95,9 +88,22 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     try data.write(to: expectedIPSWLocation, options: [.atomic])
+
     return expectedIPSWLocation
   }
-  
+
+  static func latestIPSWURL() async throws -> URL {
+    defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
+
+    let image = try await withCheckedThrowingContinuation { continuation in
+      VZMacOSRestoreImage.fetchLatestSupported() { result in
+        continuation.resume(with: result)
+      }
+    }
+
+    return image.url
+  }
+
   var inFinalState: Bool {
     get {
       virtualMachine.state == VZVirtualMachine.State.stopped ||
@@ -109,12 +115,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   init(
     vmDir: VMDirectory,
-    ipswURL: URL?,
+    ipswURL: URL,
     diskSizeGB: UInt16,
     network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
   ) async throws {
-    let ipswURL = ipswURL != nil ? ipswURL! : try await VM.retrieveLatestIPSW();
+    var ipswURL = ipswURL
+
+    if !ipswURL.isFileURL {
+      ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL, fileName: ipswURL.lastPathComponent)
+    }
 
     // Load the restore image and try to get the requirements
     // that match both the image and our platform
