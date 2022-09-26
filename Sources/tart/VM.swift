@@ -60,16 +60,26 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     virtualMachine.delegate = self
   }
 
-  static func retrieveIPSW(remoteURL: URL, fileName: String) async throws -> URL {
-    let expectedIPSWLocation = try IPSWCache().locationFor(fileName: fileName)
+  static func retrieveIPSW(remoteURL: URL) async throws -> URL {
+    // Check if we already have this IPSW in cache
+    var request = URLRequest(url: remoteURL)
+    request.httpMethod = "HEAD"
+    let (_, response) = try await URLSession.shared.data(for: request)
+    let httpURLResponse = response as! HTTPURLResponse
 
-    if FileManager.default.fileExists(atPath: expectedIPSWLocation.path) {
-      defaultLogger.appendNewLine("Using cached *.ipsw file...")
-      try expectedIPSWLocation.updateAccessDate()
-      return expectedIPSWLocation
+    if let hash = httpURLResponse.value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
+      let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
+
+      if FileManager.default.fileExists(atPath: ipswLocation.path) {
+        defaultLogger.appendNewLine("Using cached *.ipsw file...")
+        try ipswLocation.updateAccessDate()
+
+        return ipswLocation
+      }
     }
 
-    defaultLogger.appendNewLine("Fetching \(expectedIPSWLocation.lastPathComponent)...")
+    // Download the IPSW
+    defaultLogger.appendNewLine("Fetching \(remoteURL.lastPathComponent)...")
 
     let data: Data = try await withCheckedThrowingContinuation { continuation in
       let downloadedTask = URLSession.shared.dataTask(with: remoteURL) { data, response, error in
@@ -87,9 +97,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       downloadedTask.resume()
     }
 
-    try data.write(to: expectedIPSWLocation, options: [.atomic])
+    let ipswLocation = try IPSWCache().locationFor(fileName: Digest.hash(data) + ".ipsw")
+    try data.write(to: ipswLocation, options: [.atomic])
 
-    return expectedIPSWLocation
+    return ipswLocation
   }
 
   static func latestIPSWURL() async throws -> URL {
@@ -123,7 +134,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     var ipswURL = ipswURL
 
     if !ipswURL.isFileURL {
-      ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL, fileName: ipswURL.lastPathComponent)
+      ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
     }
 
     // Load the restore image and try to get the requirements
