@@ -9,7 +9,7 @@ struct Create: AsyncParsableCommand {
   @Argument(help: "VM name")
   var name: String
 
-  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file (or \"latest\") to fetch the latest appropriate IPSW", valueName: "path"))
+  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file or URL (or \"latest\", to fetch the latest supported IPSW automatically)", valueName: "path"))
   var fromIPSW: String?
 
   @Flag(help: "create a Linux VM")
@@ -34,11 +34,17 @@ struct Create: AsyncParsableCommand {
 
       try await withTaskCancellationHandler(operation: {
         if let fromIPSW = fromIPSW {
+          let ipswURL: URL
+
           if fromIPSW == "latest" {
-            _ = try await VM(vmDir: tmpVMDir, ipswURL: nil, diskSizeGB: diskSize)
+            ipswURL = try await VM.latestIPSWURL()
+          } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
+            ipswURL = URL(string: fromIPSW)!
           } else {
-            _ = try await VM(vmDir: tmpVMDir, ipswURL: URL(fileURLWithPath: fromIPSW), diskSizeGB: diskSize)
+            ipswURL = URL(fileURLWithPath: fromIPSW)
           }
+
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
         }
 
         if linux {
