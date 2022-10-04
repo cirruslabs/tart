@@ -1,28 +1,44 @@
 import Foundation
-import NIOCore
-import NIOHTTP1
-import AsyncHTTPClient
 import Algorithms
-import NIOPosix
+import AsyncAlgorithms
+
+let chunkSizeBytes = 1 * 1024 * 1024
 
 enum RegistryError: Error {
-  case UnexpectedHTTPStatusCode(when: String, code: UInt, details: String = "")
+  case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
   case MissingLocationHeader
   case AuthFailed(why: String, details: String = "")
   case MalformedHeader(why: String)
 }
 
-extension HTTPClientResponse.Body {
-  func readTextResponse() async throws -> String? {
-    let data = try await readResponse()
-    return String(decoding: data, as: UTF8.self)
-  }
+enum HTTPMethod: String {
+  case GET = "GET"
+  case POST = "POST"
+  case PUT = "PUT"
+  case PATCH = "PATCH"
+}
 
-  func readResponse() async throws -> Data {
+enum HTTPCode: Int {
+  case Ok = 200
+  case Created = 201
+  case Accepted = 202
+  case Unauthorized = 401
+}
+
+extension Data {
+  func asText() async throws -> String? {
+    String(decoding: self, as: UTF8.self)
+  }
+}
+
+extension URLSession.AsyncBytes {
+  func asData() async throws -> Data {
     var result = Data()
-    for try await part in self {
-      result.append(Data(buffer: part))
+
+    for try await chunk in chunks(ofCount: chunkSizeBytes) {
+      result += chunk
     }
+
     return result
   }
 }
@@ -78,14 +94,6 @@ struct TokenResponse: Decodable, Authentication {
 }
 
 class Registry {
-  private let httpClient = HTTPClient(
-    eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup(numberOfThreads: 1))
-  )
-
-  deinit {
-    try! httpClient.syncShutdown()
-  }
-
   let baseURL: URL
   let namespace: String
   let credentialsProviders: [CredentialsProvider]
@@ -114,43 +122,43 @@ class Registry {
   }
 
   func ping() async throws {
-    let response = try await endpointRequest(.GET, "/v2/")
-    if response.status != .ok {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing ping", code: response.status.code)
+    let (_, response) = try await endpointRequest(.GET, "/v2/")
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "doing ping", code: response.statusCode)
     }
   }
 
   func pushManifest(reference: String, manifest: OCIManifest) async throws -> String {
     let manifestJSON = try manifest.toJSON()
 
-    let response = try await endpointRequest(.PUT, "\(namespace)/manifests/\(reference)",
+    let (bytes, response) = try await endpointRequest(.PUT, "\(namespace)/manifests/\(reference)",
       headers: ["Content-Type": manifest.mediaType],
       body: manifestJSON)
-    if response.status != .created {
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing manifest", code: response.status.code,
-        details: try await response.body.readTextResponse() ?? "")
+    if response.statusCode != HTTPCode.Created.rawValue {
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing manifest", code: response.statusCode,
+        details: try await bytes.asData().asText() ?? "")
     }
 
     return Digest.hash(manifestJSON)
   }
 
   public func pullManifest(reference: String) async throws -> (OCIManifest, Data) {
-    let response = try await endpointRequest(.GET, "\(namespace)/manifests/\(reference)",
+    let (bytes, response) = try await endpointRequest(.GET, "\(namespace)/manifests/\(reference)",
       headers: ["Accept": ociManifestMediaType])
-    if response.status != .ok {
-      let body = try await response.body.readTextResponse()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling manifest", code: response.status.code,
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      let body = try await bytes.asData().asText()
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling manifest", code: response.statusCode,
         details: body ?? "")
     }
 
-    let manifestData = try await response.body.readResponse()
+    let manifestData = try await bytes.asData()
     let manifest = try OCIManifest(fromJSON: manifestData)
 
     return (manifest, manifestData)
   }
 
-  private func uploadLocationFromResponse(_ response: HTTPClientResponse) throws -> URLComponents {
-    guard let uploadLocationRaw = response.headers.first(name: "Location") else {
+  private func uploadLocationFromResponse(_ response: HTTPURLResponse) throws -> URLComponents {
+    guard let uploadLocationRaw = response.value(forHTTPHeaderField: "Location") else {
       throw RegistryError.MissingLocationHeader
     }
 
@@ -163,11 +171,11 @@ class Registry {
 
   public func pushBlob(fromData: Data, chunkSizeMb: Int = 0) async throws -> String {
     // Initiate a blob upload
-    let postResponse = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
+    let (bytes, postResponse) = try await endpointRequest(.POST, "\(namespace)/blobs/uploads/",
       headers: ["Content-Length": "0"])
-    if postResponse.status != .accepted {
-      let body = try await postResponse.body.readTextResponse()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (POST)", code: postResponse.status.code,
+    if postResponse.statusCode != HTTPCode.Accepted.rawValue {
+      let body = try await bytes.asData().asText()
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (POST)", code: postResponse.statusCode,
         details: body ?? "")
     }
 
@@ -178,7 +186,7 @@ class Registry {
     
     if chunkSizeMb == 0 {
       // monolithic upload
-      let response = try await rawRequest(
+      let (bytes, response) = try await rawRequest(
         .PUT,
         uploadLocation,
         headers: [
@@ -187,10 +195,10 @@ class Registry {
         parameters: ["digest": digest],
         body: fromData
       )
-      if response.status != .created {
-        let body = try await response.body.readTextResponse()
+      if response.statusCode != HTTPCode.Created.rawValue {
+        let body = try await bytes.asData().asText()
         throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
-          code: response.status.code, details: body ?? "")
+          code: response.statusCode, details: body ?? "")
       }
       return digest
     }
@@ -200,7 +208,7 @@ class Registry {
     let chunks = fromData.chunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
     for (index, chunk) in chunks.enumerated() {
       let lastChunk = index == (chunks.count - 1)
-      let response = try await rawRequest(
+      let (bytes, response) = try await rawRequest(
         lastChunk ? .PUT : .PATCH, 
         uploadLocation,
         headers: [
@@ -210,11 +218,11 @@ class Registry {
         parameters: lastChunk ? ["digest": digest] : [:],
         body: chunk
       )
-      let expectedStatus: HTTPResponseStatus = lastChunk ? .created : .accepted
-      if response.status != expectedStatus {
-        let body = try await response.body.readTextResponse()
+      let expectedStatus = lastChunk ? HTTPCode.Created.rawValue : HTTPCode.Accepted.rawValue
+      if response.statusCode != expectedStatus {
+        let body = try await bytes.asData().asText()
         throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
-          code: response.status.code, details: body ?? "")
+          code: response.statusCode, details: body ?? "")
       }
       uploadedBytes += chunk.count
       // Update location for the next chunk
@@ -224,18 +232,18 @@ class Registry {
     return digest
   }
 
-  public func pullBlob(_ digest: String, handler: (ByteBuffer) throws -> Void) async throws {
-    let response = try await endpointRequest(.GET, "\(namespace)/blobs/\(digest)")
-    if response.status != .ok {
-      let body = try await response.body.readTextResponse()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.status.code,
+  public func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws {
+    let (bytes, response) = try await endpointRequest(.GET, "\(namespace)/blobs/\(digest)")
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      let body = try await bytes.asData().asText()
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
         details: body ?? "")
     }
 
-    for try await part in response.body {
+    for try await part in bytes.chunks(ofCount: chunkSizeBytes) {
       try Task.checkCancellation()
 
-      try handler(part)
+      try handler(Data(part))
     }
   }
 
@@ -245,7 +253,7 @@ class Registry {
     headers: Dictionary<String, String> = Dictionary(),
     parameters: Dictionary<String, String> = Dictionary(),
     body: Data? = nil
-  ) async throws -> HTTPClientResponse {
+  ) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
     let url = URL(string: endpoint, relativeTo: baseURL)!
     let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
 
@@ -259,7 +267,7 @@ class Registry {
     parameters: Dictionary<String, String> = Dictionary(),
     body: Data? = nil,
     doAuth: Bool = true
-  ) async throws -> HTTPClientResponse {
+  ) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
     var urlComponents = urlComponents
 
     if urlComponents.queryItems == nil && !parameters.isEmpty {
@@ -269,14 +277,14 @@ class Registry {
       URLQueryItem(name: key, value: value)
     })
 
-    var request = HTTPClientRequest(url: urlComponents.string!)
-    request.method = method
+    var request = URLRequest(url: urlComponents.url!)
+    request.httpMethod = method.rawValue
     for (key, value) in headers {
-      request.headers.add(name: key, value: value)
+      request.addValue(value, forHTTPHeaderField: key)
     }
-    if body != nil {
-      request.headers.add(name: "Content-Length", value: "\(body!.count)")
-      request.body = HTTPClientRequest.Body.bytes(body!)
+    if let body = body {
+      request.addValue("\(body.count)", forHTTPHeaderField: "Content-Length")
+      request.httpBody = body
     }
 
     // Invalidate token if it has expired
@@ -284,19 +292,19 @@ class Registry {
       currentAuthToken = nil
     }
 
-    var response = try await authAwareRequest(request: request)
+    var (bytes, response) = try await authAwareRequest(request: request)
 
-    if doAuth && response.status == .unauthorized {
+    if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
       try await auth(response: response)
-      response = try await authAwareRequest(request: request)
+      (bytes, response) = try await authAwareRequest(request: request)
     }
 
-    return response
+    return (bytes, response)
   }
 
-  private func auth(response: HTTPClientResponse) async throws {
+  private func auth(response: HTTPURLResponse) async throws {
     // Process WWW-Authenticate header
-    guard let wwwAuthenticateRaw = response.headers.first(name: "WWW-Authenticate") else {
+    guard let wwwAuthenticateRaw = response.value(forHTTPHeaderField: "WWW-Authenticate") else {
       throw RegistryError.AuthFailed(why: "got HTTP 401, but WWW-Authenticate header is missing")
     }
 
@@ -345,14 +353,14 @@ class Registry {
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
 
-    let response = try await rawRequest(.GET, authenticateURL, headers: headers, doAuth: false)
-    if response.status != .ok {
-      let body = try await response.body.readTextResponse() ?? ""
-      throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.status.code) "
+    let (bytes, response) = try await rawRequest(.GET, authenticateURL, headers: headers, doAuth: false)
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      let body = try await bytes.asData() .asText() ?? ""
+      throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
         + "while retrieving an authentication token", details: body)
     }
 
-    let bodyData = try await response.body.readResponse()
+    let bodyData = try await bytes.asData()
     currentAuthToken = try TokenResponse.parse(fromData: bodyData)
   }
 
@@ -365,14 +373,16 @@ class Registry {
     return nil
   }
 
-  private func authAwareRequest(request: HTTPClientRequest) async throws -> HTTPClientResponse {
+  private func authAwareRequest(request: URLRequest) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
     var request = request
 
     if let token = currentAuthToken {
       let (name, value) = token.header()
-      request.headers.add(name: name, value: value)
+      request.addValue(value, forHTTPHeaderField: name)
     }
 
-    return try await httpClient.execute(request, deadline: .distantFuture)
+    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+    return (bytes, response as! HTTPURLResponse)
   }
 }

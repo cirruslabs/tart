@@ -34,8 +34,8 @@ final class RegistryTests: XCTestCase {
 
         // Pull it
         var pulledBlob = Data()
-        try await registry.pullBlob(pushedBlobDigest) { buffer in
-            pulledBlob.append(Data(buffer: buffer))
+        try await registry.pullBlob(pushedBlobDigest) { data in
+            pulledBlob.append(data)
         }
 
         // Ensure that both blobs are identical
@@ -52,8 +52,8 @@ final class RegistryTests: XCTestCase {
 
         // Pull it
         var pulledLargeBlob = Data()
-        try await registry.pullBlob(largeBlobDigest) { buffer in
-            pulledLargeBlob.append(Data(buffer: buffer))       
+        try await registry.pullBlob(largeBlobDigest) { data in
+            pulledLargeBlob.append(data)
         }
 
         // Ensure that both blobs are identical
