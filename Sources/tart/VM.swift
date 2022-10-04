@@ -179,7 +179,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Run automated installation
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [ipswURL] in
         let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
 
         defaultLogger.appendNewLine("Installing OS...")
