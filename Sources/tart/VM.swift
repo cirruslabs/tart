@@ -1,5 +1,6 @@
 import Foundation
 import Virtualization
+import AsyncAlgorithms
 
 struct UnsupportedRestoreImageError: Error {
 }
@@ -62,12 +63,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   static func retrieveIPSW(remoteURL: URL) async throws -> URL {
     // Check if we already have this IPSW in cache
-    var request = URLRequest(url: remoteURL)
-    request.httpMethod = "HEAD"
-    let (_, response) = try await URLSession.shared.data(for: request)
-    let httpURLResponse = response as! HTTPURLResponse
+    let (bytes, response) = try await URLSession.shared.bytes(from: remoteURL)
 
-    if let hash = httpURLResponse.value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
+    if let hash = (response as! HTTPURLResponse).value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
       let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
 
       if FileManager.default.fileExists(atPath: ipswLocation.path) {
@@ -81,26 +79,29 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Download the IPSW
     defaultLogger.appendNewLine("Fetching \(remoteURL.lastPathComponent)...")
 
-    let data: Data = try await withCheckedThrowingContinuation { continuation in
-      let downloadedTask = URLSession.shared.dataTask(with: remoteURL) { data, response, error in
-        if error != nil {
-          continuation.resume(throwing: error!)
-          return
-        }
-        if (data == nil) {
-          continuation.resume(throwing: DownloadFailed())
-          return
-        }
-        continuation.resume(returning: data!)
-      }
-      ProgressObserver(downloadedTask.progress).log(defaultLogger)
-      downloadedTask.resume()
+    let progress = Progress(totalUnitCount: response.expectedContentLength)
+    ProgressObserver(progress).log(defaultLogger)
+
+    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
+    FileManager.default.createFile(atPath: temporaryLocation.path, contents: nil)
+    let lock = try FileLock(lockURL: temporaryLocation)
+    try lock.lock()
+
+    let fileHandle = try FileHandle(forWritingTo: temporaryLocation)
+    let digest = Digest()
+
+    for try await chunk in bytes.chunks(ofCount: chunkSizeBytes) {
+      let chunkAsData = Data(chunk)
+      fileHandle.write(chunkAsData)
+      digest.update(chunkAsData)
+      progress.completedUnitCount += Int64(chunk.count)
     }
 
-    let ipswLocation = try IPSWCache().locationFor(fileName: Digest.hash(data) + ".ipsw")
-    try data.write(to: ipswLocation, options: [.atomic])
+    try fileHandle.close()
 
-    return ipswLocation
+    let finalLocation = try IPSWCache().locationFor(fileName: digest.finalize() + ".ipsw")
+
+    return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
   }
 
   static func latestIPSWURL() async throws -> URL {
