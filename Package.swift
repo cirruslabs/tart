@@ -15,7 +15,8 @@ let package = Package(
     .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
     .package(url: "https://github.com/apple/swift-async-algorithms", branch: "main"),
-    .package(url: "https://github.com/malcommac/SwiftDate", from: "6.3.1")
+    .package(url: "https://github.com/malcommac/SwiftDate", from: "6.3.1"),
+    .package(url: "https://github.com/sushichop/Puppy", from: "0.5.1")
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -25,8 +26,8 @@ let package = Package(
       .product(name: "Dynamic", package: "Dynamic"),
       .product(name: "Parsing", package: "swift-parsing"),
       .product(name: "SwiftDate", package: "SwiftDate"),
+      .product(name: "Puppy", package: "Puppy"),
     ]),
     .testTarget(name: "TartTests", dependencies: ["tart"])
   ]
 )
-

@@ -1,5 +1,14 @@
 import ArgumentParser
 import Foundation
+import Puppy
+
+var puppy = Puppy.default
+
+class LogFormatter: LogFormattable {
+    func formatMessage(_ level: LogLevel, message: String, tag: String, function: String, file: String, line: UInt, swiftLogInfo: [String: String], label: String, date: Date, threadID: UInt64) -> String {
+        "\(date) \(level) \(message)"
+    }
+}
 
 @main
 struct Root: AsyncParsableCommand {
@@ -35,6 +44,12 @@ struct Root: AsyncParsableCommand {
 
     // Set line-buffered output for stdout
     setlinebuf(stdout)
+
+    // Initialize file logger
+    let logFileURL = try Config().tartHomeDir.appendingPathComponent("tart.log")
+    let fileLogger = try FileLogger("org.cirruslabs.tart", fileURL: logFileURL)
+    fileLogger.format = LogFormatter()
+    puppy.add(fileLogger)
 
     // Parse and run command
     do {

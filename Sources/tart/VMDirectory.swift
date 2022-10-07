@@ -28,6 +28,10 @@ struct VMDirectory: Prunable {
     baseURL.lastPathComponent
   }
 
+  var url: URL {
+    baseURL
+  }
+
   static func temporary() throws -> VMDirectory {
     let tmpDir = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)

@@ -159,11 +159,22 @@ class VMStorageOCI: PrunableStorage {
         let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)
 
         let attrs = try Config().tartCacheDir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey, .volumeAvailableCapacityKey])
-        let availableCapacityBytes = max(UInt64(attrs.volumeAvailableCapacityForImportantUsage!), UInt64(attrs.volumeAvailableCapacity!))
+        let capacityImportant = attrs.volumeAvailableCapacityForImportantUsage!
+        let capacityAvailable = attrs.volumeAvailableCapacity!
+        let availableCapacityBytes = max(UInt64(capacityImportant), UInt64(capacityAvailable))
+
+        if capacityImportant == 0 || capacityAvailable == 0 {
+          puppy.warning("important capacity \(capacityImportant) bytes, "
+                  + "available capacity is \(capacityAvailable) bytes")
+        }
 
         // There is a suspicious that occasionally capacity is returned as zero which can't be true.
         // Let's validate to avoid unnecessary pruning.
         if 0 < availableCapacityBytes && availableCapacityBytes < requiredCapacityBytes {
+          puppy.info("pruning cache to accommodate \(name) with a disk of size \(uncompressedDiskSize) bytes ("
+                  + "available capacity is \(availableCapacityBytes) bytes, required capacity "
+                  + "is \(requiredCapacityBytes) bytes)")
+
           try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
         }
       }
