@@ -103,6 +103,9 @@ struct Prune: AsyncParsableCommand {
 
       cacheReclaimedBytes += try prunable.sizeBytes()
       try prunable.delete()
+      puppy.info("deleting \(prunable.url)...")
     }
+
+    puppy.info("reclaimed \(cacheReclaimedBytes) bytes")
   }
 }

@@ -164,6 +164,10 @@ class VMStorageOCI: PrunableStorage {
         // There is a suspicious that occasionally capacity is returned as zero which can't be true.
         // Let's validate to avoid unnecessary pruning.
         if 0 < availableCapacityBytes && availableCapacityBytes < requiredCapacityBytes {
+          puppy.info("pruning cache to accommodate \(name) with a disk of size \(uncompressedDiskSize) bytes ("
+                  + "available capacity is \(availableCapacityBytes) bytes, required capacity "
+                  + "is \(requiredCapacityBytes) bytes)")
+
           try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
         }
       }
