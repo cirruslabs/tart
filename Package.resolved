@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "antlr4",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/antlr/antlr4",
+      "state" : {
+        "branch" : "dev",
+        "revision" : "2703a8516c0fb7fe92db6b9c40e0113f577646d2"
+      }
+    },
+    {
       "identity" : "dynamic",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mhdhejazi/Dynamic",
@@ -46,15 +55,6 @@
       }
     },
     {
-      "identity" : "swift-case-paths",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-case-paths",
-      "state" : {
-        "revision" : "ce9c0d897db8a840c39de64caaa9b60119cf4be8",
-        "version" : "0.8.1"
-      }
-    },
-    {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
@@ -82,30 +82,12 @@
       }
     },
     {
-      "identity" : "swift-parsing",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-parsing",
-      "state" : {
-        "revision" : "28d32e9ace1c4c43f5e5a177be837a202494c2d5",
-        "version" : "0.9.2"
-      }
-    },
-    {
       "identity" : "swiftdate",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/malcommac/SwiftDate",
       "state" : {
         "revision" : "6190d0cefff3013e77ed567e6b074f324e5c5bf5",
         "version" : "6.3.1"
-      }
-    },
-    {
-      "identity" : "xctest-dynamic-overlay",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
-      "state" : {
-        "revision" : "50a70a9d3583fe228ce672e8923010c8df2deddd",
-        "version" : "0.2.1"
       }
     }
   ],

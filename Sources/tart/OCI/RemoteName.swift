@@ -1,5 +1,5 @@
 import Foundation
-import Parsing
+import Antlr4
 
 struct Reference: Comparable, Hashable, CustomStringConvertible {
   enum ReferenceType: Comparable {
@@ -46,6 +46,39 @@ struct Reference: Comparable, Hashable, CustomStringConvertible {
   }
 }
 
+class ReferenceCollector: ReferenceBaseListener {
+  var host: String? = nil
+  var port: String? = nil
+  var namespace: String? = nil
+  var reference: String? = nil
+
+  override func exitHost(_ ctx: ReferenceParser.HostContext) {
+    host = ctx.getText()
+  }
+
+  override func exitPort(_ ctx: ReferenceParser.PortContext) {
+    port = ctx.getText()
+  }
+
+  override func exitNamespace(_ ctx: ReferenceParser.NamespaceContext) {
+    namespace = ctx.getText()
+  }
+
+  override func exitReference(_ ctx: ReferenceParser.ReferenceContext) {
+    reference = ctx.getText()
+  }
+}
+
+class ErrorCollector: BaseErrorListener {
+  var error: String? = nil
+
+  override func syntaxError<T>(_ recognizer: Recognizer<T>, _ offendingSymbol: AnyObject?, _ line: Int, _ charPositionInLine: Int, _ msg: String, _ e: AnyObject?) {
+    if error == nil {
+      error = "\(msg) (character \(charPositionInLine + 1))"
+    }
+  }
+}
+
 struct RemoteName: Comparable, Hashable, CustomStringConvertible {
   var host: String
   var namespace: String
@@ -58,51 +91,40 @@ struct RemoteName: Comparable, Hashable, CustomStringConvertible {
   }
 
   init(_ name: String) throws {
-    let csNormal = [
-      UInt8(ascii: "a")...UInt8(ascii: "z"),
-      UInt8(ascii: "A")...UInt8(ascii: "Z"),
-      UInt8(ascii: "0")...UInt8(ascii: "9"),
-    ].asCharacterSet().union(CharacterSet(charactersIn: "_-."))
+    let errorCollector = ErrorCollector()
+    let inputStream = ANTLRInputStream(Array(name.unicodeScalars), name.count)
+    let lexer = ReferenceLexer(inputStream)
+    lexer.removeErrorListeners()
+    lexer.addErrorListener(errorCollector)
 
-    let csHex = [
-      UInt8(ascii: "a")...UInt8(ascii: "f"),
-      UInt8(ascii: "0")...UInt8(ascii: "9"),
-    ].asCharacterSet()
+    let tokenStream = CommonTokenStream(lexer)
+    let parser = try ReferenceParser(tokenStream)
+    parser.removeErrorListeners()
+    parser.addErrorListener(errorCollector)
 
-    let parser = Parse {
-      Consumed {
-        csNormal
-        Optionally {
-          ":"
-          Digits()
-        }
-      }
-      "/"
-      csNormal.union(CharacterSet(charactersIn: "/"))
-      Optionally {
-        OneOf {
-          Parse {
-            ":"
-            csNormal.map {
-              Reference(tag: String($0))
-            }
-          }
-          Parse {
-            "@sha256:"
-            csHex.map {
-              Reference(digest: "sha256:" + String($0))
-            }
-          }
-        }
-      }
-      End()
+    let referenceCollector = ReferenceCollector()
+    try ParseTreeWalker().walk(referenceCollector, try parser.root())
+
+    if let error = errorCollector.error {
+      throw RuntimeError("failed to parse remote name: \(error)")
     }
 
-    let result = try parser.parse(name)
-
-    host = String(result.0)
-    namespace = String(result.1)
-    reference = result.2 ?? Reference(tag: "latest")
+    host = referenceCollector.host!
+    if let port = referenceCollector.port {
+      host += ":" + port
+    }
+    namespace = referenceCollector.namespace!
+    if let reference = referenceCollector.reference {
+      if reference.starts(with: "@sha256:") {
+        self.reference = Reference(digest: String(reference.dropFirst(1)))
+      } else if reference.starts(with: ":") {
+        self.reference = Reference(tag: String(reference.dropFirst(1)))
+      } else {
+        throw RuntimeError("failed to parse remote name: unknown reference format")
+      }
+    } else {
+      self.reference = Reference(tag: "latest")
+    }
   }
 
   static func <(lhs: RemoteName, rhs: RemoteName) -> Bool {

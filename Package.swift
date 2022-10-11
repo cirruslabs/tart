@@ -12,11 +12,11 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.2"),
     .package(url: "https://github.com/mhdhejazi/Dynamic", branch: "master"),
-    .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
     .package(url: "https://github.com/apple/swift-async-algorithms", branch: "main"),
     .package(url: "https://github.com/malcommac/SwiftDate", from: "6.3.1"),
-    .package(url: "https://github.com/sushichop/Puppy", from: "0.5.1")
+    .package(url: "https://github.com/sushichop/Puppy", from: "0.5.1"),
+    .package(url: "https://github.com/antlr/antlr4", branch: "dev"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -24,9 +24,16 @@ let package = Package(
       .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
       .product(name: "ArgumentParser", package: "swift-argument-parser"),
       .product(name: "Dynamic", package: "Dynamic"),
-      .product(name: "Parsing", package: "swift-parsing"),
       .product(name: "SwiftDate", package: "SwiftDate"),
       .product(name: "Puppy", package: "Puppy"),
+      .product(name: "Antlr4Static", package: "Antlr4"),
+    ], exclude: [
+      "OCI/Reference/Makefile",
+      "OCI/Reference/Reference.g4",
+      "OCI/Reference/Generated/Reference.interp",
+      "OCI/Reference/Generated/Reference.tokens",
+      "OCI/Reference/Generated/ReferenceLexer.interp",
+      "OCI/Reference/Generated/ReferenceLexer.tokens",
     ]),
     .testTarget(name: "TartTests", dependencies: ["tart"])
   ]
