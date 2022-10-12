@@ -17,6 +17,7 @@ let package = Package(
     .package(url: "https://github.com/malcommac/SwiftDate", from: "6.3.1"),
     .package(url: "https://github.com/sushichop/Puppy", from: "0.5.1"),
     .package(url: "https://github.com/antlr/antlr4", branch: "dev"),
+    .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.0.0")),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -27,6 +28,7 @@ let package = Package(
       .product(name: "SwiftDate", package: "SwiftDate"),
       .product(name: "Puppy", package: "Puppy"),
       .product(name: "Antlr4Static", package: "Antlr4"),
+      .product(name: "Atomics", package: "swift-atomics"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",

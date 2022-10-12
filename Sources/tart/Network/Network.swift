@@ -2,6 +2,6 @@ import Virtualization
 
 protocol Network {
   func attachment() -> VZNetworkDeviceAttachment
-  func run() throws
-  func stop() throws
+  func run(_ sema: DispatchSemaphore) throws
+  func stop() async throws
 }

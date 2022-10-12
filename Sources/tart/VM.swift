@@ -209,7 +209,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run(_ recovery: Bool) async throws {
-    try network.run()
+    try network.run(sema)
 
     DispatchQueue.main.sync {
       Task {
@@ -239,7 +239,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
-    try network.stop()
+    try await network.stop()
   }
 
   static func craftConfiguration(
