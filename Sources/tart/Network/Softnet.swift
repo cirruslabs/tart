@@ -1,12 +1,16 @@
 import Foundation
 import Virtualization
+import Atomics
 
 enum SoftnetError: Error {
   case InitializationFailed(why: String)
+  case RuntimeFailed(why: String)
 }
 
 class Softnet: Network {
   private let process = Process()
+  private var monitorTask: Task<Void, Error>? = nil
+  private let monitorTaskFinished = ManagedAtomic<Bool>(false)
 
   let vmFD: Int32
 
@@ -35,13 +39,33 @@ class Softnet: Network {
     process.standardInput = FileHandle(fileDescriptor: softnetFD, closeOnDealloc: false)
   }
 
-  func run() throws {
+  func run(_ sema: DispatchSemaphore) throws {
     try process.run()
+
+    monitorTask = Task {
+      // Wait for the Softnet to finish
+      process.waitUntilExit()
+
+      // Signal to the caller that the Softnet has finished
+      sema.signal()
+
+      // Signal to ourselves that the Softnet has finished
+      monitorTaskFinished.store(true, ordering: .sequentiallyConsistent)
+    }
   }
 
-  func stop() throws {
-    process.interrupt()
-    process.waitUntilExit()
+  func stop() async throws {
+    if monitorTaskFinished.load(ordering: .sequentiallyConsistent) {
+      // Consume the monitor task's value to ensure the task has finished
+      _ = try await monitorTask?.value
+
+      throw SoftnetError.RuntimeFailed(why: "Softnet process terminated prematurely")
+    } else {
+      process.interrupt()
+
+      // Consume the monitor task's value to ensure the task has finished
+      _ = try await monitorTask?.value
+    }
   }
 
   private func setSocketBuffers(_ fd: Int32, _ sizeBytes: Int) throws {

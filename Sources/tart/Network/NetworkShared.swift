@@ -6,11 +6,11 @@ class NetworkShared: Network {
         VZNATNetworkDeviceAttachment()
     }
 
-    func run() throws {
+    func run(_ sema: DispatchSemaphore) throws {
         // no-op, only used for Softnet
     }
 
-    func stop() throws {
+    func stop() async throws {
         // no-op, only used for Softnet
     }
 }
