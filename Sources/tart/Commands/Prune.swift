@@ -63,21 +63,22 @@ struct Prune: AsyncParsableCommand {
     let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
     let prunables: [Prunable] = try prunableStorages
             .flatMap { try $0.prunables() }
-            .sorted { try $0.accessDate() < $1.accessDate() }
+            .sorted { try $0.accessDate() > $1.accessDate() }
 
-    let cacheUsedBytes = try prunables.map { try $0.sizeBytes() }.reduce(0, +)
-    var cacheReclaimedBytes: Int = 0
+    var cacheBudgetBytes = cacheBudgetBytes
+    var prunablesToDelete: [Prunable] = []
 
-    var it = prunables.makeIterator()
+    for prunable in prunables {
+      let prunableSizeBytes = UInt64(try prunable.sizeBytes())
 
-    while (cacheUsedBytes - cacheReclaimedBytes) > cacheBudgetBytes {
-      guard let prunable = it.next() else {
-        break
+      if prunableSizeBytes <= cacheBudgetBytes {
+        cacheBudgetBytes -= prunableSizeBytes
+      } else {
+        prunablesToDelete.append(prunable)
       }
-
-      cacheReclaimedBytes -= try prunable.sizeBytes()
-      try prunable.delete()
     }
+
+    try prunablesToDelete.forEach { try $0.delete() }
   }
 
   static func pruneReclaim(reclaimBytes: UInt64) throws {
