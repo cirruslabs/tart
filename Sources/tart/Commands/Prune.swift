@@ -72,8 +72,11 @@ struct Prune: AsyncParsableCommand {
       let prunableSizeBytes = UInt64(try prunable.sizeBytes())
 
       if prunableSizeBytes <= cacheBudgetBytes {
+        // Don't mark for deletion as
+        // there's a budget available
         cacheBudgetBytes -= prunableSizeBytes
       } else {
+        // Mark for deletion
         prunablesToDelete.append(prunable)
       }
     }
