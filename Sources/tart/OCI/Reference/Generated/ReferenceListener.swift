@@ -43,6 +43,18 @@ public protocol ReferenceListener: ParseTreeListener {
 	 */
 	func exitPort(_ ctx: ReferenceParser.PortContext)
 	/**
+	 * Enter a parse tree produced by {@link ReferenceParser#host_component}.
+	 - Parameters:
+	   - ctx: the parse tree
+	 */
+	func enterHost_component(_ ctx: ReferenceParser.Host_componentContext)
+	/**
+	 * Exit a parse tree produced by {@link ReferenceParser#host_component}.
+	 - Parameters:
+	   - ctx: the parse tree
+	 */
+	func exitHost_component(_ ctx: ReferenceParser.Host_componentContext)
+	/**
 	 * Enter a parse tree produced by {@link ReferenceParser#namespace}.
 	 - Parameters:
 	   - ctx: the parse tree

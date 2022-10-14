@@ -1,8 +1,9 @@
 grammar Reference;
 
 root: host (':' port)? '/' namespace reference? EOF;
-host: name ('.' name)*;
+host: host_component ('.' host_component)*;
 port: DIGIT+;
+host_component: name ('-' name)*;
 namespace: namespace_component ('/' namespace_component)*;
 namespace_component: (name separator?)+;
 reference: (':' tag) | ('@' name ':' name);
