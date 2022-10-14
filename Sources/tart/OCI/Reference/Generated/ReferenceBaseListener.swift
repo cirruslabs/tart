@@ -54,6 +54,19 @@ open class ReferenceBaseListener: ReferenceListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	open func enterHost_component(_ ctx: ReferenceParser.Host_componentContext) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	open func exitHost_component(_ ctx: ReferenceParser.Host_componentContext) { }
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	open func enterNamespace(_ ctx: ReferenceParser.NamespaceContext) { }
 	/**
 	 * {@inheritDoc}
