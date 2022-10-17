@@ -214,8 +214,7 @@ class Registry {
         parameters: lastChunk ? ["digest": digest] : [:],
         body: chunk
       )
-      let expectedStatus = lastChunk ? HTTPCode.Created.rawValue : HTTPCode.Accepted.rawValue
-      if response.statusCode != expectedStatus {
+      if response.statusCode != HTTPCode.Created.rawValue && response.statusCode != HTTPCode.Accepted.rawValue {
         throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
           code: response.statusCode, details: data.asText())
       }
