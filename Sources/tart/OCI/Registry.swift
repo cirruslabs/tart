@@ -1,6 +1,5 @@
 import Foundation
 import Algorithms
-import AsyncAlgorithms
 
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
@@ -26,18 +25,6 @@ enum HTTPCode: Int {
 extension Data {
   func asText() -> String {
     String(decoding: self, as: UTF8.self)
-  }
-}
-
-extension AsyncThrowingChannel<Data, Error> {
-  func asData() async throws -> Data {
-    var result = Data()
-
-    for try await chunk in self {
-      result += chunk
-    }
-
-    return result
   }
 }
 
@@ -225,18 +212,28 @@ class Registry {
     return digest
   }
 
-  public func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws {
-    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"))
-    if response.statusCode != HTTPCode.Ok.rawValue {
-      let body = try await channel.asData().asText()
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
-        details: body)
+  public func pullBlob(_ digest: String, _ pathInto: URL) async throws {
+    var response = try await URLFetcher.download(
+      for: buildRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)")),
+      into: pathInto
+    )
+
+    if response.statusCode == HTTPCode.Unauthorized.rawValue {      
+      try await auth(response: response)
+      response = try await URLFetcher.download(
+        for: buildRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)")),
+        into: pathInto
+      )
     }
-
-    for try await part in channel {
-      try Task.checkCancellation()
-
-      try handler(Data(part))
+    
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      var details = ""
+      do {
+        details = try Data(contentsOf: pathInto).asText()
+        try FileManager.default.removeItem(at: pathInto)
+      } catch {
+      }
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode, details: details)
     }
   }
 
@@ -249,25 +246,44 @@ class Registry {
   private func dataRequest(
           _ method: HTTPMethod,
           _ urlComponents: URLComponents,
-          headers: Dictionary<String, String> = Dictionary(),
-          parameters: Dictionary<String, String> = Dictionary(),
+          headers: Dictionary<String, String> = [:],
+          parameters: Dictionary<String, String> = [:],
           body: Data? = nil,
           doAuth: Bool = true
   ) async throws -> (Data, HTTPURLResponse) {
-    let (channel, response) = try await channelRequest(method, urlComponents,
-            headers: headers, parameters: parameters, body: body, doAuth: doAuth)
+    let request = buildRequest(
+      method, 
+      urlComponents, 
+      parameters: parameters, 
+      headers: headers, 
+      body: body
+    )
 
-    return (try await channel.asData(), response)
+    let (data, response) = try await URLFetcher.data(for: request)
+
+    let shouldReTry = doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue
+    if !shouldReTry {
+      return (data, response)
+    }
+    
+    try await auth(response: response)
+    return try await dataRequest(
+      method,
+      urlComponents,
+      headers: headers,
+      parameters: parameters,
+      body: body,
+      doAuth: false // so there is no infinite recursion
+    )
   }
 
-  private func channelRequest(
-    _ method: HTTPMethod,
-    _ urlComponents: URLComponents,
-    headers: Dictionary<String, String> = Dictionary(),
-    parameters: Dictionary<String, String> = Dictionary(),
-    body: Data? = nil,
-    doAuth: Bool = true
-  ) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private func buildRequest(
+    _ method: HTTPMethod, 
+    _ urlComponents: URLComponents, 
+    parameters: Dictionary<String, String> = [String: String](), 
+    headers: Dictionary<String, String> = [String: String](), 
+    body: Data? = nil
+  ) -> URLRequest {
     var urlComponents = urlComponents
 
     if urlComponents.queryItems == nil && !parameters.isEmpty {
@@ -279,6 +295,11 @@ class Registry {
 
     var request = URLRequest(url: urlComponents.url!)
     request.httpMethod = method.rawValue
+    // auth if possible
+    if let token = currentAuthToken {
+      let (name, value) = token.header()
+      request.addValue(value, forHTTPHeaderField: name)
+    }
     for (key, value) in headers {
       request.addValue(value, forHTTPHeaderField: key)
     }
@@ -291,16 +312,7 @@ class Registry {
     if currentAuthToken?.isValid() == false {
       currentAuthToken = nil
     }
-
-    var (channel, response) = try await authAwareRequest(request: request)
-
-    if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
-      _ = try await channel.asData()
-      try await auth(response: response)
-      (channel, response) = try await authAwareRequest(request: request)
-    }
-
-    return (channel, response)
+    return request
   }
 
   private func auth(response: HTTPURLResponse) async throws {
@@ -370,18 +382,5 @@ class Registry {
       }
     }
     return nil
-  }
-
-  private func authAwareRequest(request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
-    var request = request
-
-    if let token = currentAuthToken {
-      let (name, value) = token.header()
-      request.addValue(value, forHTTPHeaderField: name)
-    }
-
-    let (channel, response) = try await Fetcher().fetch(request)
-
-    return (channel, response as! HTTPURLResponse)
   }
 }

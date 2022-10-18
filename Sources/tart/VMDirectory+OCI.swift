@@ -1,3 +1,4 @@
+import Atomics
 import Foundation
 import Compression
 
@@ -34,11 +35,7 @@ extension VMDirectory {
     if !FileManager.default.createFile(atPath: configURL.path, contents: nil) {
       throw OCIError.FailedToCreateVmFile
     }
-    let configFile = try FileHandle(forWritingTo: configURL)
-    try await registry.pullBlob(configLayers.first!.digest) { data in
-      configFile.write(data)
-    }
-    try configFile.close()
+    try await registry.pullBlob(configLayers.first!.digest, configURL)
 
     // Pull VM's disk layers and decompress them sequentially into a disk file
     let diskLayers = manifest.layers.filter {
@@ -50,12 +47,6 @@ extension VMDirectory {
     if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
       throw OCIError.FailedToCreateVmFile
     }
-    let disk = try FileHandle(forWritingTo: diskURL)
-    let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
-      if let data = data {
-        disk.write(data)
-      }
-    }
 
     // Progress
     let diskCompressedSize: Int64 = Int64(diskLayers.map {
@@ -65,15 +56,43 @@ extension VMDirectory {
               $0 + $1
             })
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
-    defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
-    let progress = Progress(totalUnitCount: diskCompressedSize)
-    ProgressObserver(progress).log(defaultLogger)
-
-    for diskLayer in diskLayers {
-      try await registry.pullBlob(diskLayer.digest) { data in
-        try filter.write(data)
-        progress.completedUnitCount += Int64(data.count)
+    defaultLogger.appendNewLine("pulling \(diskLayers.count) disk layers (\(prettyDiskSize) GB compressed)")
+    let layersDownloaded = ManagedAtomic<Int>(0)
+    defaultLogger.appendNewLine("pulled \(layersDownloaded.load(ordering: .relaxed))/\(diskLayers.count) layers...")
+    
+    // download layers in parallel
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for (index, diskLayer) in diskLayers.enumerated() {
+        if (index >= ProcessInfo.processInfo.processorCount) {
+          // wait for next availability
+          try await group.next()
+        }
+        group.addTask {
+          try await registry.pullBlob(diskLayer.digest, layerPath(diskLayer.digest))
+          layersDownloaded.wrappingIncrement(ordering: .relaxed)
+          defaultLogger.updateLastLine("pulled \(layersDownloaded.load(ordering: .relaxed))/\(diskLayers.count) layers...")
+        }
       }
+      
+      try await group.waitForAll()
+      defaultLogger.updateLastLine("pulled all layers!")        
+    }
+    
+    let disk = try FileHandle(forWritingTo: diskURL)
+    let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
+      if let data = data {
+        disk.write(data)
+      }
+    }
+    defaultLogger.appendNewLine("extracting layers...")
+    let extractProgress = Progress(totalUnitCount: diskCompressedSize)
+    ProgressObserver(extractProgress).log(defaultLogger)
+    for diskLayer in diskLayers {
+      let layerPath = layerPath(diskLayer.digest)
+      let layerData = try Data(contentsOf: layerPath)
+      try filter.write(layerData)
+      extractProgress.completedUnitCount += Int64(layerData.count)
+      try FileManager.default.removeItem(at: layerPath)
     }
     try filter.finalize()
     try disk.close()
@@ -90,11 +109,7 @@ extension VMDirectory {
     if !FileManager.default.createFile(atPath: nvramURL.path, contents: nil) {
       throw OCIError.FailedToCreateVmFile
     }
-    let nvram = try FileHandle(forWritingTo: nvramURL)
-    try await registry.pullBlob(nvramLayers.first!.digest) { data in
-      nvram.write(data)
-    }
-    try nvram.close()
+    try await registry.pullBlob(nvramLayers.first!.digest, nvramURL)
   }
 
   func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int) async throws -> RemoteName {

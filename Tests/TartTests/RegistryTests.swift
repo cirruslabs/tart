@@ -33,10 +33,10 @@ final class RegistryTests: XCTestCase {
         XCTAssertEqual("sha256:d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", pushedBlobDigest)
 
         // Pull it
-        var pulledBlob = Data()
-        try await registry.pullBlob(pushedBlobDigest) { data in
-            pulledBlob.append(data)
-        }
+        let tmpBlobFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        addTeardownBlock { try FileManager.default.removeItem(at: tmpBlobFile) }
+        try await registry.pullBlob(pushedBlobDigest, tmpBlobFile)
+        let pulledBlob = try Data(contentsOf: tmpBlobFile)
 
         // Ensure that both blobs are identical
         XCTAssertEqual(pushedBlob, pulledBlob)
@@ -51,10 +51,10 @@ final class RegistryTests: XCTestCase {
         let largeBlobDigest = try await registry.pushBlob(fromData: largeBlobToPush, chunkSizeMb: 10)
 
         // Pull it
-        var pulledLargeBlob = Data()
-        try await registry.pullBlob(largeBlobDigest) { data in
-            pulledLargeBlob.append(data)
-        }
+        let tmpBlobFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        addTeardownBlock { try FileManager.default.removeItem(at: tmpBlobFile) }
+        try await registry.pullBlob(largeBlobDigest, tmpBlobFile)
+        let pulledLargeBlob = try Data(contentsOf: tmpBlobFile)
 
         // Ensure that both blobs are identical
         XCTAssertEqual(largeBlobToPush, pulledLargeBlob)

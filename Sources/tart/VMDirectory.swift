@@ -23,6 +23,10 @@ struct VMDirectory: Prunable {
   var explicitlyPulledMark: URL {
     baseURL.appendingPathComponent(".explicitly-pulled")
   }
+  
+  internal func layerPath(_ digest: String) -> URL {
+    baseURL.appendingPathComponent("\(digest).layer")    
+  }
 
   var name: String {
     baseURL.lastPathComponent
