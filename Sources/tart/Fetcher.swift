@@ -6,8 +6,8 @@ class Fetcher: NSObject, URLSessionTaskDelegate, URLSessionDelegate, URLSessionD
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
     func fetch(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, URLResponse) {
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
-        let task = session.dataTask(with: request)
+        let task = URLSession.shared.dataTask(with: request)
+        task.delegate = self
         task.resume()
 
         // Wait for the response and only then return
