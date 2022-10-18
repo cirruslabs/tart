@@ -2,8 +2,6 @@ import Foundation
 import Algorithms
 import AsyncAlgorithms
 
-let chunkSizeBytes = 1 * 1024 * 1024
-
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
   case MissingLocationHeader
@@ -31,11 +29,11 @@ extension Data {
   }
 }
 
-extension URLSession.AsyncBytes {
+extension AsyncThrowingChannel<Data, Error> {
   func asData() async throws -> Data {
     var result = Data()
 
-    for try await chunk in chunks(ofCount: chunkSizeBytes) {
+    for try await chunk in self {
       result += chunk
     }
 
@@ -228,14 +226,14 @@ class Registry {
   }
 
   public func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws {
-    let (bytes, response) = try await bytesRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"))
+    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"))
     if response.statusCode != HTTPCode.Ok.rawValue {
-      let body = try await bytes.asData().asText()
+      let body = try await channel.asData().asText()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
         details: body)
     }
 
-    for try await part in bytes.chunks(ofCount: chunkSizeBytes) {
+    for try await part in channel {
       try Task.checkCancellation()
 
       try handler(Data(part))
@@ -256,20 +254,20 @@ class Registry {
           body: Data? = nil,
           doAuth: Bool = true
   ) async throws -> (Data, HTTPURLResponse) {
-    let (bytes, response) = try await bytesRequest(method, urlComponents,
+    let (channel, response) = try await channelRequest(method, urlComponents,
             headers: headers, parameters: parameters, body: body, doAuth: doAuth)
 
-    return (try await bytes.asData(), response)
+    return (try await channel.asData(), response)
   }
 
-  private func bytesRequest(
+  private func channelRequest(
     _ method: HTTPMethod,
     _ urlComponents: URLComponents,
     headers: Dictionary<String, String> = Dictionary(),
     parameters: Dictionary<String, String> = Dictionary(),
     body: Data? = nil,
     doAuth: Bool = true
-  ) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
+  ) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var urlComponents = urlComponents
 
     if urlComponents.queryItems == nil && !parameters.isEmpty {
@@ -294,14 +292,14 @@ class Registry {
       currentAuthToken = nil
     }
 
-    var (bytes, response) = try await authAwareRequest(request: request)
+    var (channel, response) = try await authAwareRequest(request: request)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
       try await auth(response: response)
-      (bytes, response) = try await authAwareRequest(request: request)
+      (channel, response) = try await authAwareRequest(request: request)
     }
 
-    return (bytes, response)
+    return (channel, response)
   }
 
   private func auth(response: HTTPURLResponse) async throws {
@@ -373,7 +371,7 @@ class Registry {
     return nil
   }
 
-  private func authAwareRequest(request: URLRequest) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
+  private func authAwareRequest(request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var request = request
 
     if let token = currentAuthToken {
@@ -381,8 +379,8 @@ class Registry {
       request.addValue(value, forHTTPHeaderField: name)
     }
 
-    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+    let (channel, response) = try await Fetcher().fetch(request)
 
-    return (bytes, response as! HTTPURLResponse)
+    return (channel, response as! HTTPURLResponse)
   }
 }

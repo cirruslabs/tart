@@ -63,7 +63,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   static func retrieveIPSW(remoteURL: URL) async throws -> URL {
     // Check if we already have this IPSW in cache
-    let (bytes, response) = try await URLSession.shared.bytes(from: remoteURL)
+    let (channel, response) = try await Fetcher().fetch(URLRequest(url: remoteURL))
 
     if let hash = (response as! HTTPURLResponse).value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
       let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
@@ -90,7 +90,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let fileHandle = try FileHandle(forWritingTo: temporaryLocation)
     let digest = Digest()
 
-    for try await chunk in bytes.chunks(ofCount: chunkSizeBytes) {
+    for try await chunk in channel {
       let chunkAsData = Data(chunk)
       fileHandle.write(chunkAsData)
       digest.update(chunkAsData)
