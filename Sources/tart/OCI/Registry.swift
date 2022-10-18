@@ -295,6 +295,7 @@ class Registry {
     var (channel, response) = try await authAwareRequest(request: request)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
+      _ = try await channel.asData()
       try await auth(response: response)
       (channel, response) = try await authAwareRequest(request: request)
     }
