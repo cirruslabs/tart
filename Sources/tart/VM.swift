@@ -8,6 +8,13 @@ struct UnsupportedRestoreImageError: Error {
 struct NoMainScreenFoundError: Error {
 }
 
+struct RosettaVMError: Error, LocalizedError {
+    let errorDescription: String?
+
+    init(_ description: String) {
+        errorDescription = description
+    }
+}
 struct DownloadFailed: Error {
 }
 
@@ -202,7 +209,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try vmDir.resizeDisk(diskSizeGB)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 8*1024 * 1024 * 1024)
+
+
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)
@@ -241,7 +250,64 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     try await network.stop()
   }
+     @available(macOS 13.0, *)
+    static func installRosetta() async throws {
+        let rosettaAvailability = VZLinuxRosettaDirectoryShare.availability
 
+        switch rosettaAvailability {
+        case .notSupported:
+            throw RosettaVMError("Rosetta is not supported on your system")
+
+        case .notInstalled:
+            do {
+                try await VZLinuxRosettaDirectoryShare.installRosetta()
+                // Success: The system installs Rosetta on the host system.
+            } catch let error as VZError {
+                // must catch as VZError type to have the VZError codes
+                switch error.code {
+                    case .networkError:
+                        // A network error prevented the download from completing successfully.
+                        fatalError("There was a network error while installing Rosetta. Please try again.")
+                    case .outOfDiskSpace:
+                        // Not enough disk space on the system volume to complete the installation.
+                        fatalError("Your system does not have enuogh disk space to install Rosetta")
+                    case .operationCancelled:
+                        // The user cancelled the installation.
+                        break
+                    case .notSupported:
+                        // Rosetta isn't supported on the host Mac or macOS version.
+                        break
+                    default:
+                        break // A non installer-related error occurred.
+                }
+            }
+            break
+        case .installed:
+            break // Ready to go.
+        @unknown default:
+            throw RosettaVMError("Unknown error returned while checking for Rosetta")
+        }
+    }
+   @available(macOS 13.0, *)
+  static func createGraphicsDeviceConfiguration() -> VZVirtioGraphicsDeviceConfiguration {
+    let graphicsDevice = VZVirtioGraphicsDeviceConfiguration()
+    graphicsDevice.scanouts = [
+        VZVirtioGraphicsScanoutConfiguration(widthInPixels: 1920, heightInPixels: 1080)
+    ]
+
+    return graphicsDevice
+  }
+  @available(macOS 13.0, *)
+  static func createSpiceAgentConsoleDeviceConfiguration() -> VZVirtioConsoleDeviceConfiguration {
+        let consoleDevice = VZVirtioConsoleDeviceConfiguration()
+
+        let spiceAgentPort = VZVirtioConsolePortConfiguration()
+        spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
+        spiceAgentPort.attachment = VZSpiceAgentPortAttachment()
+        consoleDevice.ports[0] = spiceAgentPort
+
+        return consoleDevice
+  }
   static func craftConfiguration(
     diskURL: URL,
     nvramURL: URL,
@@ -263,7 +329,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.platform = vmConfig.platform.platform(nvramURL: nvramURL)
 
     // Display
-    configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
+    //
+      if #available(macOS 13.0, *) {
+          configuration.graphicsDevices = [createGraphicsDeviceConfiguration()]
+      } else {
+          configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
+      }
+
 
     // Audio
     let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
@@ -291,8 +363,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Entropy
     configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
+      if #available(macOS 13.0, *) {
+          configuration.consoleDevices = [createSpiceAgentConsoleDeviceConfiguration()]
+      } else {
+          // Fallback on earlier versions
+      }
 
     // Directory share
+      configuration.directorySharingDevices = []
     if #available(macOS 13, *) {
       var directories: [String : VZSharedDirectory] = Dictionary()
       directoryShares.forEach { directories[$0.name] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
@@ -301,10 +379,24 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
       sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
 
-      configuration.directorySharingDevices = [sharingDevice]
+        configuration.directorySharingDevices.append(sharingDevice)
     } else if !directoryShares.isEmpty {
       throw UnsupportedOSError("directory sharing", "is")
     }
+      if #available(macOS 13, *) {
+          let tag = "ROSETTA"
+          do {
+              let _ = try VZVirtioFileSystemDeviceConfiguration.validateTag(tag)
+              let rosettaDirectoryShare = try VZLinuxRosettaDirectoryShare()
+              let fileSystemDevice = VZVirtioFileSystemDeviceConfiguration(tag: tag)
+              fileSystemDevice.share = rosettaDirectoryShare
+              
+              configuration.directorySharingDevices.append( fileSystemDevice)
+              // virtualMachineConfiguration.directorySharingDevices = [ fileSystemDevice]
+          } catch {
+              throw RosettaVMError("Rosetta is not available")
+          }
+      }
 
     try configuration.validate()
 
