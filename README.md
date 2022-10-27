@@ -28,13 +28,41 @@ Try running a Tart VM on your Apple Silicon device running macOS Monterey or lat
 
 ```shell
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-monterey-base:latest monterey-base
-tart run monterey-base
+tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
+tart run ventura-base
 ```
 
-![tart VM view app](Resources/TartScreenshot.png)
+<img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartScreenshot.png"/>
 
 ## CI Integration
+
+Tart already powers several CI services mentioned above including our own [Cirrus CI](https://cirrus-ci.org/guide/macOS/) which offers unlimited concurrency with per-second billing.
+For services that haven't leveraged Tart yet, we offer fully managed runners via a monthly subscription.
+*Cirrus Runners* is the fastest way to get your current CI workflows to benefit from Apple Silicon hardware. No need to manage infrastructure or migrate to another CI provider.
+Please read down below about currently supported services.
+
+### Managed runners for your CI-as-a-service
+
+At the moment Cirrus Runners only supports GitHub Actions, but we are actively working on adding more options.
+Please [email us](mailto:hello@cirruslabs.org) if you are interested in a particular one.
+
+#### GitHub Actions
+
+Configuring Cirrus Runners for GitHub Actions is as simple as installing [Cirrus Runners App](https://github.com/apps/cirrus-runners).
+After successful installation and subscription configuration, use any of [Ventura images managed by us](https://github.com/cirruslabs/macos-image-templates) in `runs-on`:
+
+```yaml
+name: Test Suite
+jobs:
+  test:
+    runs-on: ghcr.io/cirruslabs/macos-ventura-xcode:latest
+```
+
+When workflows are executing you'll see Cirrus on-demand runners on your organization's settings page at `https://github.com/organizations/<ORGANIZATION>/settings/actions/runners`.
+
+<img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartGHARunners.png"/>
+
+### Self-hosted CI
 
 Tart itself is only responsible for managing virtual machines, but we've built Tart support into a tool called Cirrus CLI
 also developed by Cirrus Labs. [Cirrus CLI](https://github.com/cirruslabs/cirrus-cli) is a command line tool with
@@ -64,14 +92,14 @@ brew install cirruslabs/cli/cirrus
 cirrus run
 ```
 
-![Cirrus CLI Run](Resources/TartCirrusCLI.gif)
+<img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartCirrusCLI.gif"/>
 
 [Cirrus CI](https://cirrus-ci.org/) already leverages Tart to power its macOS cloud infrastructure. The `.cirrus.yml`
 config from above will just work in Cirrus CI and your tasks will be executed inside Tart VMs in our cloud.
 
 **Note:** Cirrus CI only allows [images managed and regularly updated by us](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos).
 
-### Retrieving artifacts from within Tart VMs
+#### Retrieving artifacts from within Tart VMs
 
 In many cases there is a need to retrieve particular files or a folder from within a Tart virtual machine.
 For example, the below `.cirrus.yml` configuration defines a single task that builds a `tart` binary and
