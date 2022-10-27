@@ -58,7 +58,7 @@ jobs:
     runs-on: ghcr.io/cirruslabs/macos-ventura-xcode:latest
 ```
 
-When workflows are executing you'll see Cirrus on-demand runners on your organization's settings page at https://github.com/organizations/<ORGANIZATION>/settings/actions/runners.
+When workflows are executing you'll see Cirrus on-demand runners on your organization's settings page at `https://github.com/organizations/<ORGANIZATION>/settings/actions/runners`.
 
 <img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartGHARunners.png"/>
 
