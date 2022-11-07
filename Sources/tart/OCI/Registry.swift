@@ -226,7 +226,7 @@ class Registry {
   }
 
   public func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws {
-    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"))
+    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), viaFile: true)
     if response.statusCode != HTTPCode.Ok.rawValue {
       let body = try await channel.asData().asText()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
@@ -266,7 +266,8 @@ class Registry {
     headers: Dictionary<String, String> = Dictionary(),
     parameters: Dictionary<String, String> = Dictionary(),
     body: Data? = nil,
-    doAuth: Bool = true
+    doAuth: Bool = true,
+    viaFile: Bool = false
   ) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var urlComponents = urlComponents
 
@@ -292,12 +293,12 @@ class Registry {
       currentAuthToken = nil
     }
 
-    var (channel, response) = try await authAwareRequest(request: request)
+    var (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
       _ = try await channel.asData()
       try await auth(response: response)
-      (channel, response) = try await authAwareRequest(request: request)
+      (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile)
     }
 
     return (channel, response)
@@ -372,7 +373,7 @@ class Registry {
     return nil
   }
 
-  private func authAwareRequest(request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private func authAwareRequest(request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var request = request
 
     if let token = currentAuthToken {
@@ -380,8 +381,10 @@ class Registry {
       request.addValue(value, forHTTPHeaderField: name)
     }
 
-    let (channel, response) = try await Fetcher().fetch(request)
+    if viaFile {
+      return try await Fetcher().fetchViaFile(request)
+    }
 
-    return (channel, response as! HTTPURLResponse)
+    return try await Fetcher().fetch(request)
   }
 }
