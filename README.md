@@ -180,32 +180,25 @@ Please refer to `tart set --help` for additional details.
 Please refer to [Tart Packer Plugin repository](https://github.com/cirruslabs/packer-plugin-tart) for setup instructions.
 Here is an example of a template to build `monterey-base` local image based of a remote image:
 
-```json
-{
-  "builders": [
-    {
-      "name": "tart",
-      "type": "tart-cli",
-      "vm_base_name": "tartvm/vanilla:latest",
-      "vm_name": "monterey-base",
-      "cpu_count": 4,
-      "memory_gb": 8,
-      "disk_size_gb": 32,
-      "ssh_username": "admin",
-      "ssh_password": "admin",
-      "ssh_timeout": "120s"
-    }
-  ],
-  "provisioners": [
-    {
-      "inline": [
-        "echo 'Disabling spotlight indexing...'",
-        "sudo mdutil -a -i off"
-      ],
-      "type": "shell"
-    },
-    # more provisioners
-  ]
+```hcl
+source "tart-cli" "tart" {
+  cpu_count    = 4
+  disk_size_gb = 32
+  memory_gb    = 8
+  ssh_password = "admin"
+  ssh_timeout  = "120s"
+  ssh_username = "admin"
+  vm_base_name = "tartvm/vanilla:latest"
+  vm_name      = "monterey-base"
+}
+
+build {
+  sources = ["source.tart-cli.tart"]
+
+  provisioner "shell" {
+    inline = ["echo 'Disabling spotlight indexing...'", "sudo mdutil -a -i off"]
+  }
+  # more provisioners
 }
 ```
 
