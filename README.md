@@ -181,15 +181,24 @@ Please refer to [Tart Packer Plugin repository](https://github.com/cirruslabs/pa
 Here is an example of a template to build `monterey-base` local image based of a remote image:
 
 ```hcl
+packer {
+  required_plugins {
+    tart = {
+      version = ">= 0.5.3"
+      source  = "github.com/cirruslabs/tart"
+    }
+  }
+}
+
 source "tart-cli" "tart" {
+  vm_base_name = "ghcr.io/cirruslabs/macos-ventura-base:latest"
+  vm_name      = "monterey-base"
   cpu_count    = 4
-  disk_size_gb = 32
   memory_gb    = 8
+  disk_size_gb = 40
   ssh_password = "admin"
   ssh_timeout  = "120s"
   ssh_username = "admin"
-  vm_base_name = "tartvm/vanilla:latest"
-  vm_name      = "monterey-base"
 }
 
 build {
@@ -198,6 +207,7 @@ build {
   provisioner "shell" {
     inline = ["echo 'Disabling spotlight indexing...'", "sudo mdutil -a -i off"]
   }
+
   # more provisioners
 }
 ```
