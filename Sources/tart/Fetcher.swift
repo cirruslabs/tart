@@ -20,6 +20,11 @@ class Fetcher: NSObject, URLSessionTaskDelegate, URLSessionDelegate, URLSessionD
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
     let (fileURL, response) = try await URLSession.shared.download(for: request)
+
+    // Acquire a handle to the downloaded file and then remove it.
+    //
+    // This keeps a working reference to that file, yet we don't
+    // have to deal with the cleanup any more.
     let fh = try FileHandle(forReadingFrom: fileURL)
     try FileManager.default.removeItem(at: fileURL)
 
