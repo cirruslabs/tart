@@ -192,7 +192,7 @@ packer {
 
 source "tart-cli" "tart" {
   vm_base_name = "ghcr.io/cirruslabs/macos-ventura-base:latest"
-  vm_name      = "monterey-base"
+  vm_name      = "my-custom-ventura"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 40
