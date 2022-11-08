@@ -195,7 +195,7 @@ source "tart-cli" "tart" {
   vm_name      = "my-custom-ventura"
   cpu_count    = 4
   memory_gb    = 8
-  disk_size_gb = 40
+  disk_size_gb = 70
   ssh_password = "admin"
   ssh_timeout  = "120s"
   ssh_username = "admin"
