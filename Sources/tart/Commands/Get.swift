@@ -13,12 +13,13 @@ struct Get: AsyncParsableCommand {
       let vmConfig = try VMConfig(fromURL: vmDir.configURL)
       let diskSize = try vmDir.sizeBytes() / 1024 / 1024 / 1000
 
-      print("""
-            cpu cores: \(vmConfig.cpuCount)
-            memory:    \(vmConfig.memorySize / 1024 / 1024)
-            disk size: \(diskSize) GB
-            display:   \(vmConfig.display.width) x \(vmConfig.display.height)
-            """)
+      print("cpu\tmemory\tdisk\tdisplay")
+
+      var s = "\(vmConfig.cpuCount)\t"
+      s += "\(vmConfig.memorySize / 1024 / 1024)MB\t"
+      s += "\(diskSize)GB\t"
+      s += "\(vmConfig.display.width)x\(vmConfig.display.height)"
+      print(s)
 
       Foundation.exit(0)
     } catch {
