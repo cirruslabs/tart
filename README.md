@@ -1,4 +1,4 @@
-![Tart – open source virtualization for your automation needs](Resources/TartSocial.png)
+<img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartSocial.png"/>
 
 *Tart* is a virtualization toolset to build, run and manage macOS and Linux virtual machines on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
