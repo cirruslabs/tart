@@ -2,7 +2,7 @@ import Foundation
 import AsyncAlgorithms
 
 class Fetcher {
-  func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  static func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     if viaFile {
       return try await fetchViaFile(request)
     }
@@ -10,7 +10,7 @@ class Fetcher {
     return try await fetchViaMemory(request)
   }
 
-  private func fetchViaMemory(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private static func fetchViaMemory(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
     let (data, response) = try await URLSession.shared.data(for: request)
@@ -24,7 +24,7 @@ class Fetcher {
     return (dataCh, response as! HTTPURLResponse)
   }
 
-  private func fetchViaFile(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private static func fetchViaFile(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
     let (fileURL, response) = try await URLSession.shared.download(for: request)

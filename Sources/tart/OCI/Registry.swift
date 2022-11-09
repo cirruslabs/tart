@@ -381,6 +381,6 @@ class Registry {
       request.addValue(value, forHTTPHeaderField: name)
     }
 
-    return try await Fetcher().fetch(request, viaFile: viaFile)
+    return try await Fetcher.fetch(request, viaFile: viaFile)
   }
 }
