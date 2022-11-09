@@ -1,7 +1,7 @@
 import Foundation
 import AsyncAlgorithms
 
-class Fetcher: NSObject, URLSessionTaskDelegate, URLSessionDelegate, URLSessionDataDelegate {
+class Fetcher {
   func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     if viaFile {
       return try await fetchViaFile(request)
