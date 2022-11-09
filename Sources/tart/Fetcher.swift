@@ -1,6 +1,16 @@
 import Foundation
 import AsyncAlgorithms
 
+fileprivate func getURLSession() -> URLSession {
+  let config = URLSessionConfiguration.default
+
+  config.httpShouldSetCookies = false
+
+  return URLSession(configuration: config)
+}
+
+fileprivate let urlSession = getURLSession()
+
 class Fetcher {
   static func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     if viaFile {
