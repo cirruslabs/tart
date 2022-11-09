@@ -1,12 +1,6 @@
 import Foundation
 import Virtualization
 
-struct UninitializedVMDirectoryError: Error {
-}
-
-struct AlreadyInitializedVMDirectoryError: Error {
-}
-
 struct VMDirectory: Prunable {
   var baseURL: URL
 
@@ -47,7 +41,7 @@ struct VMDirectory: Prunable {
 
   func initialize(overwrite: Bool = false) throws {
     if !overwrite && initialized {
-      throw AlreadyInitializedVMDirectoryError()
+      throw RuntimeError("VM directory is already initialized, preventing overwrite")
     }
 
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
@@ -58,8 +52,13 @@ struct VMDirectory: Prunable {
   }
 
   func validate() throws {
+    if !FileManager.default.fileExists(atPath: baseURL.path) {
+      throw RuntimeError("the specified VM does not exist")
+    }
+
     if !initialized {
-      throw UninitializedVMDirectoryError()
+      throw RuntimeError("VM is missing some of its files (\(configURL.lastPathComponent),"
+        + " \(diskURL.lastPathComponent) or \(nvramURL.lastPathComponent))")
     }
   }
 
