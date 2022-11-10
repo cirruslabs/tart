@@ -20,6 +20,7 @@ struct Root: AsyncParsableCommand {
       Clone.self,
       Run.self,
       Set.self,
+      Get.self,
       List.self,
       Login.self,
       IP.self,
