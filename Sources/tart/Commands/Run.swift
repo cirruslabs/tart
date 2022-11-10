@@ -108,6 +108,24 @@ struct Run: AsyncParsableCommand {
       }
     }()
 
+    // Lock the VM
+    //
+    // More specifically, lock the "config.json", because we can't lock
+    // directories with fcntl(2)-based locking and we better not interfere
+    // with the VM's disk and NVRAM, because they are opened (and even seem
+    // to be locked) directly by the Virtualization.Framework's process.
+    //
+    // Note that due to "completely stupid semantics"[1] of the fcntl-based
+    // file locking, we need to acquire the lock after we read the VM's
+    // configuration file, otherwise we will loose the lock.
+    //
+    // [1]: https://man.openbsd.org/fcntl
+    let lock = try PIDLock(lockURL: vmDir.configURL)
+    if try !lock.trylock() {
+      print("Virtual machine \"\(name)\" is already running!")
+      Foundation.exit(2)
+    }
+
     let task = Task {
       do {
         if let vncImpl = vncImpl {
@@ -129,11 +147,6 @@ struct Run: AsyncParsableCommand {
 
         Foundation.exit(0)
       } catch {
-        if error.localizedDescription.contains("Failed to lock auxiliary storage.") {
-          print("Virtual machine \"\(name)\" is already running!")
-          Foundation.exit(2)
-        }
-
         print(error)
         Foundation.exit(1)
       }
