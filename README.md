@@ -27,7 +27,7 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 Try running a Tart VM on your Apple Silicon device running macOS Monterey or later (will download a 25 GB image):
 
 ```shell
-brew install cirruslabs/cli/tart
+brew install tart
 tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
 tart run ventura-base
 ```
