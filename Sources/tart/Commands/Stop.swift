@@ -22,7 +22,7 @@ struct Stop: AsyncParsableCommand {
       if pid == 0 {
         print("VM \(name) is not running")
 
-        Foundation.exit(1)
+        Foundation.exit(2)
       }
 
       // Try to gracefully terminate the VM
