@@ -100,7 +100,7 @@ class Registry {
 
   init(urlComponents: URLComponents,
        namespace: String,
-       credentialsProviders: [CredentialsProvider] = [DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
+       credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
     baseURL = urlComponents.url!
     self.namespace = namespace
@@ -111,7 +111,7 @@ class Registry {
     host: String,
     namespace: String,
     insecure: Bool = false,
-    credentialsProviders: [CredentialsProvider] = [DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
+    credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
     let proto = insecure ? "http" : "https"
     let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
