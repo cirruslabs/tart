@@ -28,6 +28,7 @@ struct Root: AsyncParsableCommand {
       Push.self,
       Prune.self,
       Rename.self,
+      Stop.self,
       Delete.self,
     ])
 
