@@ -228,6 +228,12 @@ tart login acme.io
 
 Credentials are securely stored in Keychain.
 
+In addition, Tart supports [Docker credential helpers](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers)
+if defined in `~/.docker/config.json`.
+
+Finally, `TART_REGISTRY_USERNAME` and `TART_REGISTRY_PASSWORD` environment variables allow to override authorization
+for all registries which might useful for integrating with your CI's secret management.
+
 #### Pushing a Local Image
 
 Once credentials are saved for `acme.io`, run the following command to push a local images remotely with two tags:
