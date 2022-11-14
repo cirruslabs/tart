@@ -1,13 +1,30 @@
 task:
   name: Test on Ventura
+  alias: test
   persistent_worker:
     labels:
-      name: Mac-Mini-M1
-  build_script: swift test
-  test_script: swift test
+      name: scaleway-m1
+  test_script:
+    - swift test
+  integration_test_script:
+    # Build Tart
+    - swift build
+    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/debug/tart
+    - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
+    # Run integration tests
+    - cd integration-tests
+    - HOMEBREW_NO_AUTO_UPDATE=1 brew install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - pip install -r requirements.txt
+    - pytest --verbose --junit-xml=pytest-junit.xml
+  pytest_junit_result_artifacts:
+    path: "integration-tests/pytest-junit.xml"
+    format: junit
 
 task:
   name: Build
+  alias: build
   only_if: $CIRRUS_TAG == ''
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
@@ -19,6 +36,9 @@ task:
 task:
   name: Release
   only_if: $CIRRUS_TAG != ''
+  depends_on:
+    - test
+    - build
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
   env:

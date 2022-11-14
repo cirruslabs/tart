@@ -138,6 +138,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
     }
 
+    // We create a temporary TART_HOME directory in tests, which has its "cache" folder symlinked
+    // to the users Tart cache directory (~/.tart/cache). However, the Virtualization.Framework
+    // cannot deal with paths that contain symlinks, so expand them here first.
+    ipswURL.resolveSymlinksInPath()
+
     // Load the restore image and try to get the requirements
     // that match both the image and our platform
     let image = try await withCheckedThrowingContinuation { continuation in
