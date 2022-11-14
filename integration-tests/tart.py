@@ -5,7 +5,7 @@ import subprocess
 
 class Tart:
     def __init__(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_dir = tempfile.TemporaryDirectory(dir=os.environ.get("CIRRUS_WORKING_DIR"))
 
         # Link to the users IPSW cache to make things faster
         src = os.path.join(os.path.expanduser("~"), ".tart", "cache", "IPSWs")
