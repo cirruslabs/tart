@@ -13,7 +13,7 @@ task:
     - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
     # Run integration tests
     - cd integration-tests
-    - brew install virtualenv
+    - HOMEBREW_NO_AUTO_UPDATE=1 brew install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - pip install -r requirements.txt
