@@ -14,8 +14,8 @@ struct DownloadFailed: Error {
 struct UnsupportedOSError: Error, CustomStringConvertible {
   let description: String
 
-  init(_ what: String, _ plural: String) {
-    description = "error: \(what) \(plural) only supported on hosts running macOS 13.0 (Ventura) or newer"
+  init(_ what: String, _ plural: String, _ requires: String = "running macOS 13.0 (Ventura) or newer") {
+    description = "error: \(what) \(plural) only supported on hosts \(requires)"
   }
 }
 
@@ -40,7 +40,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   init(vmDir: VMDirectory,
        network: Network = NetworkShared(),
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
-       directoryShares: [DirectoryShare] = []
+       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = []
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -54,7 +54,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
       nvramURL: vmDir.nvramURL, vmConfig: config,
       network: network, additionalDiskAttachments: additionalDiskAttachments,
-            directoryShares: directoryShares)
+      directorySharingDevices: directorySharingDevices
+    )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -130,7 +131,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     ipswURL: URL,
     diskSizeGB: UInt16,
     network: Network = NetworkShared(),
-    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = []
+    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
+    directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = []
   ) async throws {
     var ipswURL = ipswURL
 
@@ -177,7 +179,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
       vmConfig: config, network: network,
       additionalDiskAttachments: additionalDiskAttachments,
-      directoryShares: [])
+      directorySharingDevices: directorySharingDevices
+    )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
@@ -253,7 +256,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     vmConfig: VMConfig,
     network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
-    directoryShares: [DirectoryShare]
+    directorySharingDevices: [VZDirectorySharingDeviceConfiguration]
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -297,19 +300,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Entropy
     configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
 
-    // Directory share
-    if #available(macOS 13, *) {
-      var directories: [String : VZSharedDirectory] = Dictionary()
-      directoryShares.forEach { directories[$0.name] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
-
-      let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
-      let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
-      sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
-
-      configuration.directorySharingDevices = [sharingDevice]
-    } else if !directoryShares.isEmpty {
-      throw UnsupportedOSError("directory sharing", "is")
-    }
+    // Directory sharing devices
+    configuration.directorySharingDevices = directorySharingDevices
 
     try configuration.validate()
 
@@ -330,10 +322,4 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     print("virtual machine's network attachment \(networkDevice) has been disconnected with error: \(error)")
     sema.signal()
   }
-}
-
-struct DirectoryShare {
-  let name: String
-  let path: URL
-  let readOnly: Bool
 }
