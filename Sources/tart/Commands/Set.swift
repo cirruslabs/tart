@@ -11,7 +11,7 @@ struct Set: AsyncParsableCommand {
   var cpu: UInt16?
 
   @Option(help: "VM memory size in megabytes")
-  var memory: UInt16?
+  var memory: UInt64?
 
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
@@ -29,7 +29,7 @@ struct Set: AsyncParsableCommand {
       }
 
       if let memory = memory {
-        try vmConfig.setMemory(memorySize: UInt64(memory) * 1024 * 1024)
+        try vmConfig.setMemory(memorySize: memory * 1024 * 1024)
       }
 
       if let display = display {
