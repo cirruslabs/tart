@@ -322,7 +322,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func virtualMachine(_ virtualMachine: VZVirtualMachine, didStopWithError error: Error) {
-    print("guest has stopped the virtual machine due to error")
+    print("guest has stopped the virtual machine due to error: \(error)")
     sema.signal()
   }
 
