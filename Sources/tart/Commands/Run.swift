@@ -48,6 +48,20 @@ struct Run: AsyncParsableCommand {
     """, valueName: "path[:ro]"))
   var disk: [String] = []
 
+  @Option(name: [.customLong("rosetta")], help: ArgumentHelp(
+    "Attaches a Rosetta share to the guest Linux VM with a specific tag (e.g. --rosetta=\"rosetta\")",
+    discussion: """
+                Requires host to be macOS 13.0 (Ventura) with Rosetta installed. The latter can be done
+                by running "softwareupdate --install-rosetta" (without quotes) in the Terminal.app.
+
+                Note that you also have to configure Rosetta in the guest Linux VM by following the
+                steps from "Mount the Shared Directory and Register Rosetta" section here:
+                https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta#3978496
+                """,
+    valueName: "tag"
+  ))
+  var rosettaTag: String?
+
   @Option(help: ArgumentHelp("""
                              Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\")
                              """, discussion: """
@@ -107,7 +121,7 @@ struct Run: AsyncParsableCommand {
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalDiskAttachments: additionalDiskAttachments,
-      directoryShares: directoryShares()
+      directorySharingDevices: directoryShares() + rosettaDirectoryShare()
     )
 
     let vncImpl: VNC? = try {
@@ -242,8 +256,22 @@ struct Run: AsyncParsableCommand {
     return result
   }
 
-  func directoryShares() throws -> [DirectoryShare] {
-    var result: [DirectoryShare] = []
+  func directoryShares() throws -> [VZDirectorySharingDeviceConfiguration] {
+    if dir.isEmpty {
+      return []
+    }
+
+    guard #available(macOS 13, *) else {
+      throw UnsupportedOSError("directory sharing", "is")
+    }
+
+    struct DirectoryShare {
+      let name: String
+      let path: URL
+      let readOnly: Bool
+    }
+
+    var directoryShares: [DirectoryShare] = []
 
     for rawDir in dir {
       let splits = rawDir.split(maxSplits: 2) { $0 == ":" }
@@ -264,10 +292,46 @@ struct Run: AsyncParsableCommand {
 
       let (name, path) = (String(splits[0]), String(splits[1]))
 
-      result.append(DirectoryShare(name: name, path: URL(fileURLWithPath: NSString(string: path).expandingTildeInPath), readOnly: readOnly))
+      directoryShares.append(DirectoryShare(
+        name: name,
+        path: URL(fileURLWithPath: NSString(string: path).expandingTildeInPath),
+        readOnly: readOnly)
+      )
     }
 
-    return result
+    var directories: [String : VZSharedDirectory] = Dictionary()
+    directoryShares.forEach { directories[$0.name] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
+
+    let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
+    let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
+    sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
+
+    return [sharingDevice]
+  }
+
+  private func rosettaDirectoryShare() throws -> [VZDirectorySharingDeviceConfiguration] {
+    guard let rosettaTag = rosettaTag else {
+      return []
+    }
+
+    guard #available(macOS 13, *) else {
+      throw UnsupportedOSError("Rosetta directory share", "is")
+    }
+
+    switch VZLinuxRosettaDirectoryShare.availability {
+    case .notInstalled:
+      throw UnsupportedOSError("Rosetta directory share", "is", "that have Rosetta installed")
+    case .notSupported:
+      throw UnsupportedOSError("Rosetta directory share", "is", "running Apple silicon")
+    default:
+      break
+    }
+
+    try VZVirtioFileSystemDeviceConfiguration.validateTag(rosettaTag)
+    let device = VZVirtioFileSystemDeviceConfiguration(tag: rosettaTag)
+    device.share = try VZLinuxRosettaDirectoryShare()
+
+    return [device]
   }
 
   private func runUI() {
