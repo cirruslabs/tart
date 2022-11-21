@@ -22,6 +22,22 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
   </a>
 </p>
 
+Many more companies are using Tart in their internal setups. Here are a few of them:
+
+<p align="center">
+  <a href="https://ahrefs.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/ahrefs.png" height="65"/>
+  </a>
+  <a href="https://suran.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Suran.png" height="65"/>
+  </a>
+  <a href="https://symflower.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Symflower.png" height="65"/>
+  </a>
+</p>
+
+**Note:** If your company or project is using Tart please consider [adding yourself to the list above](/Resources/Users/HowToAddYourself.md).
+
 ## Usage
 
 Try running a Tart VM on your Apple Silicon device running macOS Monterey or later (will download a 25 GB image):
