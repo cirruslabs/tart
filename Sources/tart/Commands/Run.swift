@@ -90,10 +90,23 @@ struct Run: AsyncParsableCommand {
   @MainActor
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
+
+    let additionalDiskAttachments = try additionalDiskAttachments()
+
+    // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
+    // see https://github.com/cirruslabs/tart/issues/323 for more details.
+    for additionalDiskAttachment in additionalDiskAttachments {
+      if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
+        print("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
+          + "unmount it first in Finder")
+        Foundation.exit(1)
+      }
+    }
+
     vm = try VM(
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
-      additionalDiskAttachments: additionalDiskAttachments(),
+      additionalDiskAttachments: additionalDiskAttachments,
       directoryShares: directoryShares()
     )
 
