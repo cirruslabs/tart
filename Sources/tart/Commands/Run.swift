@@ -110,6 +110,11 @@ struct Run: AsyncParsableCommand {
     // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
     // see https://github.com/cirruslabs/tart/issues/323 for more details.
     for additionalDiskAttachment in additionalDiskAttachments {
+      // Read-only attachments do not seem to acquire the lock
+      if additionalDiskAttachment.isReadOnly {
+        continue
+      }
+
       if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
         print("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
           + "unmount it first in Finder")
