@@ -312,7 +312,7 @@ class Registry {
 
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
 
-    if wwwAuthenticate.scheme == "Basic" {
+    if wwwAuthenticate.scheme.lowercased() == "basic" {
       if let (user, password) = try lookupCredentials(host: baseURL.host!) {
         currentAuthToken = BasicAuthentication(user: user, password: password)
       }
@@ -320,7 +320,7 @@ class Registry {
       return
     }
 
-    if wwwAuthenticate.scheme != "Bearer" {
+    if wwwAuthenticate.scheme.lowercased() != "bearer" {
       throw RegistryError.AuthFailed(why: "WWW-Authenticate header's authentication scheme "
         + "\"\(wwwAuthenticate.scheme)\" is unsupported, expected \"Bearer\" scheme")
     }
