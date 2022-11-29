@@ -304,7 +304,7 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
 
-```
+```sh
 mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 
