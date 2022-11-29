@@ -286,7 +286,7 @@ Here, the `project` specifies a mount name, whereas the `~/src/project` is a pat
 
 It is also possible to mount directories in read-only mode by adding a third parameter, `ro`:
 
-```
+```sh
 tart run --dir=project:~/src/project:ro vm
 ```
 
