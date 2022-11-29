@@ -23,6 +23,18 @@ task:
     format: junit
 
 task:
+  name: Lint
+  alias: lint
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
+  lint_script:
+    - swift package plugin --allow-writing-to-package-directory swiftformat --cache ignore --lint --report swiftformat.json .
+  always:
+    swiftformat_report_artifacts:
+      path: swiftformat.json
+      format: swiftformat
+
+task:
   name: Build
   alias: build
   only_if: $CIRRUS_TAG == ''
@@ -37,6 +49,7 @@ task:
   name: Release
   only_if: $CIRRUS_TAG != ''
   depends_on:
+    - lint
     - test
     - build
   macos_instance:
