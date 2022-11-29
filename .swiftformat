@@ -1,0 +1,4 @@
+--disable all
+--enable indent
+--indent 2
+--swiftversion 5.7
