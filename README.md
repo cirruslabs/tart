@@ -278,7 +278,7 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 
 To mount a directory, run the VM with the `--dir` argument:
 
-```
+```sh
 tart run --dir=project:~/src/project vm
 ```
 
