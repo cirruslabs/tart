@@ -130,11 +130,11 @@ class Registry {
     let manifestJSON = try manifest.toJSON()
 
     let (data, response) = try await dataRequest(.PUT, endpointURL("\(namespace)/manifests/\(reference)"),
-      headers: ["Content-Type": manifest.mediaType],
-      body: manifestJSON)
+                                                 headers: ["Content-Type": manifest.mediaType],
+                                                 body: manifestJSON)
     if response.statusCode != HTTPCode.Created.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing manifest", code: response.statusCode,
-        details: data.asText())
+                                                   details: data.asText())
     }
 
     return Digest.hash(manifestJSON)
@@ -142,10 +142,10 @@ class Registry {
 
   public func pullManifest(reference: String) async throws -> (OCIManifest, Data) {
     let (data, response) = try await dataRequest(.GET, endpointURL("\(namespace)/manifests/\(reference)"),
-      headers: ["Accept": ociManifestMediaType])
+                                                 headers: ["Accept": ociManifestMediaType])
     if response.statusCode != HTTPCode.Ok.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling manifest", code: response.statusCode,
-        details: data.asText())
+                                                   details: data.asText())
     }
 
     let manifest = try OCIManifest(fromJSON: data)
@@ -168,17 +168,17 @@ class Registry {
   public func pushBlob(fromData: Data, chunkSizeMb: Int = 0) async throws -> String {
     // Initiate a blob upload
     let (data, postResponse) = try await dataRequest(.POST, endpointURL("\(namespace)/blobs/uploads/"),
-      headers: ["Content-Length": "0"])
+                                                     headers: ["Content-Length": "0"])
     if postResponse.statusCode != HTTPCode.Accepted.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (POST)", code: postResponse.statusCode,
-        details: data.asText())
+                                                   details: data.asText())
     }
 
     // Figure out where to upload the blob
     var uploadLocation = try uploadLocationFromResponse(postResponse)
 
     let digest = Digest.hash(fromData)
-    
+
     if chunkSizeMb == 0 {
       // monolithic upload
       let (data, response) = try await dataRequest(
@@ -192,7 +192,7 @@ class Registry {
       )
       if response.statusCode != HTTPCode.Created.rawValue {
         throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
-          code: response.statusCode, details: data.asText())
+                                                     code: response.statusCode, details: data.asText())
       }
       return digest
     }
@@ -215,13 +215,13 @@ class Registry {
       // always accept both statuses since AWS ECR is not following specification
       if response.statusCode != HTTPCode.Created.rawValue && response.statusCode != HTTPCode.Accepted.rawValue {
         throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
-          code: response.statusCode, details: data.asText())
+                                                     code: response.statusCode, details: data.asText())
       }
       uploadedBytes += chunk.count
       // Update location for the next chunk
       uploadLocation = try uploadLocationFromResponse(response)
     }
-    
+
     return digest
   }
 
@@ -230,7 +230,7 @@ class Registry {
     if response.statusCode != HTTPCode.Ok.rawValue {
       let body = try await channel.asData().asText()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
-        details: body)
+                                                   details: body)
     }
 
     for try await part in channel {
@@ -247,15 +247,15 @@ class Registry {
   }
 
   private func dataRequest(
-          _ method: HTTPMethod,
-          _ urlComponents: URLComponents,
-          headers: Dictionary<String, String> = Dictionary(),
-          parameters: Dictionary<String, String> = Dictionary(),
-          body: Data? = nil,
-          doAuth: Bool = true
+    _ method: HTTPMethod,
+    _ urlComponents: URLComponents,
+    headers: Dictionary<String, String> = Dictionary(),
+    parameters: Dictionary<String, String> = Dictionary(),
+    body: Data? = nil,
+    doAuth: Bool = true
   ) async throws -> (Data, HTTPURLResponse) {
     let (channel, response) = try await channelRequest(method, urlComponents,
-            headers: headers, parameters: parameters, body: body, doAuth: doAuth)
+                                                       headers: headers, parameters: parameters, body: body, doAuth: doAuth)
 
     return (try await channel.asData(), response)
   }

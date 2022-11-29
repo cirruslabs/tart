@@ -39,7 +39,7 @@ class VMStorageOCI: PrunableStorage {
     // Pre-create intermediate directories (e.g. creates ~/.tart/cache/OCIs/github.com/org/repo/
     // for github.com/org/repo:latest)
     try FileManager.default.createDirectory(at: targetURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true)
+                                            withIntermediateDirectories: true)
 
     _ = try FileManager.default.replaceItemAt(targetURL, withItemAt: from.baseURL)
   }
@@ -53,7 +53,7 @@ class VMStorageOCI: PrunableStorage {
     var refCounts = Dictionary<URL, UInt>()
 
     guard let enumerator = FileManager.default.enumerator(at: baseURL,
-            includingPropertiesForKeys: [.isSymbolicLinkKey]) else {
+                                                          includingPropertiesForKeys: [.isSymbolicLinkKey]) else {
       return
     }
 
@@ -90,7 +90,7 @@ class VMStorageOCI: PrunableStorage {
     var result: [(String, VMDirectory, Bool)] = Array()
 
     guard let enumerator = FileManager.default.enumerator(at: baseURL,
-      includingPropertiesForKeys: [.isSymbolicLinkKey], options: [.producesRelativePathURLs]) else {
+                                                          includingPropertiesForKeys: [.isSymbolicLinkKey], options: [.producesRelativePathURLs]) else {
       return []
     }
 
@@ -127,7 +127,7 @@ class VMStorageOCI: PrunableStorage {
     let (manifest, manifestData) = try await registry.pullManifest(reference: name.reference.value)
 
     let digestName = RemoteName(host: name.host, namespace: name.namespace,
-            reference: Reference(digest: Digest.hash(manifestData)))
+                                reference: Reference(digest: Digest.hash(manifestData)))
 
     // Ensure that host directory for given RemoteName exists in OCI storage
     let hostDirectoryURL = hostDirectoryURL(digestName)
@@ -165,15 +165,15 @@ class VMStorageOCI: PrunableStorage {
 
         if capacityImportant == 0 || capacityAvailable == 0 {
           puppy.warning("important capacity \(capacityImportant) bytes, "
-                  + "available capacity is \(capacityAvailable) bytes")
+            + "available capacity is \(capacityAvailable) bytes")
         }
 
         // There is a suspicious that occasionally capacity is returned as zero which can't be true.
         // Let's validate to avoid unnecessary pruning.
         if 0 < availableCapacityBytes && availableCapacityBytes < requiredCapacityBytes {
           puppy.info("pruning cache to accommodate \(name) with a disk of size \(uncompressedDiskSize) bytes ("
-                  + "available capacity is \(availableCapacityBytes) bytes, required capacity "
-                  + "is \(requiredCapacityBytes) bytes)")
+            + "available capacity is \(availableCapacityBytes) bytes, required capacity "
+            + "is \(requiredCapacityBytes) bytes)")
 
           try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
         }

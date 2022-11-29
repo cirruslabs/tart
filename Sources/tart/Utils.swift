@@ -13,7 +13,7 @@ func resolveBinaryPath(_ name: String) -> URL? {
 
   for pathComponent in path.split(separator: ":") {
     let url = URL(fileURLWithPath: String(pathComponent))
-            .appendingPathComponent(name, isDirectory: false)
+      .appendingPathComponent(name, isDirectory: false)
 
     if FileManager.default.fileExists(atPath: url.path) {
       return url

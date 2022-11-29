@@ -48,10 +48,10 @@ struct VMConfig: Codable {
   var display: VMDisplayConfig = VMDisplayConfig()
 
   init(
-          platform: Platform,
-          cpuCountMin: Int,
-          memorySizeMin: UInt64,
-          macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
+    platform: Platform,
+    cpuCountMin: Int,
+    memorySizeMin: UInt64,
+    macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
     self.os = platform.os()
     self.arch = CurrentArchitecture()
@@ -105,12 +105,12 @@ struct VMConfig: Codable {
     let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
     guard let macAddress = VZMACAddress.init(string: encodedMacAddress) else {
       throw DecodingError.dataCorruptedError(
-                forKey: .hardwareModel,
-                in: container,
-                debugDescription: "failed to initialize VZMacAddress using the provided value")
+        forKey: .hardwareModel,
+        in: container,
+        debugDescription: "failed to initialize VZMacAddress using the provided value")
     }
     self.macAddress = macAddress
-    
+
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
   }
 
@@ -132,7 +132,7 @@ struct VMConfig: Codable {
   mutating func setCPU(cpuCount: Int) throws {
     if cpuCount < cpuCountMin {
       throw LessThanMinimalResourcesError("VM should have \(cpuCountMin) CPU cores"
-              + " at minimum (requested \(cpuCount))")
+        + " at minimum (requested \(cpuCount))")
     }
 
     self.cpuCount = cpuCount
@@ -141,7 +141,7 @@ struct VMConfig: Codable {
   mutating func setMemory(memorySize: UInt64) throws {
     if memorySize < memorySizeMin {
       throw LessThanMinimalResourcesError("VM should have \(memorySizeMin) bytes"
-              + " of memory at minimum (requested \(memorySizeMin))")
+        + " of memory at minimum (requested \(memorySizeMin))")
     }
 
     self.memorySize = memorySize

@@ -31,7 +31,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   // VM's config
   var name: String
-  
+
   // VM's config
   var config: VMConfig
 
@@ -52,9 +52,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Initialize the virtual machine and its configuration
     self.network = network
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
-      nvramURL: vmDir.nvramURL, vmConfig: config,
-      network: network, additionalDiskAttachments: additionalDiskAttachments,
-      directorySharingDevices: directorySharingDevices
+                                                    nvramURL: vmDir.nvramURL, vmConfig: config,
+                                                    network: network, additionalDiskAttachments: additionalDiskAttachments,
+                                                    directorySharingDevices: directorySharingDevices
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -122,7 +122,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       virtualMachine.state == VZVirtualMachine.State.stopped ||
         virtualMachine.state == VZVirtualMachine.State.paused ||
         virtualMachine.state == VZVirtualMachine.State.error
-      
+
     }
   }
 
@@ -177,9 +177,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Initialize the virtual machine and its configuration
     self.network = network
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-      vmConfig: config, network: network,
-      additionalDiskAttachments: additionalDiskAttachments,
-      directorySharingDevices: directorySharingDevices
+                                                    vmConfig: config, network: network,
+                                                    additionalDiskAttachments: additionalDiskAttachments,
+                                                    directorySharingDevices: directorySharingDevices
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 

@@ -7,13 +7,13 @@ struct Prune: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Prune OCI and IPSW caches")
 
   @Option(help: ArgumentHelp("Remove cache entries last accessed more than n days ago",
-    discussion: "For example, --older-than=7 will remove entries that weren't accessed by Tart in the last 7 days.",
-    valueName: "n"))
+                             discussion: "For example, --older-than=7 will remove entries that weren't accessed by Tart in the last 7 days.",
+                             valueName: "n"))
   var olderThan: UInt?
 
   @Option(help: ArgumentHelp("Remove least recently used cache entries that do not fit the specified cache size budget n, expressed in gigabytes",
-    discussion: "For example, --cache-budget=50 will effectively shrink all caches to a total size of 50 gigabytes.",
-    valueName: "n"))
+                             discussion: "For example, --cache-budget=50 will effectively shrink all caches to a total size of 50 gigabytes.",
+                             valueName: "n"))
   var cacheBudget: UInt?
 
   @Flag(help: .hidden)
@@ -62,8 +62,8 @@ struct Prune: AsyncParsableCommand {
   static func pruneCacheBudget(cacheBudgetBytes: UInt64) throws {
     let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
     let prunables: [Prunable] = try prunableStorages
-            .flatMap { try $0.prunables() }
-            .sorted { try $0.accessDate() > $1.accessDate() }
+      .flatMap { try $0.prunables() }
+      .sorted { try $0.accessDate() > $1.accessDate() }
 
     var cacheBudgetBytes = cacheBudgetBytes
     var prunablesToDelete: [Prunable] = []
@@ -87,8 +87,8 @@ struct Prune: AsyncParsableCommand {
   static func pruneReclaim(reclaimBytes: UInt64) throws {
     let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
     let prunables: [Prunable] = try prunableStorages
-            .flatMap { try $0.prunables() }
-            .sorted { try $0.accessDate() < $1.accessDate() }
+      .flatMap { try $0.prunables() }
+      .sorted { try $0.accessDate() < $1.accessDate() }
 
     // Does it even make sense to start?
     let cacheUsedBytes = try prunables.map { try $0.sizeBytes() }.reduce(0, +)

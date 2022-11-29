@@ -2,36 +2,36 @@ import Virtualization
 
 @available(macOS 13, *)
 struct Linux: Platform {
-    func os() -> OS {
-        .linux
-    }
+  func os() -> OS {
+    .linux
+  }
 
-    func bootLoader(nvramURL: URL) throws -> VZBootLoader {
-        let result = VZEFIBootLoader()
+  func bootLoader(nvramURL: URL) throws -> VZBootLoader {
+    let result = VZEFIBootLoader()
 
-        result.variableStore = VZEFIVariableStore(url: nvramURL)
+    result.variableStore = VZEFIVariableStore(url: nvramURL)
 
-        return result
-    }
+    return result
+  }
 
-    func platform(nvramURL: URL) -> VZPlatformConfiguration {
-        VZGenericPlatformConfiguration()
-    }
+  func platform(nvramURL: URL) -> VZPlatformConfiguration {
+    VZGenericPlatformConfiguration()
+  }
 
-    func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration {
-        let result = VZVirtioGraphicsDeviceConfiguration()
+  func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration {
+    let result = VZVirtioGraphicsDeviceConfiguration()
 
-        result.scanouts = [
-            VZVirtioGraphicsScanoutConfiguration(
-                    widthInPixels: vmConfig.display.width,
-                    heightInPixels: vmConfig.display.height
-            )
-        ]
+    result.scanouts = [
+      VZVirtioGraphicsScanoutConfiguration(
+        widthInPixels: vmConfig.display.width,
+        heightInPixels: vmConfig.display.height
+      )
+    ]
 
-        return result
-    }
+    return result
+  }
 
-    func pointingDevices() -> [VZPointingDeviceConfiguration] {
-        [VZUSBScreenCoordinatePointingDeviceConfiguration()]
-    }
+  func pointingDevices() -> [VZPointingDeviceConfiguration] {
+    [VZUSBScreenCoordinatePointingDeviceConfiguration()]
+  }
 }
