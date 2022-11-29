@@ -28,9 +28,7 @@ task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
   lint_script:
-    # Note that we need "$(pwd)/" in "--config $(pwd)/.swiftformat"
-    # to work around SwiftFormat's URL/glob mishandling
-    - swift package plugin --allow-writing-to-package-directory swiftformat --config $(pwd)/.swiftformat --cache ignore --lint --report swiftformat.json .
+    - swift package plugin --allow-writing-to-package-directory swiftformat --cache ignore --lint --report swiftformat.json .
   always:
     swiftformat_report_artifacts:
       path: swiftformat.json
