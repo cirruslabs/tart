@@ -22,14 +22,14 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     guard let executableURL = resolveBinaryPath(binaryName) else {
       throw CredentialsProviderError.Failed(message: "\(binaryName) not found in PATH")
     }
-    
+
     let process = Process.init()
     process.executableURL = executableURL
     process.arguments = ["get"]
 
     let outPipe = Pipe()
     let inPipe = Pipe()
-    
+
     process.standardOutput = outPipe
     process.standardError = outPipe
     process.standardInput = inPipe
@@ -38,7 +38,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     inPipe.fileHandleForWriting.write("\(host)\n".data(using: .utf8)!)
     inPipe.fileHandleForWriting.closeFile()
-    
+
     process.waitUntilExit()
 
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {

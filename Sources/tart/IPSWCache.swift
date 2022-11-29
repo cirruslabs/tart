@@ -15,6 +15,6 @@ class IPSWCache: PrunableStorage {
 
   func prunables() throws -> [Prunable] {
     try FileManager.default.contentsOfDirectory(at: baseURL, includingPropertiesForKeys: nil)
-            .filter { $0.lastPathComponent.hasSuffix(".ipsw")}
+      .filter { $0.lastPathComponent.hasSuffix(".ipsw")}
   }
 }

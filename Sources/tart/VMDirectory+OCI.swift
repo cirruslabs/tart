@@ -59,11 +59,11 @@ extension VMDirectory {
 
     // Progress
     let diskCompressedSize: Int64 = Int64(diskLayers.map {
-              $0.size
-            }
-            .reduce(0) {
-              $0 + $1
-            })
+      $0.size
+    }
+    .reduce(0) {
+      $0 + $1
+    })
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
     defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
     let progress = Progress(totalUnitCount: diskCompressedSize)
@@ -144,9 +144,9 @@ extension VMDirectory {
     let ociConfigJSON = try OCIConfig(architecture: config.arch, os: config.os).toJSON()
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON, chunkSizeMb: chunkSizeMb)
     let manifest = OCIManifest(
-            config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
-            layers: layers,
-            uncompressedDiskSize: UInt64(mappedDiskReadOffset)
+      config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
+      layers: layers,
+      uncompressedDiskSize: UInt64(mappedDiskReadOffset)
     )
 
     // Manifest

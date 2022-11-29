@@ -20,8 +20,8 @@ class Digest {
 extension SHA256.Digest {
   func hexdigest() -> String {
     "sha256:" + self.map {
-              String(format: "%02x", $0)
-            }
-            .joined()
+      String(format: "%02x", $0)
+    }
+    .joined()
   }
 }

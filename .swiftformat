@@ -1,0 +1,5 @@
+--disable all
+--enable indent
+--indent 2
+--exclude Sources/tart/OCI/Reference/Generated
+--swiftversion 5.7

@@ -15,8 +15,8 @@ struct Run: AsyncParsableCommand {
   var name: String
 
   @Flag(help: ArgumentHelp(
-          "Don't open a UI window.",
-          discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
+    "Don't open a UI window.",
+    discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
   var noGraphics: Bool = false
 
   @Flag(help: "Force open a UI window, even when VNC is enabled.")
@@ -24,11 +24,11 @@ struct Run: AsyncParsableCommand {
 
   @Flag(help: "Boot into recovery mode") 
   var recovery: Bool = false
-  
+
   @Flag(help: ArgumentHelp(
-          "Use screen sharing instead of the built-in UI.",
-          discussion: "Useful since Screen Sharing supports copy/paste, drag and drop, etc.\n"
-            + "Note that Remote Login option should be enabled inside the VM."))
+    "Use screen sharing instead of the built-in UI.",
+    discussion: "Useful since Screen Sharing supports copy/paste, drag and drop, etc.\n"
+      + "Note that Remote Login option should be enabled inside the VM."))
   var vnc: Bool = false
 
   @Flag(help: ArgumentHelp(
@@ -41,46 +41,46 @@ struct Run: AsyncParsableCommand {
   var withSoftnet: Bool = false
 
   @Option(help: ArgumentHelp("""
-    Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
-    """, discussion: """
-    Learn how to create a disk image using Disk Utility here:
-    https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
-    """, valueName: "path[:ro]"))
+  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
+  """, discussion: """
+  Learn how to create a disk image using Disk Utility here:
+  https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+  """, valueName: "path[:ro]"))
   var disk: [String] = []
 
   @Option(name: [.customLong("rosetta")], help: ArgumentHelp(
     "Attaches a Rosetta share to the guest Linux VM with a specific tag (e.g. --rosetta=\"rosetta\")",
     discussion: """
-                Requires host to be macOS 13.0 (Ventura) with Rosetta installed. The latter can be done
-                by running "softwareupdate --install-rosetta" (without quotes) in the Terminal.app.
+    Requires host to be macOS 13.0 (Ventura) with Rosetta installed. The latter can be done
+    by running "softwareupdate --install-rosetta" (without quotes) in the Terminal.app.
 
-                Note that you also have to configure Rosetta in the guest Linux VM by following the
-                steps from "Mount the Shared Directory and Register Rosetta" section here:
-                https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta#3978496
-                """,
+    Note that you also have to configure Rosetta in the guest Linux VM by following the
+    steps from "Mount the Shared Directory and Register Rosetta" section here:
+    https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta#3978496
+    """,
     valueName: "tag"
   ))
   var rosettaTag: String?
 
   @Option(help: ArgumentHelp("""
-                             Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\")
-                             """, discussion: """
-                                              Requires host to be macOS 13.0 (Ventura) or newer.
-                                              All shared directories are automatically mounted to "/Volumes/My Shared Files" directory on macOS,
-                                              while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
-                                              For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
-                                              """, valueName: "name:path[:ro]"))
+  Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\")
+  """, discussion: """
+  Requires host to be macOS 13.0 (Ventura) or newer.
+  All shared directories are automatically mounted to "/Volumes/My Shared Files" directory on macOS,
+  while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
+  For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
+  """, valueName: "name:path[:ro]"))
   var dir: [String] = []
 
   @Option(help: ArgumentHelp("""
-                             Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
-                             """, discussion: """
-                                              Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
-                                              """, valueName: "interface name"))
+  Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
+  """, discussion: """
+  Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
+  """, valueName: "interface name"))
   var netBridged: String?
 
   @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
-          discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
+                           discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
   func validate() throws {
@@ -357,16 +357,16 @@ struct Run: AsyncParsableCommand {
             }
           }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
         }.commands {
-                  // Remove some standard menu options
-                  CommandGroup(replacing: .help, addition: {})
-                  CommandGroup(replacing: .newItem, addition: {})
-                  CommandGroup(replacing: .pasteboard, addition: {})
-                  CommandGroup(replacing: .textEditing, addition: {})
-                  CommandGroup(replacing: .undoRedo, addition: {})
-                  CommandGroup(replacing: .windowSize, addition: {})
-                  // Replace some standard menu options
-                  CommandGroup(replacing: .appInfo) { AboutTart() }
-                }
+          // Remove some standard menu options
+          CommandGroup(replacing: .help, addition: {})
+          CommandGroup(replacing: .newItem, addition: {})
+          CommandGroup(replacing: .pasteboard, addition: {})
+          CommandGroup(replacing: .textEditing, addition: {})
+          CommandGroup(replacing: .undoRedo, addition: {})
+          CommandGroup(replacing: .windowSize, addition: {})
+          // Replace some standard menu options
+          CommandGroup(replacing: .appInfo) { AboutTart() }
+        }
       }
     }
 

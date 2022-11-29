@@ -12,8 +12,8 @@ struct Config {
       tartHomeDir = URL(fileURLWithPath: customTartHome)
     } else {
       tartHomeDir = FileManager.default
-              .homeDirectoryForCurrentUser
-              .appendingPathComponent(".tart", isDirectory: true)
+        .homeDirectoryForCurrentUser
+        .appendingPathComponent(".tart", isDirectory: true)
     }
     self.tartHomeDir = tartHomeDir
 
@@ -26,7 +26,7 @@ struct Config {
 
   func gc() throws {
     for entry in try FileManager.default.contentsOfDirectory(at: tartTmpDir,
-        includingPropertiesForKeys: [], options: []) {
+                                                             includingPropertiesForKeys: [], options: []) {
       let lock = try FileLock(lockURL: entry)
       if try !lock.trylock() {
         continue

@@ -18,6 +18,7 @@ let package = Package(
     .package(url: "https://github.com/sushichop/Puppy", from: "0.5.1"),
     .package(url: "https://github.com/antlr/antlr4", branch: "dev"),
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.0.0")),
+    .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.50.4"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [

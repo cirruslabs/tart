@@ -5,9 +5,9 @@ import Puppy
 var puppy = Puppy.default
 
 class LogFormatter: LogFormattable {
-    func formatMessage(_ level: LogLevel, message: String, tag: String, function: String, file: String, line: UInt, swiftLogInfo: [String: String], label: String, date: Date, threadID: UInt64) -> String {
-        "\(date) \(level) \(message)"
-    }
+  func formatMessage(_ level: LogLevel, message: String, tag: String, function: String, file: String, line: UInt, swiftLogInfo: [String: String], label: String, date: Date, threadID: UInt64) -> String {
+    "\(date) \(level) \(message)"
+  }
 }
 
 @main
