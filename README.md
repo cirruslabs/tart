@@ -290,6 +290,14 @@ It is also possible to mount directories in read-only mode by adding a third par
 tart run --dir=project:~/src/project:ro vm
 ```
 
+To mount multiple directories, repeat the `--dir` argument for each directory:
+
+```sh
+tart run --dir=www1:~/project1/www --dir=www2:~/project2/www
+```
+
+Note that the first parameter in each `--dir` argument must be unique, otherwise only the last `--dir` argument using that name will be used.
+
 Note: to use the directory mounting feature, the host needs to run macOS 13.0 (Ventura) or newer.
 
 #### Accessing mounted directories in macOS guests
