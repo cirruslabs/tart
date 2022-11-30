@@ -1,3 +1,5 @@
+use_compute_credits: true
+
 task:
   name: Test on Ventura
   alias: test
