@@ -225,10 +225,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
           // new API introduced in Ventura
           let startOptions = VZMacOSVirtualMachineStartOptions()
           startOptions.startUpFromMacOSRecovery = recovery
-          try await self.virtualMachine.start(options: startOptions)
+          try await virtualMachine.start(options: startOptions)
         } else {
           // use method that also available on Monterey
-          try await self.virtualMachine.start(recovery)
+          try await virtualMachine.start(recovery)
         }
       }
     }
