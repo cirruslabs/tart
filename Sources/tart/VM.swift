@@ -219,7 +219,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   func run(_ recovery: Bool) async throws {
     try network.run(sema)
 
-    DispatchQueue.main.sync {
+    let startTask = DispatchQueue.main.sync {
       Task {
         if #available(macOS 13, *) {
           // new API introduced in Ventura
@@ -233,7 +233,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
-    await withTaskCancellationHandler(operation: {
+    try await withTaskCancellationHandler(operation: {
+      // Await on VZVirtualMachine.start() result
+      _ = try await startTask.value
+
+      // Wait for the VM to finish running
+      // or for the exit condition
       sema.wait()
     }, onCancel: {
       sema.signal()
