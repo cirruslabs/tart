@@ -102,9 +102,10 @@
     {
       "identity" : "swiftformat",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/edigaryev/SwiftFormat",
+      "location" : "https://github.com/nicklockwood/SwiftFormat",
       "state" : {
-        "revision" : "46f34946546a29eeb6cb23ec44936b74fd379d63"
+        "revision" : "da637c398c5d08896521b737f2868ddc2e7996ae",
+        "version" : "0.50.6"
       }
     }
   ],
