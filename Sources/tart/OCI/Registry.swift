@@ -313,7 +313,7 @@ class Registry {
     let wwwAuthenticate = try WWWAuthenticate(rawHeaderValue: wwwAuthenticateRaw)
 
     if wwwAuthenticate.scheme.lowercased() == "basic" {
-      if let (user, password) = try lookupCredentials(host: baseURL.host!) {
+      if let (user, password) = try lookupCredentials() {
         currentAuthToken = BasicAuthentication(user: user, password: password)
       }
 
@@ -350,7 +350,7 @@ class Registry {
 
     var headers: Dictionary<String, String> = Dictionary()
 
-    if let (user, password) = try lookupCredentials(host: baseURL.host!) {
+    if let (user, password) = try lookupCredentials() {
       let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
       headers["Authorization"] = "Basic \(encodedCredentials!)"
     }
@@ -364,7 +364,13 @@ class Registry {
     currentAuthToken = try TokenResponse.parse(fromData: data)
   }
 
-  private func lookupCredentials(host: String) throws -> (String, String)? {
+  private func lookupCredentials() throws -> (String, String)? {
+    var host = baseURL.host!
+
+    if let port = baseURL.port {
+      host += ":\(port)"
+    }
+
     for provider in credentialsProviders {
       if let (user, password) = try provider.retrieve(host: host) {
         return (user, password)
