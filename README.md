@@ -40,7 +40,7 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 ## Usage
 
-Try running a Tart VM on your Apple Silicon device running macOS Monterey or later (will download a 25 GB image):
+Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
 
 ```shell
 brew install cirruslabs/cli/tart
@@ -166,6 +166,8 @@ After the initial booting of the VM you'll need to manually go through the macOS
 5. Run `sudo visudo` in Terminal, find `%admin ALL=(ALL) ALL` add `admin ALL=(ALL) NOPASSWD: ALL` to allow sudo without a password.
 
 #### Creating a Linux VM image from scratch
+
+Linux VMs are supported on hosts running macOS 13.0 (Ventura) or newer.
 
 ```bash
 # Create a bare VM
@@ -356,7 +358,7 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
   <summary>VM location on disk</summary>
 
   Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
-  Remote images are pulled into `~/.tart/vms/cache/OCIs/`.
+  Remote images are pulled into `~/.tart/cache/OCIs/`.
 </details>
 
 <details>
@@ -381,5 +383,14 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
 
   ```
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
+  ```
+</details>
+
+<details>
+  <summary>How to connect to a VM over SSH?</summary>
+
+  If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
+  ```
+  ssh admin:admin@$(tart ip monterey-base)
   ```
 </details>
