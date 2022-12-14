@@ -70,7 +70,7 @@ class Softnet: Network {
 
   private func setSocketBuffers(_ fd: Int32, _ sizeBytes: Int) throws {
     let option_len = socklen_t(MemoryLayout<Int>.size)
-    
+
     // The system expects the value of SO_RCVBUF to be at least double the value of SO_SNDBUF,
     // and for optimal performance, the recommended value of SO_RCVBUF is four times the value of SO_SNDBUF.
     // See: https://developer.apple.com/documentation/virtualization/vzfilehandlenetworkdeviceattachment/3969266-maximumtransmissionunit
