@@ -1,6 +1,6 @@
 <img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartSocial.png"/>
 
-*Tart* is a virtualization toolset to build, run and manage macOS and Linux virtual machines on Apple Silicon.
+*Tart* is a virtualization toolset to build, run and manage macOS and Linux virtual machines (VMs) on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
 
 * Tart uses Apple's own `Virtualization.Framework` for [near-native performance](https://browser.geekbench.com/v5/cpu/compare/14966395?baseline=14966339).
@@ -40,7 +40,7 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 ## Usage
 
-Try running a Tart VM on your Apple Silicon device running macOS Monterey or later (will download a 25 GB image):
+Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
 
 ```shell
 brew install cirruslabs/cli/tart
@@ -133,7 +133,7 @@ task:
 
 Running Cirrus CLI with `--artifacts-dir` will write defined `artifacts` to the provided local directory on the host:
 
-```bash
+```shell
 cirrus run --artifacts-dir artifacts
 ```
 
@@ -167,7 +167,9 @@ After the initial booting of the VM you'll need to manually go through the macOS
 
 #### Creating a Linux VM image from scratch
 
-```bash
+Linux VMs are supported on hosts running macOS 13.0 (Ventura) or newer.
+
+```shell
 # Create a bare VM
 tart create --linux ubuntu
 
@@ -278,7 +280,7 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 
 To mount a directory, run the VM with the `--dir` argument:
 
-```sh
+```shell
 tart run --dir=project:~/src/project vm
 ```
 
@@ -286,13 +288,13 @@ Here, the `project` specifies a mount name, whereas the `~/src/project` is a pat
 
 It is also possible to mount directories in read-only mode by adding a third parameter, `ro`:
 
-```sh
+```shell
 tart run --dir=project:~/src/project:ro vm
 ```
 
 To mount multiple directories, repeat the `--dir` argument for each directory:
 
-```sh
+```shell
 tart run --dir=www1:~/project1/www --dir=www2:~/project2/www
 ```
 
@@ -312,7 +314,7 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
 
-```sh
+```shell
 mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 
@@ -356,7 +358,7 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
   <summary>VM location on disk</summary>
 
   Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
-  Remote images are pulled into `~/.tart/vms/cache/OCIs/`.
+  Remote images are pulled into `~/.tart/cache/OCIs/`.
 </details>
 
 <details>
@@ -371,7 +373,7 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
 
   To change the default network to `192.168.77.1`:
 
-  ```
+  ```shell
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Address -string 192.168.77.1
   ```
 
@@ -379,7 +381,17 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
 
   The default subnet mask `255.255.255.0` should suffice for most use-cases, however, you can also change it to `255.255.0.0`, for example:
 
-  ```
+  ```shell
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
+  ```
+</details>
+
+<details>
+  <summary>How to connect to a VM over SSH?</summary>
+
+  If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
+  
+  ```shell
+  ssh admin@$(tart ip macos-monterey-base)
   ```
 </details>
