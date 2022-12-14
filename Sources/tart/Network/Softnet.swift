@@ -69,15 +69,19 @@ class Softnet: Network {
   }
 
   private func setSocketBuffers(_ fd: Int32, _ sizeBytes: Int) throws {
-    var option_value = sizeBytes
     let option_len = socklen_t(MemoryLayout<Int>.size)
 
-    var ret = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &option_value, option_len)
+    // The system expects the value of SO_RCVBUF to be at least double the value of SO_SNDBUF,
+    // and for optimal performance, the recommended value of SO_RCVBUF is four times the value of SO_SNDBUF.
+    // See: https://developer.apple.com/documentation/virtualization/vzfilehandlenetworkdeviceattachment/3969266-maximumtransmissionunit
+    var receiveBufferSize = 4 * sizeBytes
+    var ret = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receiveBufferSize, option_len)
     if ret != 0 {
       throw SoftnetError.InitializationFailed(why: "setsockopt(SO_RCVBUF) returned \(ret)")
     }
 
-    ret = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &option_value, option_len)
+    var sendBufferSize = sizeBytes
+    ret = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &sendBufferSize, option_len)
     if ret != 0 {
       throw SoftnetError.InitializationFailed(why: "setsockopt(SO_SNDBUF) returned \(ret)")
     }
