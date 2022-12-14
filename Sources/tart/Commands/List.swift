@@ -9,20 +9,30 @@ struct List: AsyncParsableCommand {
   var quiet: Bool = false
 
   @Option(help: ArgumentHelp("Only display VMs from the specified source (e.g. --source local, --source oci)."))
-  var source: String = ""
+  var source: String?
+
+  func validate() throws {
+    guard let source = source else {
+      return
+    }
+
+    if !["local", "oci"].contains(source) {
+      throw ValidationError("'\(source)' is not a valid <source>")
+    }
+  }
 
   func run() async throws {
     do {
-      switch source {
-      case "local":
+      if !quiet {
+        print("Source\tName")
+      }
+
+      if source == nil || source == "local" {
         displayTable("local", try VMStorageLocal().list())
-      case "oci":
+      }
+
+      if source == nil || source == "oci" {
         displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
-      case "":
-        displayTable("local", try VMStorageLocal().list())
-        displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
-      default:
-        throw ValidationError("Unknown source: '\(source)'")
       }
 
       Foundation.exit(0)
@@ -34,10 +44,6 @@ struct List: AsyncParsableCommand {
   }
 
   private func displayTable(_ source: String, _ vms: [(String, VMDirectory)]) {
-    if !quiet {
-      print("Source\tName")
-    }
-
     for (name, _) in vms.sorted(by: { left, right in left.0 < right.0 }) {
       if quiet {
         print(name)
