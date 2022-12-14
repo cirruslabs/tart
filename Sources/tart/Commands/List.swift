@@ -42,6 +42,7 @@ struct List: AsyncParsableCommand {
       if quiet {
         print(name)
       } else {
+        let source = source.padding(toLength: "Source".count, withPad: " ", startingAt: 0)
         print("\(source)\t\(name)")
       }
     }
