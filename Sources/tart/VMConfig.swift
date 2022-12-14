@@ -35,6 +35,12 @@ struct VMDisplayConfig: Codable {
   var height: Int = 768
 }
 
+extension VMDisplayConfig: CustomStringConvertible {
+  var description: String {
+    "\(width)x\(height)"
+  }
+}
+
 struct VMConfig: Codable {
   var version: Int = 1
   var os: OS
