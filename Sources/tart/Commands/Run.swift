@@ -118,7 +118,8 @@ struct Run: AsyncParsableCommand {
       if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
         print("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
           + "unmount it first in Finder")
-        Foundation.exit(1)
+
+        throw ExitCode.failure
       }
     }
 
@@ -155,7 +156,8 @@ struct Run: AsyncParsableCommand {
     let lock = try PIDLock(lockURL: vmDir.configURL)
     if try !lock.trylock() {
       print("Virtual machine \"\(name)\" is already running!")
-      Foundation.exit(2)
+
+      throw ExitCode(2)
     }
 
     let task = Task {

@@ -27,40 +27,32 @@ struct Login: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      var user: String
-      var password: String
+    var user: String
+    var password: String
 
-      if let username = username {
-        user = username
+    if let username = username {
+      user = username
 
-        let passwordData = FileHandle.standardInput.readDataToEndOfFile()
-        password = String(decoding: passwordData, as: UTF8.self)
-      } else {
-        (user, password) = try StdinCredentials.retrieve()
-      }
-      let credentialsProvider = DictionaryCredentialsProvider([
-        host: (user, password)
-      ])
-
-      do {
-        let registry = try Registry(host: host, namespace: "", insecure: insecure,
-                                    credentialsProviders: [credentialsProvider])
-        try await registry.ping()
-      } catch {
-        print("invalid credentials: \(error)")
-
-        Foundation.exit(1)
-      }
-
-      try KeychainCredentialsProvider().store(host: host, user: user, password: password)
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+      let passwordData = FileHandle.standardInput.readDataToEndOfFile()
+      password = String(decoding: passwordData, as: UTF8.self)
+    } else {
+      (user, password) = try StdinCredentials.retrieve()
     }
+    let credentialsProvider = DictionaryCredentialsProvider([
+      host: (user, password)
+    ])
+
+    do {
+      let registry = try Registry(host: host, namespace: "", insecure: insecure,
+        credentialsProviders: [credentialsProvider])
+      try await registry.ping()
+    } catch {
+      print("invalid credentials: \(error)")
+
+      throw ExitCode.failure
+    }
+
+    try KeychainCredentialsProvider().store(host: host, user: user, password: password)
   }
 }
 

@@ -17,24 +17,16 @@ struct Rename: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      let localStorage = VMStorageLocal()
+    let localStorage = VMStorageLocal()
 
-      if !localStorage.exists(name) {
-        throw ValidationError("failed to rename a non-existent VM: \(name)")
-      }
-
-      if localStorage.exists(newName) {
-        throw ValidationError("failed to rename VM \(name), target VM \(name) already exists, delete it first!")
-      }
-
-      try localStorage.rename(name, newName)
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    if !localStorage.exists(name) {
+      throw ValidationError("failed to rename a non-existent VM: \(name)")
     }
+
+    if localStorage.exists(newName) {
+      throw ValidationError("failed to rename VM \(name), target VM \(name) already exists, delete it first!")
+    }
+
+    try localStorage.rename(name, newName)
   }
 }

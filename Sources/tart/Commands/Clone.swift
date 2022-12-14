@@ -21,43 +21,35 @@ struct Clone: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      let ociStorage = VMStorageOCI()
-      let localStorage = VMStorageLocal()
+    let ociStorage = VMStorageOCI()
+    let localStorage = VMStorageLocal()
 
-      if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
-        // Pull the VM in case it's OCI-based and doesn't exist locally yet
-        let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
-        try await ociStorage.pull(remoteName, registry: registry)
-      }
-
-      let sourceVM = try VMStorageHelper.open(sourceName)
-
-      let tmpVMDir = try VMDirectory.temporary()
-
-      // Lock the temporary VM directory to prevent it's garbage collection
-      let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
-      try tmpVMDirLock.lock()
-
-      try await withTaskCancellationHandler(operation: {
-        let lock = try FileLock(lockURL: Config().tartHomeDir)
-        try lock.lock()
-
-        let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
-        try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
-        try localStorage.move(newName, from: tmpVMDir)
-
-        try lock.unlock()
-      }, onCancel: {
-        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
-      })
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
+      // Pull the VM in case it's OCI-based and doesn't exist locally yet
+      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
+      try await ociStorage.pull(remoteName, registry: registry)
     }
+
+    let sourceVM = try VMStorageHelper.open(sourceName)
+
+    let tmpVMDir = try VMDirectory.temporary()
+
+    // Lock the temporary VM directory to prevent it's garbage collection
+    let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
+    try tmpVMDirLock.lock()
+
+    try await withTaskCancellationHandler(operation: {
+      let lock = try FileLock(lockURL: Config().tartHomeDir)
+      try lock.lock()
+
+      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
+      try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
+      try localStorage.move(newName, from: tmpVMDir)
+
+      try lock.unlock()
+    }, onCancel: {
+      try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+    })
   }
 }
 

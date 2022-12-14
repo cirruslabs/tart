@@ -12,27 +12,19 @@ struct Pull: AsyncParsableCommand {
   var insecure: Bool = false
 
   func run() async throws {
-    do {
-      // Be more liberal when accepting local image as argument,
-      // see https://github.com/cirruslabs/tart/issues/36
-      if VMStorageLocal().exists(remoteName) {
-        print("\"\(remoteName)\" is a local image, nothing to pull here!")
+    // Be more liberal when accepting local image as argument,
+    // see https://github.com/cirruslabs/tart/issues/36
+    if VMStorageLocal().exists(remoteName) {
+      print("\"\(remoteName)\" is a local image, nothing to pull here!")
 
-        Foundation.exit(0)
-      }
-
-      let remoteName = try RemoteName(remoteName)
-      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
-
-      defaultLogger.appendNewLine("pulling \(remoteName)...")
-
-      try await VMStorageOCI().pull(remoteName, registry: registry)
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+      throw ExitCode.success
     }
+
+    let remoteName = try RemoteName(remoteName)
+    let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
+
+    defaultLogger.appendNewLine("pulling \(remoteName)...")
+
+    try await VMStorageOCI().pull(remoteName, registry: registry)
   }
 }

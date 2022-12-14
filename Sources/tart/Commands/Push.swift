@@ -28,54 +28,46 @@ struct Push: AsyncParsableCommand {
   var populateCache: Bool = false
 
   func run() async throws {
-    do {
-      let localVMDir = try VMStorageLocal().open(localName)
+    let localVMDir = try VMStorageLocal().open(localName)
 
-      // Parse remote names supplied by the user
-      let remoteNames = try remoteNames.map{
-        try RemoteName($0)
-      }
+    // Parse remote names supplied by the user
+    let remoteNames = try remoteNames.map{
+      try RemoteName($0)
+    }
 
-      // Group remote names by registry
-      struct RegistryIdentifier: Hashable, Equatable {
-        var host: String
-        var namespace: String
-      }
+    // Group remote names by registry
+    struct RegistryIdentifier: Hashable, Equatable {
+      var host: String
+      var namespace: String
+    }
 
-      let registryGroups = Dictionary(grouping: remoteNames, by: {
-        RegistryIdentifier(host: $0.host, namespace: $0.namespace)
-      })
+    let registryGroups = Dictionary(grouping: remoteNames, by: {
+      RegistryIdentifier(host: $0.host, namespace: $0.namespace)
+    })
 
-      // Push VM
-      for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
-        let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace,
-                                    insecure: insecure)
+    // Push VM
+    for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
+      let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace,
+        insecure: insecure)
 
-        defaultLogger.appendNewLine("pushing \(localName) to "
-          + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
+      defaultLogger.appendNewLine("pushing \(localName) to "
+        + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
-        let pushedRemoteName = try await localVMDir.pushToRegistry(
-          registry: registry, 
-          references: remoteNamesForRegistry.map{ $0.reference.value }, 
-          chunkSizeMb: chunkSize
-        )
+      let pushedRemoteName = try await localVMDir.pushToRegistry(
+        registry: registry,
+        references: remoteNamesForRegistry.map{ $0.reference.value },
+        chunkSizeMb: chunkSize
+      )
 
-        // Populate the local cache (if requested)
-        if populateCache {
-          let ociStorage = VMStorageOCI()
-          let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
-          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
-          for remoteName in remoteNamesForRegistry {
-            try ociStorage.link(from: remoteName, to: pushedRemoteName)
-          }
+      // Populate the local cache (if requested)
+      if populateCache {
+        let ociStorage = VMStorageOCI()
+        let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
+        try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
+        for remoteName in remoteNamesForRegistry {
+          try ociStorage.link(from: remoteName, to: pushedRemoteName)
         }
       }
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
     }
   }
 }

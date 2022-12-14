@@ -9,16 +9,8 @@ struct Delete: AsyncParsableCommand {
   var name: [String]
 
   func run() async throws {
-    do {
-      for it in name {
-        try VMStorageHelper.delete(it)
-      }
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    for it in name {
+      try VMStorageHelper.delete(it)
     }
   }
 }
