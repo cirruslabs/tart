@@ -8,7 +8,7 @@ struct List: AsyncParsableCommand {
   @Flag(name: [.short, .long], help: ArgumentHelp("Only display VM names."))
   var quiet: Bool = false
 
-  @Option(name: [.short, .long], help: ArgumentHelp("Only display VMs of this Source."))
+  @Option(help: ArgumentHelp("Only display VMs from the specified source (e.g. --source local, --source oci)."))
   var source: String = ""
 
   func run() async throws {
