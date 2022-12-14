@@ -7,7 +7,7 @@ struct List: AsyncParsableCommand {
 
   @Flag(name: [.short, .long], help: ArgumentHelp("Only display VM names."))
   var quiet: Bool = false
-  
+
   @Option(name: [.short, .long], help: ArgumentHelp("Only display VMs of this Source."))
   var source: String = ""
 
@@ -24,7 +24,7 @@ struct List: AsyncParsableCommand {
       default:
         throw ValidationError("Unknown source: '\(source)'")
       }
-      
+
       Foundation.exit(0)
     } catch {
       print(error)
@@ -37,7 +37,7 @@ struct List: AsyncParsableCommand {
     if !quiet {
       print("Source\tName")
     }
-    
+
     for (name, _) in vms.sorted(by: { left, right in left.0 < right.0 }) {
       if quiet {
         print(name)
