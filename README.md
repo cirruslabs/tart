@@ -390,6 +390,7 @@ The directory we've mounted above will be accessible from the `/mnt/shared/proje
   <summary>How to connect to a VM over SSH?</summary>
 
   If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
+  
   ```shell
   ssh admin@$(tart ip macos-monterey-base)
   ```
