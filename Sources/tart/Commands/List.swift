@@ -13,10 +13,6 @@ struct List: AsyncParsableCommand {
 
   func run() async throws {
     do {
-      if !quiet {
-        print("Source\tName")
-      }
-      
       switch source {
       case "local":
         displayTable("local", try VMStorageLocal().list())
@@ -38,6 +34,10 @@ struct List: AsyncParsableCommand {
   }
 
   private func displayTable(_ source: String, _ vms: [(String, VMDirectory)]) {
+    if !quiet {
+      print("Source\tName")
+    }
+    
     for (name, _) in vms.sorted(by: { left, right in left.0 < right.0 }) {
       if quiet {
         print(name)
