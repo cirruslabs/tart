@@ -65,10 +65,6 @@ class VMStorageOCI: PrunableStorage {
       // with broken outgoing references
       if isSymlink && foundURL == foundURL.resolvingSymlinksInPath() {
         try FileManager.default.removeItem(at: foundURL)
-        SentrySDK.capture(message: "Broken symlink!") { scope in
-          scope.setLevel(.info)
-          scope.setContext(value: ["url": foundURL, ], key: "Symlink details")
-        }
         continue
       }
 
@@ -86,10 +82,6 @@ class VMStorageOCI: PrunableStorage {
       let vmDir = VMDirectory(baseURL: baseURL)
 
       if !vmDir.isExplicitlyPulled() && incRefCount == 0 {
-        SentrySDK.capture(message: "Garbage image!") { scope in
-          scope.setLevel(.info)
-          scope.setContext(value: ["image": vmDir.name, ], key: "Image details")
-        }
         try FileManager.default.removeItem(at: baseURL)
       }
     }
