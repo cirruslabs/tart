@@ -157,14 +157,7 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
-      SentrySDK.capture(message: "Image is not yet cached!") { scope in
-        scope.setLevel(.info)
-
-        scope.setContext(value: [
-          "image": name.description,
-          "digest": digestName,
-        ], key: "Image details")
-      }
+      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull")
       let tmpVMDir = try VMDirectory.temporary()
 
       // Lock the temporary VM directory to prevent it's garbage collection
@@ -173,6 +166,7 @@ class VMStorageOCI: PrunableStorage {
 
       // Try to reclaim some cache space if we know the VM size in advance
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
+        transaction.setMeasurement(name: "disk_size", value: uncompressedDiskSize as NSNumber, unit: MeasurementUnitInformation.byte);
         let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)
 
         let attrs = try Config().tartCacheDir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey, .volumeAvailableCapacityKey])
@@ -199,7 +193,9 @@ class VMStorageOCI: PrunableStorage {
       try await withTaskCancellationHandler(operation: {
         try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
         try move(digestName, from: tmpVMDir)
+        transaction.finish()
       }, onCancel: {
+        transaction.finish(status: SentrySpanStatus.cancelled)
         try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
       })
     } else {

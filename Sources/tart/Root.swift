@@ -39,6 +39,8 @@ struct Root: AsyncParsableCommand {
       SentrySDK.start { options in
         options.dsn = dsn
         options.releaseName = CI.release
+        
+        options.tracesSampleRate = 1.0
 
         // By default only 5XX are captured
         // Let's capture everything but 401 (unauthorized)
