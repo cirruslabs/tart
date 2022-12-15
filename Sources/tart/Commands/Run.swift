@@ -117,10 +117,8 @@ struct Run: AsyncParsableCommand {
       }
 
       if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
-        print("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
+        throw RuntimeError("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
           + "unmount it first in Finder")
-
-        throw ExitCode.failure
       }
     }
 
@@ -156,9 +154,7 @@ struct Run: AsyncParsableCommand {
     // [1]: https://man.openbsd.org/fcntl
     let lock = try PIDLock(lockURL: vmDir.configURL)
     if try !lock.trylock() {
-      print("Virtual machine \"\(name)\" is already running!")
-
-      throw ExitCode(2)
+      throw RuntimeError("Virtual machine \"\(name)\" is already running!", exitCode: 2)
     }
 
     let task = Task {

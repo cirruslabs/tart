@@ -89,7 +89,13 @@ struct Root: AsyncParsableCommand {
       SentrySDK.capture(error: error)
       SentrySDK.flush(timeout: 2.seconds.timeInterval)
 
-      exit(withError: error)
+      print(error)
+
+      if let runtimeError = error as? RuntimeError {
+        Foundation.exit(runtimeError.exitCode)
+      }
+
+      Foundation.exit(1)
     }
   }
 

@@ -47,9 +47,7 @@ struct Login: AsyncParsableCommand {
                                   credentialsProviders: [credentialsProvider])
       try await registry.ping()
     } catch {
-      print("invalid credentials: \(error)")
-
-      throw ExitCode.failure
+      throw RuntimeError("invalid credentials: \(error)")
     }
 
     try KeychainCredentialsProvider().store(host: host, user: user, password: password)

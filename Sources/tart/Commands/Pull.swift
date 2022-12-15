@@ -17,7 +17,7 @@ struct Pull: AsyncParsableCommand {
     if VMStorageLocal().exists(remoteName) {
       print("\"\(remoteName)\" is a local image, nothing to pull here!")
 
-      throw ExitCode.success
+      return
     }
 
     let remoteName = try RemoteName(remoteName)

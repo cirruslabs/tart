@@ -19,9 +19,7 @@ struct Stop: AsyncParsableCommand {
     // Find the VM's PID
     var pid = try lock.pid()
     if pid == 0 {
-      print("VM \(name) is not running")
-
-      throw ExitCode(2)
+      throw RuntimeError("VM \(name) is not running", exitCode: 2)
     }
 
     // Try to gracefully terminate the VM
@@ -44,7 +42,7 @@ struct Stop: AsyncParsableCommand {
     while gracefulWaitDuration.value > 0 {
       pid = try lock.pid()
       if pid == 0 {
-        throw ExitCode.success
+        return
       }
 
       try await Task.sleep(nanoseconds: UInt64(gracefulTickDuration.converted(to: .nanoseconds).value))
@@ -56,9 +54,7 @@ struct Stop: AsyncParsableCommand {
     if ret != 0 {
       let details = Errno(rawValue: CInt(errno))
 
-      print("failed to forcefully terminate the VM \(name): \(details)")
-
-      throw ExitCode.failure
+      throw RuntimeError("failed to forcefully terminate the VM \(name): \(details)")
     }
   }
 }

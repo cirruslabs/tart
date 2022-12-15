@@ -42,12 +42,22 @@ extension Error {
 
 class RuntimeError: Error, CustomStringConvertible {
   let message: String
+  let exitCode: Int32
 
-  init(_ message: String) {
+  init(_ message: String, exitCode: Int32 = 1) {
     self.message = message
+    self.exitCode = exitCode
   }
 
   var description: String {
     message
+  }
+}
+
+extension RuntimeError : CustomNSError {
+  var errorUserInfo: [String : Any] {
+    [
+      NSDebugDescriptionErrorKey: message,
+    ]
   }
 }
