@@ -166,7 +166,6 @@ class VMStorageOCI: PrunableStorage {
 
       // Try to reclaim some cache space if we know the VM size in advance
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
-        transaction.setMeasurement(name: "disk_size", value: uncompressedDiskSize as NSNumber, unit: MeasurementUnitInformation.byte);
         let requiredCapacityBytes = UInt64(uncompressedDiskSize + 128 * 1024 * 1024)
 
         let attrs = try Config().tartCacheDir.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey, .volumeAvailableCapacityKey])
