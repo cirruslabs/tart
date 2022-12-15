@@ -165,7 +165,6 @@ class VMStorageOCI: PrunableStorage {
           "digest": digestName,
         ], key: "Image details")
       }
-      
       let tmpVMDir = try VMDirectory.temporary()
 
       // Lock the temporary VM directory to prevent it's garbage collection
