@@ -157,7 +157,7 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
-      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull")
+      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
       let tmpVMDir = try VMDirectory.temporary()
 
       // Lock the temporary VM directory to prevent it's garbage collection
