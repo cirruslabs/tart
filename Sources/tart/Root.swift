@@ -43,6 +43,7 @@ struct Root: AsyncParsableCommand {
 
         // By default only 5XX are captured
         // Let's capture everything but 401 (unauthorized)
+        options.enableCaptureFailedRequests = true
         options.failedRequestStatusCodes = [
           HttpStatusCodeRange(min: 400, max: 400),
           HttpStatusCodeRange(min: 402, max: 599)
