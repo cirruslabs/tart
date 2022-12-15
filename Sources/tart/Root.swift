@@ -39,7 +39,9 @@ struct Root: AsyncParsableCommand {
       SentrySDK.start { options in
         options.dsn = dsn
         options.releaseName = CI.release
-        options.tracesSampleRate = 1.0
+        options.tracesSampleRate = Float(
+          ProcessInfo.processInfo.environment["SENTRY_TRACES_SAMPLE_RATE"] ?? "1.0"
+        ) as NSNumber?
 
         // By default only 5XX are captured
         // Let's capture everything but 401 (unauthorized)
