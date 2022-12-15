@@ -38,6 +38,7 @@ struct Root: AsyncParsableCommand {
     if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] {
       SentrySDK.start { options in
         options.dsn = dsn
+        options.releaseName = CI.release
       }
     }
     defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }

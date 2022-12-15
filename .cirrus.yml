@@ -89,3 +89,8 @@ task:
     # Bundle and upload sources
     - sentry-cli debug-files bundle-sources tart.dSYM
     - sentry-cli debug-files upload tart.src.zip
+  create_sentry_release_script:
+    - export SENTRY_RELEASE="tart@$CIRRUS_TAG"
+    - sentry-cli releases new $SENTRY_RELEASE
+    - sentry-cli releases set-commits $SENTRY_RELEASE --auto
+    - sentry-cli releases finalize $SENTRY_RELEASE
