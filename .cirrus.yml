@@ -61,6 +61,9 @@ task:
     AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
+    SENTRY_ORG: cirrus-labs
+    SENTRY_PROJECT: persistent-workers
+    SENTRY_AUTH_TOKEN: ENCRYPTED[!c16a5cf7da5f856b4bc2f21fe8cb7aa2a6c981f851c094ed4d3025fd02ea59a58a86cee8b193a69a1fc20fa217e56ac3!]
   setup_script:
     - cd $HOME
     - echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
@@ -78,3 +81,16 @@ task:
     - xcodebuild -version
     - swift -version
   release_script: goreleaser
+  upload_sentry_debug_files_script:
+    - cd .build/arm64-apple-macosx/debug/
+    # Generate and upload symbols
+    - dsymutil tart
+    - sentry-cli debug-files upload tart.dSYM/
+    # Bundle and upload sources
+    - sentry-cli debug-files bundle-sources tart.dSYM
+    - sentry-cli debug-files upload tart.src.zip
+  create_sentry_release_script:
+    - export SENTRY_RELEASE="tart@$CIRRUS_TAG"
+    - sentry-cli releases new $SENTRY_RELEASE
+    - sentry-cli releases set-commits $SENTRY_RELEASE --auto
+    - sentry-cli releases finalize $SENTRY_RELEASE

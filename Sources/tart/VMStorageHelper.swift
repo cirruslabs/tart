@@ -42,12 +42,25 @@ extension Error {
 
 class RuntimeError: Error, CustomStringConvertible {
   let message: String
+  let exitCode: Int32
 
-  init(_ message: String) {
+  init(_ message: String, exitCode: Int32 = 1) {
     self.message = message
+    self.exitCode = exitCode
   }
 
   var description: String {
     message
+  }
+}
+
+// Customize error description for Sentry[1]
+//
+// [1]: https://docs.sentry.io/platforms/apple/guides/ios/usage/#customizing-error-descriptions
+extension RuntimeError : CustomNSError {
+  var errorUserInfo: [String : Any] {
+    [
+      NSDebugDescriptionErrorKey: message,
+    ]
   }
 }

@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 import Puppy
+import Sentry
 
 var puppy = Puppy.default
 
@@ -33,6 +34,24 @@ struct Root: AsyncParsableCommand {
     ])
 
   public static func main() async throws {
+    // Initialize Sentry
+    if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] {
+      SentrySDK.start { options in
+        options.dsn = dsn
+        options.releaseName = CI.release
+      }
+    }
+    defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }
+
+    // Enrich future events with Cirrus CI-specific tags
+    if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
+      SentrySDK.configureScope { scope in
+        for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
+          scope.setTag(value: value, key: key)
+        }
+      }
+    }
+
     // Ensure the default SIGINT handled is disabled,
     // otherwise there's a race between two handlers
     signal(SIGINT, SIG_IGN);
@@ -66,7 +85,26 @@ struct Root: AsyncParsableCommand {
         try command.run()
       }
     } catch {
-      exit(withError: error)
+      // Capture the error into Sentry
+      SentrySDK.capture(error: error)
+      SentrySDK.flush(timeout: 2.seconds.timeInterval)
+
+      print(error)
+
+      if let runtimeError = error as? RuntimeError {
+        Foundation.exit(runtimeError.exitCode)
+      }
+
+      Foundation.exit(1)
     }
+  }
+
+  private static func parseCirrusSentryTag(_ tag: String.SubSequence) -> (String, String)? {
+    let splits = tag.split(separator: "=", maxSplits: 1)
+    if splits.count != 2 {
+      return nil
+    }
+
+    return (String(splits[0]), String(splits[1]))
   }
 }

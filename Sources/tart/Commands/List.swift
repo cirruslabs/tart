@@ -22,24 +22,16 @@ struct List: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      if !quiet {
-        print("Source\tName")
-      }
+    if !quiet {
+      print("Source\tName")
+    }
 
-      if source == nil || source == "local" {
-        displayTable("local", try VMStorageLocal().list())
-      }
+    if source == nil || source == "local" {
+      displayTable("local", try VMStorageLocal().list())
+    }
 
-      if source == nil || source == "oci" {
-        displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
-      }
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    if source == nil || source == "oci" {
+      displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
     }
   }
 

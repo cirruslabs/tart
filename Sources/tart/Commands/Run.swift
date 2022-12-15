@@ -2,6 +2,7 @@ import ArgumentParser
 import Dispatch
 import SwiftUI
 import Virtualization
+import Sentry
 
 var vm: VM?
 
@@ -116,9 +117,8 @@ struct Run: AsyncParsableCommand {
       }
 
       if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
-        print("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
+        throw RuntimeError("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
           + "unmount it first in Finder")
-        Foundation.exit(1)
       }
     }
 
@@ -154,8 +154,7 @@ struct Run: AsyncParsableCommand {
     // [1]: https://man.openbsd.org/fcntl
     let lock = try PIDLock(lockURL: vmDir.configURL)
     if try !lock.trylock() {
-      print("Virtual machine \"\(name)\" is already running!")
-      Foundation.exit(2)
+      throw RuntimeError("Virtual machine \"\(name)\" is already running!", exitCode: 2)
     }
 
     let task = Task {
@@ -179,7 +178,12 @@ struct Run: AsyncParsableCommand {
 
         Foundation.exit(0)
       } catch {
+        // Capture the error into Sentry
+        SentrySDK.capture(error: error)
+        SentrySDK.flush(timeout: 2.seconds.timeInterval)
+
         print(error)
+
         Foundation.exit(1)
       }
     }

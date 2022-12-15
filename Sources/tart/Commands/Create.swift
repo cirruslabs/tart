@@ -25,46 +25,38 @@ struct Create: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      let tmpVMDir = try VMDirectory.temporary()
+    let tmpVMDir = try VMDirectory.temporary()
 
-      // Lock the temporary VM directory to prevent it's garbage collection
-      let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
-      try tmpVMDirLock.lock()
+    // Lock the temporary VM directory to prevent it's garbage collection
+    let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
+    try tmpVMDirLock.lock()
 
-      try await withTaskCancellationHandler(operation: {
-        if let fromIPSW = fromIPSW {
-          let ipswURL: URL
+    try await withTaskCancellationHandler(operation: {
+      if let fromIPSW = fromIPSW {
+        let ipswURL: URL
 
-          if fromIPSW == "latest" {
-            ipswURL = try await VM.latestIPSWURL()
-          } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
-            ipswURL = URL(string: fromIPSW)!
-          } else {
-            ipswURL = URL(fileURLWithPath: fromIPSW)
-          }
-
-          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
+        if fromIPSW == "latest" {
+          ipswURL = try await VM.latestIPSWURL()
+        } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
+          ipswURL = URL(string: fromIPSW)!
+        } else {
+          ipswURL = URL(fileURLWithPath: fromIPSW)
         }
 
-        if linux {
-          if #available(macOS 13, *) {
-            _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
-          } else {
-            throw UnsupportedOSError("Linux VMs", "are")
-          }
+        _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
+      }
+
+      if linux {
+        if #available(macOS 13, *) {
+          _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
+        } else {
+          throw UnsupportedOSError("Linux VMs", "are")
         }
+      }
 
-        try VMStorageLocal().move(name, from: tmpVMDir)
-      }, onCancel: {
-        try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
-      })
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
-    }
+      try VMStorageLocal().move(name, from: tmpVMDir)
+    }, onCancel: {
+      try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
+    })
   }
 }

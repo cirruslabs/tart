@@ -39,7 +39,9 @@ struct ARPCacheInternalError: Error, CustomStringConvertible {
 }
 
 struct ARPCache {
-  static func ResolveMACAddress(macAddress: MACAddress, bridgeOnly: Bool = true) throws -> IPv4Address? {
+  let arpCommandOutput: Data
+
+  init() throws {
     let process = Process.init()
     process.executableURL = URL.init(fileURLWithPath: "/usr/sbin/arp")
     process.arguments = ["-an"]
@@ -58,10 +60,15 @@ struct ARPCache {
         terminationStatus: process.terminationStatus)
     }
 
-    guard let rawLines = try pipe.fileHandleForReading.readToEnd() else {
+    guard let arpCommandOutput = try pipe.fileHandleForReading.readToEnd() else {
       throw ARPCommandYieldedInvalidOutputError(explanation: "empty output")
     }
-    let lines = String(decoding: rawLines, as: UTF8.self)
+
+    self.arpCommandOutput = arpCommandOutput
+  }
+
+  func ResolveMACAddress(macAddress: MACAddress, bridgeOnly: Bool = true) throws -> IPv4Address? {
+    let lines = String(decoding: arpCommandOutput, as: UTF8.self)
       .trimmingCharacters(in: .whitespacesAndNewlines)
       .components(separatedBy: "\n")
 

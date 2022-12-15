@@ -4,6 +4,10 @@ struct CI {
   static var version: String {
     rawVersion.expanded() ? rawVersion : "SNAPSHOT"
   }
+
+  static var release: String? {
+    rawVersion.expanded() ? "tart@\(rawVersion)" : nil
+  }
 }
 
 private extension String {

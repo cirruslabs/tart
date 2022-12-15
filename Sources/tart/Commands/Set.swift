@@ -20,38 +20,30 @@ struct Set: AsyncParsableCommand {
   var diskSize: UInt16?
 
   func run() async throws {
-    do {
-      let vmDir = try VMStorageLocal().open(name)
-      var vmConfig = try VMConfig(fromURL: vmDir.configURL)
+    let vmDir = try VMStorageLocal().open(name)
+    var vmConfig = try VMConfig(fromURL: vmDir.configURL)
 
-      if let cpu = cpu {
-        try vmConfig.setCPU(cpuCount: Int(cpu))
+    if let cpu = cpu {
+      try vmConfig.setCPU(cpuCount: Int(cpu))
+    }
+
+    if let memory = memory {
+      try vmConfig.setMemory(memorySize: memory * 1024 * 1024)
+    }
+
+    if let display = display {
+      if (display.width > 0) {
+        vmConfig.display.width = display.width
       }
-
-      if let memory = memory {
-        try vmConfig.setMemory(memorySize: memory * 1024 * 1024)
+      if (display.height > 0) {
+        vmConfig.display.height = display.height
       }
+    }
 
-      if let display = display {
-        if (display.width > 0) {
-          vmConfig.display.width = display.width
-        }
-        if (display.height > 0) {
-          vmConfig.display.height = display.height
-        }
-      }
+    try vmConfig.save(toURL: vmDir.configURL)
 
-      try vmConfig.save(toURL: vmDir.configURL)
-
-      if diskSize != nil {
-        try vmDir.resizeDisk(diskSize!)
-      }
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    if diskSize != nil {
+      try vmDir.resizeDisk(diskSize!)
     }
   }
 }

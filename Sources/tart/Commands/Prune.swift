@@ -26,29 +26,21 @@ struct Prune: AsyncParsableCommand {
   }
 
   func run() async throws {
-    do {
-      if gc {
-        try VMStorageOCI().gc()
-      }
+    if gc {
+      try VMStorageOCI().gc()
+    }
 
-      // Clean up cache entries based on last accessed date
-      if let olderThan = olderThan {
-        let olderThanInterval = Int(exactly: olderThan)!.days.timeInterval
-        let olderThanDate = Date().addingTimeInterval(olderThanInterval)
+    // Clean up cache entries based on last accessed date
+    if let olderThan = olderThan {
+      let olderThanInterval = Int(exactly: olderThan)!.days.timeInterval
+      let olderThanDate = Date().addingTimeInterval(olderThanInterval)
 
-        try Prune.pruneOlderThan(olderThanDate: olderThanDate)
-      }
+      try Prune.pruneOlderThan(olderThanDate: olderThanDate)
+    }
 
-      // Clean up cache entries based on imposed cache size limit and entry's last accessed date
-      if let cacheBudget = cacheBudget {
-        try Prune.pruneCacheBudget(cacheBudgetBytes: UInt64(cacheBudget) * 1024 * 1024 * 1024)
-      }
-
-      Foundation.exit(0)
-    } catch {
-      print(error)
-
-      Foundation.exit(1)
+    // Clean up cache entries based on imposed cache size limit and entry's last accessed date
+    if let cacheBudget = cacheBudget {
+      try Prune.pruneCacheBudget(cacheBudgetBytes: UInt64(cacheBudget) * 1024 * 1024 * 1024)
     }
   }
 
