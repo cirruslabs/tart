@@ -39,6 +39,13 @@ struct Root: AsyncParsableCommand {
       SentrySDK.start { options in
         options.dsn = dsn
         options.releaseName = CI.release
+
+        // By default only 5XX are captured
+        // Let's capture everything but 401 (unauthorized)
+        options.failedRequestStatusCodes = [
+          HttpStatusCodeRange(min: 400, max: 400),
+          HttpStatusCodeRange(min: 402, max: 599)
+        ]
       }
     }
     defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }

@@ -1,4 +1,5 @@
 import Foundation
+import Sentry
 
 class VMStorageOCI: PrunableStorage {
   let baseURL = try! Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
@@ -64,6 +65,10 @@ class VMStorageOCI: PrunableStorage {
       // with broken outgoing references
       if isSymlink && foundURL == foundURL.resolvingSymlinksInPath() {
         try FileManager.default.removeItem(at: foundURL)
+        SentrySDK.capture(message: "Broken symlink!") { scope in
+          scope.setLevel(.info)
+          scope.setContext(value: ["url": foundURL, ], key: "Symlink details")
+        }
         continue
       }
 
@@ -81,6 +86,10 @@ class VMStorageOCI: PrunableStorage {
       let vmDir = VMDirectory(baseURL: baseURL)
 
       if !vmDir.isExplicitlyPulled() && incRefCount == 0 {
+        SentrySDK.capture(message: "Garbage image!") { scope in
+          scope.setLevel(.info)
+          scope.setContext(value: ["image": vmDir.name, ], key: "Image details")
+        }
         try FileManager.default.removeItem(at: baseURL)
       }
     }
@@ -148,6 +157,15 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
+      SentrySDK.capture(message: "Image is not yet cached!") { scope in
+        scope.setLevel(.info)
+
+        scope.setContext(value: [
+          "image": name.description,
+          "digest": digestName,
+        ], key: "Image details")
+      }
+      
       let tmpVMDir = try VMDirectory.temporary()
 
       // Lock the temporary VM directory to prevent it's garbage collection
