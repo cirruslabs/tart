@@ -48,7 +48,7 @@ struct Push: AsyncParsableCommand {
     // Push VM
     for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
       let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace,
-        insecure: insecure)
+                                  insecure: insecure)
 
       defaultLogger.appendNewLine("pushing \(localName) to "
         + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")

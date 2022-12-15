@@ -44,7 +44,7 @@ struct Login: AsyncParsableCommand {
 
     do {
       let registry = try Registry(host: host, namespace: "", insecure: insecure,
-        credentialsProviders: [credentialsProvider])
+                                  credentialsProviders: [credentialsProvider])
       try await registry.ping()
     } catch {
       print("invalid credentials: \(error)")
