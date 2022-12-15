@@ -191,7 +191,7 @@ class VMStorageOCI: PrunableStorage {
 
     if name != digestName {
       // Create new or overwrite the old symbolic link
-      try link(from: digestName, to: name)
+      try link(from: name, to: digestName)
     } else {
       // Ensure that images pulled by content digest
       // are excluded from garbage collection
@@ -200,11 +200,11 @@ class VMStorageOCI: PrunableStorage {
   }
 
   func link(from: RemoteName, to: RemoteName) throws {
-    if FileManager.default.fileExists(atPath: vmURL(to).path) {
-      try FileManager.default.removeItem(at: vmURL(to))
+    if FileManager.default.fileExists(atPath: vmURL(from).path) {
+      try FileManager.default.removeItem(at: vmURL(from))
     }
 
-    try FileManager.default.createSymbolicLink(at: vmURL(to), withDestinationURL: vmURL(from))
+    try FileManager.default.createSymbolicLink(at: vmURL(from), withDestinationURL: vmURL(to))
 
     try gc()
   }
