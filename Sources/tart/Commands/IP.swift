@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 import Network
 import SystemConfiguration
+import Sentry
 
 struct IP: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Get VM's IP address")
@@ -23,7 +24,23 @@ struct IP: AsyncParsableCommand {
       throw ExitCode.failure
     }
 
-    if let ipViaARP = try ARPCache.ResolveMACAddress(macAddress: vmMACAddress), ipViaARP != ipViaDHCP {
+    let arpCache = try ARPCache()
+
+    if let ipViaARP = try arpCache.ResolveMACAddress(macAddress: vmMACAddress), ipViaARP != ipViaDHCP {
+      // Capture the warning into Sentry
+      SentrySDK.capture(message: "DHCP lease and ARP cache entries for a single MAC address differ") { scope in
+        scope.setLevel(.warning)
+
+        scope.setContext(value: [
+          "MAC address": vmMACAddress,
+          "IP via ARP": ipViaARP,
+          "IP via DHCP": ipViaDHCP,
+        ], key: "Address conflict details")
+
+        scope.add(Attachment(path: "/var/db/dhcpd_leases", filename: "dhcpd_leases.txt", contentType: "text/plain"))
+        scope.add(Attachment(data: arpCache.arpCommandOutput, filename: "arp-an-output.txt", contentType: "text/plain"))
+      }
+
       fputs("WARNING: DHCP lease and ARP cache entries for MAC address \(vmMACAddress) differ: "
         + "got \(ipViaDHCP) and \(ipViaARP) respectively, consider reporting this case to"
         + " https://github.com/cirruslabs/tart/issues/172\n", stderr)
