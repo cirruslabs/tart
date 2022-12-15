@@ -1,4 +1,5 @@
 import Foundation
+import Sentry
 
 class VMStorageOCI: PrunableStorage {
   let baseURL = try! Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
@@ -148,6 +149,7 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
+      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
       let tmpVMDir = try VMDirectory.temporary()
 
       // Lock the temporary VM directory to prevent it's garbage collection
@@ -182,7 +184,9 @@ class VMStorageOCI: PrunableStorage {
       try await withTaskCancellationHandler(operation: {
         try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
         try move(digestName, from: tmpVMDir)
+        transaction.finish()
       }, onCancel: {
+        transaction.finish(status: SentrySpanStatus.cancelled)
         try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
       })
     } else {

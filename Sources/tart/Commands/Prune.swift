@@ -1,5 +1,6 @@
 import ArgumentParser
 import Dispatch
+import Sentry
 import SwiftUI
 import SwiftDate
 
@@ -103,5 +104,7 @@ struct Prune: AsyncParsableCommand {
     }
 
     puppy.info("reclaimed \(cacheReclaimedBytes) bytes")
+
+    SentrySDK.span?.setMeasurement(name: "gc_disk_reclaimed", value: cacheReclaimedBytes as NSNumber, unit: MeasurementUnitInformation.byte);
   }
 }
