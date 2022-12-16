@@ -19,7 +19,8 @@ struct Stop: AsyncParsableCommand {
     // Find the VM's PID
     var pid = try lock.pid()
     if pid == 0 {
-      throw RuntimeError("VM \(name) is not running", exitCode: 2)
+      print("VM \"\(name)\" is not running! Nothing to stop!")
+      return
     }
 
     // Try to gracefully terminate the VM
