@@ -96,6 +96,10 @@ struct Root: AsyncParsableCommand {
         try command.run()
       }
     } catch {
+      if exitCode(for: error).rawValue == 0 {
+        exit(withError: error)
+      }
+      
       // Capture the error into Sentry
       SentrySDK.capture(error: error)
       SentrySDK.flush(timeout: 2.seconds.timeInterval)
