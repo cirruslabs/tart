@@ -102,8 +102,8 @@ struct Root: AsyncParsableCommand {
 
       print(error)
 
-      if let runtimeError = error as? RuntimeError {
-        Foundation.exit(runtimeError.exitCode)
+      if let errorWithExitCode = error as? HasExitCode {
+        Foundation.exit(errorWithExitCode.exitCode)
       }
 
       Foundation.exit(1)

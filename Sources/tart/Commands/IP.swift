@@ -19,7 +19,7 @@ struct IP: AsyncParsableCommand {
     let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
     guard let ipViaDHCP = try await IP.resolveIP(vmMACAddress, secondsToWait: wait) else {
-      throw RuntimeError("no IP address found, is your VM running?")
+      throw RuntimeError.NoIPAddressFound("no IP address found, is your VM running?")
     }
 
     let arpCache = try ARPCache()

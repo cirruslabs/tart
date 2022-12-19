@@ -26,7 +26,7 @@ class VMStorageHelper {
       return try closure()
     } catch {
       if error.isFileNotFound() {
-        throw RuntimeError("source VM \"\(name)\" not found, is it listed in \"tart list\"?")
+        throw RuntimeError.VMDoesNotExist(name: name)
       }
 
       throw error
@@ -40,17 +40,66 @@ extension Error {
   }
 }
 
-class RuntimeError: Error, CustomStringConvertible {
-  let message: String
-  let exitCode: Int32
+enum RuntimeError : Error {
+  case VMDoesNotExist(name: String)
+  case VMMissingFiles(_ message: String)
+  case VMNotRunning(_ message: String)
+  case VMAlreadyRunning(_ message: String)
+  case NoIPAddressFound(_ message: String)
+  case DiskAlreadyInUse(_ message: String)
+  case FailedToUpdateAccessDate(_ message: String)
+  case PIDLockFailed(_ message: String)
+  case FailedToParseRemoteName(_ message: String)
+  case VMTerminationFailed(_ message: String)
+  case InvalidCredentials(_ message: String)
+  case VMDirectoryAlreadyInitialized(_ message: String)
+}
 
-  init(_ message: String, exitCode: Int32 = 1) {
-    self.message = message
-    self.exitCode = exitCode
+protocol HasExitCode {
+  var exitCode: Int32 { get }
+}
+
+extension RuntimeError : CustomStringConvertible {
+  public var description: String {
+    switch self {
+    case .VMDoesNotExist(let name):
+      return "the specified VM \"\(name)\" does not exist"
+    case .VMMissingFiles(let message):
+      return message
+    case .VMNotRunning(let message):
+      return message
+    case .VMAlreadyRunning(let message):
+      return message
+    case .NoIPAddressFound(let message):
+      return message
+    case .DiskAlreadyInUse(let message):
+      return message
+    case .FailedToUpdateAccessDate(let message):
+      return message
+    case .PIDLockFailed(let message):
+      return message
+    case .FailedToParseRemoteName(let cause):
+      return "failed to parse remote name: \(cause)"
+    case .VMTerminationFailed(let message):
+      return message
+    case .InvalidCredentials(let message):
+      return message
+    case .VMDirectoryAlreadyInitialized(let message):
+      return message
+    }
   }
+}
 
-  var description: String {
-    message
+extension RuntimeError : HasExitCode {
+  var exitCode: Int32 {
+    switch self {
+    case .VMNotRunning:
+      return 2
+    case .VMAlreadyRunning:
+      return 2
+    default:
+      return 1
+    }
   }
 }
 
@@ -60,7 +109,7 @@ class RuntimeError: Error, CustomStringConvertible {
 extension RuntimeError : CustomNSError {
   var errorUserInfo: [String : Any] {
     [
-      NSDebugDescriptionErrorKey: message,
+      NSDebugDescriptionErrorKey: description,
     ]
   }
 }

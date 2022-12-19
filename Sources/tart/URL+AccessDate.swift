@@ -13,7 +13,7 @@ extension URL {
     let times = [accessDate.asTimeval(), modificationDate.asTimeval()]
     let ret = utimes(path, times)
     if ret != 0 {
-      throw RuntimeError("utimes(2) failed: \(ret.explanation())")
+      throw RuntimeError.FailedToUpdateAccessDate("utimes(2) failed: \(ret.explanation())")
     }
   }
 }

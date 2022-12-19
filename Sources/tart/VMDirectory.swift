@@ -41,7 +41,7 @@ struct VMDirectory: Prunable {
 
   func initialize(overwrite: Bool = false) throws {
     if !overwrite && initialized {
-      throw RuntimeError("VM directory is already initialized, preventing overwrite")
+      throw RuntimeError.VMDirectoryAlreadyInitialized("VM directory is already initialized, preventing overwrite")
     }
 
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
@@ -53,11 +53,11 @@ struct VMDirectory: Prunable {
 
   func validate() throws {
     if !FileManager.default.fileExists(atPath: baseURL.path) {
-      throw RuntimeError("the specified VM does not exist")
+      throw RuntimeError.VMDoesNotExist(name: baseURL.lastPathComponent)
     }
 
     if !initialized {
-      throw RuntimeError("VM is missing some of its files (\(configURL.lastPathComponent),"
+      throw RuntimeError.VMMissingFiles("VM is missing some of its files (\(configURL.lastPathComponent),"
         + " \(diskURL.lastPathComponent) or \(nvramURL.lastPathComponent))")
     }
   }
