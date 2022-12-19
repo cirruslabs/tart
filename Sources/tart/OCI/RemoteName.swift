@@ -106,7 +106,7 @@ struct RemoteName: Comparable, Hashable, CustomStringConvertible {
     try ParseTreeWalker().walk(referenceCollector, try parser.root())
 
     if let error = errorCollector.error {
-      throw RuntimeError("failed to parse remote name: \(error)")
+      throw RuntimeError.FailedToParseRemoteName("\(error)")
     }
 
     host = referenceCollector.host!
@@ -120,7 +120,7 @@ struct RemoteName: Comparable, Hashable, CustomStringConvertible {
       } else if reference.starts(with: ":") {
         self.reference = Reference(tag: String(reference.dropFirst(1)))
       } else {
-        throw RuntimeError("failed to parse remote name: unknown reference format")
+        throw RuntimeError.FailedToParseRemoteName("unknown reference format")
       }
     } else {
       self.reference = Reference(tag: "latest")

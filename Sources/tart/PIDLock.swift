@@ -44,7 +44,7 @@ class PIDLock {
 
       let details = Errno(rawValue: CInt(errno))
 
-      throw RuntimeError("\(message): \(details)")
+      throw RuntimeError.PIDLockFailed("\(message): \(details)")
     }
 
     return (true, result)
