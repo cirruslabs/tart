@@ -96,21 +96,19 @@ struct Root: AsyncParsableCommand {
         try command.run()
       }
     } catch {
-      if exitCode(for: error).rawValue == 0 {
-        exit(withError: error)
-      }
-
       // Capture the error into Sentry
       SentrySDK.capture(error: error)
       SentrySDK.flush(timeout: 2.seconds.timeInterval)
 
-      print(error)
-
+      // Handle a non-ArgumentParser's exception that requires a specific exit code to be set
       if let errorWithExitCode = error as? HasExitCode {
+        print(error)
+
         Foundation.exit(errorWithExitCode.exitCode)
       }
 
-      Foundation.exit(1)
+      // Handle any other exception, including ArgumentParser's ones
+      exit(withError: error)
     }
   }
 
