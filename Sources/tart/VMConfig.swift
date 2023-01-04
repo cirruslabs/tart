@@ -28,7 +28,7 @@ enum CodingKeys: String, CodingKey {
   // macOS-specific keys
   case ecid
   case hardwareModel
-  
+
   // serial device
   case serial
 }

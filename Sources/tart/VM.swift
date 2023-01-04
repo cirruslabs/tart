@@ -307,24 +307,24 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Directory sharing devices
     configuration.directorySharingDevices = directorySharingDevices
-      
+
     // Serial Port
     if vmConfig.serial {
       var tty_fd = createPTY()
       if(tty_fd > -1){
-          let tty_read = FileHandle.init(fileDescriptor: tty_fd)
-          let tty_write = FileHandle.init(fileDescriptor: tty_fd)
-          
-          
-          configuration.serialPorts = [VZVirtioConsoleDeviceSerialPortConfiguration()]
-          let serialPortAttachment = VZFileHandleSerialPortAttachment(
-                                            fileHandleForReading: tty_read,
-                                            fileHandleForWriting: tty_write)
-          
-          configuration.serialPorts[0].attachment = serialPortAttachment
+        let tty_read = FileHandle.init(fileDescriptor: tty_fd)
+        let tty_write = FileHandle.init(fileDescriptor: tty_fd)
+
+
+        configuration.serialPorts = [VZVirtioConsoleDeviceSerialPortConfiguration()]
+        let serialPortAttachment = VZFileHandleSerialPortAttachment(
+          fileHandleForReading: tty_read,
+          fileHandleForWriting: tty_write)
+
+        configuration.serialPorts[0].attachment = serialPortAttachment
       }
     }
-      
+
     try configuration.validate()
 
     return configuration
