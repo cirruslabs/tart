@@ -40,7 +40,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   init(vmDir: VMDirectory,
        network: Network = NetworkShared(),
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
-       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = []
+       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
+       serial: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -54,7 +55,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
                                                     nvramURL: vmDir.nvramURL, vmConfig: config,
                                                     network: network, additionalDiskAttachments: additionalDiskAttachments,
-                                                    directorySharingDevices: directorySharingDevices
+                                                    directorySharingDevices: directorySharingDevices,
+                                                    serial: serial
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -132,7 +134,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     diskSizeGB: UInt16,
     network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
-    directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = []
+    directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
+    serial: Bool = false
   ) async throws {
     var ipswURL = ipswURL
 
@@ -179,7 +182,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
                                                     vmConfig: config, network: network,
                                                     additionalDiskAttachments: additionalDiskAttachments,
-                                                    directorySharingDevices: directorySharingDevices
+                                                    directorySharingDevices: directorySharingDevices,
+                                                    serial: serial
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -261,7 +265,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     vmConfig: VMConfig,
     network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
-    directorySharingDevices: [VZDirectorySharingDeviceConfiguration]
+    directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
+    serial: Bool
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -309,8 +314,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.directorySharingDevices = directorySharingDevices
 
     // Serial Port
-    if vmConfig.serial {
-      var tty_fd = createPTY()
+    if vmConfig.serial || serial {
+      let tty_fd = createPTY()
       if(tty_fd > -1){
         let tty_read = FileHandle.init(fileDescriptor: tty_fd)
         let tty_write = FileHandle.init(fileDescriptor: tty_fd)
