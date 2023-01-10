@@ -278,7 +278,9 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 
 ### Mounting directories
 
-To mount a directory, run the VM with the `--dir` argument (host must be macOS 13.0 Ventura or newer):
+**Note:** macOS 13.0 (Ventura) or newer is required on both the host and guest to mount a directory.
+
+To mount a directory, run the VM with the `--dir` argument:
 
 ```shell
 tart run --dir=project:~/src/project vm
@@ -305,8 +307,6 @@ Note that the first parameter in each `--dir` argument must be unique, otherwise
 All shared directories are automatically mounted to `/Volumes/My Shared Files` directory.
 
 The directory we've mounted above will be accessible from the `/Volumes/My Shared Files/project` path inside a guest VM.
-
-Note: to use the directory mounting feature, the guest VM needs to run macOS 13.0 (Ventura) or newer.
 
 #### Accessing mounted directories in Linux guests
 
