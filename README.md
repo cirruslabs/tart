@@ -278,7 +278,7 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 
 ### Mounting directories
 
-**Note:** macOS 13.0 (Ventura) or newer is required on both the host and guest to mount a directory.
+**Note**: directory mounting is only supported on hosts running macOS 13.0 (Ventura) or newer. macOS guests must also use 13.0 or newer.
 
 To mount a directory, run the VM with the `--dir` argument:
 
