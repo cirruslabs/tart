@@ -28,9 +28,6 @@ enum CodingKeys: String, CodingKey {
   // macOS-specific keys
   case ecid
   case hardwareModel
-
-  // serial device
-  case serial
 }
 
 struct VMDisplayConfig: Codable {
@@ -55,7 +52,6 @@ struct VMConfig: Codable {
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
   var display: VMDisplayConfig = VMDisplayConfig()
-  var serial: Bool
 
   init(
     platform: Platform,
@@ -71,7 +67,6 @@ struct VMConfig: Codable {
     self.memorySizeMin = memorySizeMin
     cpuCount = cpuCountMin
     memorySize = memorySizeMin
-    self.serial = false
   }
 
   init(fromJSON: Data) throws {
@@ -123,7 +118,6 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
 
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
-    self.serial = try container.decodeIfPresent(Bool.self, forKey: .serial) ?? false
   }
 
   func encode(to encoder: Encoder) throws {
@@ -139,7 +133,6 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
-    try container.encode(self.serial, forKey: .serial)
   }
 
   mutating func setCPU(cpuCount: Int) throws {

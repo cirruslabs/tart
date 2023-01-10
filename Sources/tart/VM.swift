@@ -314,7 +314,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.directorySharingDevices = directorySharingDevices
 
     // Serial Port
-    if vmConfig.serial || serial {
+    if serial {
       let tty_fd = createPTY()
       if(tty_fd > -1){
         let tty_read = FileHandle.init(fileDescriptor: tty_fd)
