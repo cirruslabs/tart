@@ -278,7 +278,7 @@ This invocation calls the `tart pull` implicitly (if the image is not being pres
 
 ### Mounting directories
 
-To mount a directory, run the VM with the `--dir` argument:
+To mount a directory, run the VM with the `--dir` argument (host must be macOS 13.0 Ventura or newer):
 
 ```shell
 tart run --dir=project:~/src/project vm
