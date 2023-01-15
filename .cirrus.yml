@@ -94,3 +94,16 @@ task:
     - sentry-cli releases new $SENTRY_RELEASE
     - sentry-cli releases set-commits $SENTRY_RELEASE --auto
     - sentry-cli releases finalize $SENTRY_RELEASE
+
+task:
+  name: Deploy Documentation
+  only_if: $CIRRUS_BRANCH == 'main'
+  container:
+    image: ghcr.io/squidfunk/mkdocs-material:latest
+  env:
+    DEPLOY_TOKEN: ENCRYPTED[!45ed45666558902ed1c2400add734ec063103bec31841847e8c8764802fca229bfa6d85c690e16ad159e047574b48793!]
+  deploy_script: 
+    - git config --global user.name "Cirrus CI"
+    - git config --global user.name "hello@cirruslabs.org"
+    - git remote set-url origin https://$DEPLOY_TOKEN@github.com/cirruslabs/tart/
+    - mkdocs --verbose gh-deploy --force --remote-branch gh-pages
