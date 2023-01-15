@@ -1,0 +1,91 @@
+repo_url: https://github.com/cirruslabs/tart/
+site_url: https://tart.run/
+edit_uri: blob/main/docs/
+
+site_name: Tart
+site_author: Cirrus Labs
+copyright: © Cirrus Labs 2017-present
+site_description: >
+  Tart is a virtualization toolset to build, run and manage macOS and Linux virtual machines (VMs) on Apple Silicon.
+  Built by CI engineers for your automation needs. 
+
+remote_branch: main
+
+theme:
+  name: 'material'
+  favicon: 'assets/images/favicon.ico'
+  logo: 'assets/images/TartLogo.webp'
+  icon:
+    repo: fontawesome/brands/github
+  language: en
+  palette:
+    - scheme: default
+      primary: orange
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - scheme: slate
+      primary: orange
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - announce.dismiss
+    - content.tabs.link
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.suggest
+    - toc.follow
+
+plugins:
+  - search
+  - minify
+
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - "Quick Start": index.md
+  - "GitHub Actions": github-actions.md
+  - "Self-hosted CI": cirrus-cli.md
+  - "Managing VMs": vm-management.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: 'https://twitter.com/cirrus_labs'

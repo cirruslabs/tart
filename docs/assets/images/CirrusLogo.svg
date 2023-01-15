@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="146px" height="165px" viewBox="0 0 146 165" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>cirrus-logo</title>
+  <defs></defs>
+  <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+    <g id="cirrus-logo" transform="translate(7.000000, 7.000000)" stroke="#333333" stroke-width="13.5">
+      <path d="M0,126.494118 L111,126.494118" id="Shape" fill="#000000" fill-rule="nonzero"></path>
+      <path d="M111,126.494118 C122.59798,126.494118 132,117.055227 132,105.411765 C132,93.7683027 122.59798,84.3294118 111,84.3294118" id="Shape"></path>
+      <path d="M0,84.3294118 L111,84.3294118" id="Shape" fill="#000000" fill-rule="nonzero"></path>
+      <path d="M111,84.3294118 C122.59798,84.3294118 132,74.8905208 132,63.2470588 C132,51.6035968 122.59798,42.1647059 111,42.1647059" id="Shape"></path>
+      <path d="M0,42.1647059 L111,42.1647059" id="Shape" fill="#000000" fill-rule="nonzero"></path>
+      <path d="M111,42.1647059 C122.59798,42.1647057 132,32.7258148 132,21.0823529 C132,9.43889104 122.59798,1.73501101e-07 111,-3.55271368e-15" id="Shape"></path>
+    </g>
+  </g>
+</svg>
