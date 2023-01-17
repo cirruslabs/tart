@@ -1,0 +1,98 @@
+repo_url: https://github.com/cirruslabs/tart/
+site_url: https://tart.run/
+edit_uri: blob/main/docs/
+
+site_name: Tart
+site_author: Cirrus Labs
+copyright: © Cirrus Labs 2017-present
+site_description: >
+  Tart is a virtualization toolset to build, run and manage macOS and Linux virtual machines (VMs) on Apple Silicon.
+  Built by CI engineers for your automation needs. 
+
+remote_branch: main
+
+theme:
+  name: 'material'
+  custom_dir: 'docs/theme'
+  favicon: 'assets/images/favicon.ico'
+  logo: 'assets/images/TartLogo.webp'
+  icon:
+    repo: fontawesome/brands/github
+  language: en
+  palette:
+    - scheme: default
+      primary: orange
+      accent: orange
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - announce.dismiss
+    - content.tabs.link
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.suggest
+    - toc.follow
+      
+extra_css:
+  - 'stylesheets/extra.css'
+  - 'stylesheets/landing.css'
+
+plugins:
+  - search
+  - minify
+
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - "Home": index.md
+  - "Quick Start": quick-start.md
+  - "GitHub Actions": github-actions.md
+  - "Self-hosted CI": cirrus-cli.md
+  - "Managing VMs": vm-management.md
+
+extra:
+  analytics:
+    provider: google
+    property: G-HXBEB9D47X
+  consent:
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+  social:
+    - icon: fontawesome/brands/twitter
+      link: 'https://twitter.com/cirrus_labs'

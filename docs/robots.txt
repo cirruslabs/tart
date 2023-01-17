@@ -1,0 +1,4 @@
+User-agent: *
+Allow: *
+Disallow: 
+Sitemap: https://tart.run/sitemap.xml

@@ -1,0 +1,131 @@
+.tx-container {
+  background:
+    linear-gradient(to bottom, var(--md-primary-fg-color), var(--md-default-bg-color) 100%)
+}
+
+[data-md-color-scheme=slate] .tx-container {
+  background:
+    linear-gradient(to bottom, var(--md-primary-fg-color), var(--md-default-bg-color) 100%)
+}
+
+.tx-landing {
+  margin: 0 .8rem;
+  color: var(--md-primary-bg-color)
+}
+
+.tx-landing h1 {
+  margin-bottom: 1rem;
+  color: currentColor;
+  font-weight: 700
+}
+
+@media screen and (max-width: 30em) {
+  .tx-landing h1 {
+    font-size: 1.4rem
+  }
+}
+
+.tx-landing__content p a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.tx-landing__testimonials {
+  width: 100%;
+  text-align: center;
+}
+
+.tx-landing__content p a:hover {
+  color: darkblue;
+  text-decoration: underline;
+}
+
+.tx-landing__logos {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tx-landing__logos img {
+  height: 8vh;
+  max-height: 81px; /* max height of images */
+  width: auto;
+  margin: 2vh;
+  vertical-align: middle;
+}
+
+.tx-landing__quotes {
+  padding-bottom: 5em;
+  text-align: center;
+}
+
+@media screen and (min-width: 60em) {
+  .tx-landing__quotes {
+    margin: 1em 5em;
+  }
+}
+
+.tx-landing__quotes figure {
+  margin: 2em auto 2em auto;
+}
+
+.tx-landing__quote {
+  display: flex;
+  border-radius: 1em;
+  padding: 1em 1em 0 1em;
+  background: var(--md-primary-fg-color);
+}
+
+.tx-landing__quote blockquote {
+  border: 0;
+  color: #fff;
+}
+
+.tx-landing__quote a img {
+  height: 6vh;
+  max-height: 81px; /* max height of images */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media screen and (min-width: 60em) {
+  .tx-container {
+    padding-bottom: 14vw
+  }
+
+  .tx-landing {
+    display: flex;
+    align-items: stretch
+  }
+
+  .tx-landing__content {
+    max-width: 19rem;
+    margin-top: 3.5rem;
+  }
+
+  .tx-landing__image {
+    order: 1;
+    width: 38rem;
+    transform: translateX(4rem)
+  }
+}
+
+@media screen and (min-width: 77em) {
+  .tx-landing__image {
+    transform: translateX(8rem)
+  }
+}
+
+.tx-landing .md-button {
+  margin-top: .5rem;
+  margin-right: .5rem;
+  color: var(--md-primary-bg-color)
+}
+
+.tx-landing .md-button:hover, .tx-landing .md-button:focus {
+  color: var(--md-default-bg-color);
+  background-color: var(--md-default-fg-color);
+  border-color: var(--md-default-fg-color)
+}

@@ -1,0 +1,34 @@
+/* Remove default title on the page */
+.md-content__inner h1:first-child {
+  display: none;
+}
+
+/* Adjust to 2px to align with the title */
+.md-logo {
+  padding-top: 6px;
+}
+
+.btn {
+  border: none;
+  padding: 14px 28px;
+  cursor: pointer;
+  display: inline-block;
+
+  background: #009688;
+  color: white;
+}
+
+.btn:hover {
+  background: #00bfa5;
+  color: white;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-center {
+  text-align: center;
+}
