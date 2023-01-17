@@ -13,6 +13,7 @@ remote_branch: main
 
 theme:
   name: 'material'
+  custom_dir: 'docs/theme'
   favicon: 'assets/images/favicon.ico'
   logo: 'assets/images/TartLogo.webp'
   icon:
@@ -22,15 +23,6 @@ theme:
     - scheme: default
       primary: orange
       accent: orange
-      toggle:
-        icon: material/weather-night
-        name: Switch to light mode
-    - scheme: slate
-      primary: orange
-      accent: orange
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to dark mode
   font:
     text: Roboto
     code: Roboto Mono
@@ -42,6 +34,10 @@ theme:
     - navigation.top
     - search.suggest
     - toc.follow
+      
+extra_css:
+  - 'stylesheets/extra.css'
+  - 'stylesheets/landing.css'
 
 plugins:
   - search
@@ -80,7 +76,8 @@ markdown_extensions:
   - pymdownx.tilde
 
 nav:
-  - "Quick Start": index.md
+  - "Home": index.md
+  - "Quick Start": quick-start.md
   - "GitHub Actions": github-actions.md
   - "Self-hosted CI": cirrus-cli.md
   - "Managing VMs": vm-management.md

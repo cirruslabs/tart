@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+<!-- Render landing page under tabs -->
+{% block tabs %}
+{{ super() }}
+
+<!-- Additional styles for landing page -->
+<style>
+
+  /* Application header should be static for the landing page */
+  .md-header {
+    position: initial;
+  }
+
+  /* Remove spacing, as we cannot hide it completely */
+  .md-main__inner {
+    margin: 0;
+  }
+
+  /* Hide main content for now */
+  .md-content {
+    display: none;
+  }
+
+  /* Hide table of contents */
+  @media screen and (min-width: 60em) {
+    .md-sidebar--secondary {
+      display: none;
+    }
+  }
+
+  /* Hide navigation */
+  @media screen and (min-width: 76.25em) {
+    .md-sidebar--primary {
+      display: none;
+    }
+  }
+</style>
+
+<!-- landing page for landing page -->
+<section class="tx-container">
+  <div class="md-grid md-typeset">
+    <div class="tx-landing">
+      <!-- landing image -->
+      <div class="tx-landing__image">
+        <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
+        <dotlottie-player
+          src="/assets/animations/TartLogo.lottie"
+          mode="normal"
+          style="width: 100%"
+          autoplay
+        />
+      </div>
+
+      <!-- landing content -->
+      <div class="tx-landing__content">
+        <h2><strong>Tart</strong> is a virtualization toolset to build, run and manage <i>macOS</i> and <i>Linux</i> virtual machines on <i>Apple Silicon.</i></h2>
+        <p>
+          Tart utilizes <i>Virtualization.Framework</i> to achieve nearly native performance.
+          Benefit from clean ephemeral environments for your automations with no performance implications.
+        </p>
+        <p>
+          For storing virtual machine images Tart integrates with OCI-compatible container registries.
+          Push and pull virtual machines like you used to with Docker containers.
+        </p>
+        <p>
+          Tart powers several continuous integration systems including <a href="/cirrus-runners">on-demand GitHub Actions</a>
+          and <a href="https://cirrus-ci.org/guide/macOS/">Cirrus CI</a>. Tart can be easily <a href="/cirrus-cli">integrated with any other CI</a>
+          and soon will get <a href="https://github.com/cirruslabs/tart/issues/372">clustering capabilities</a>
+          to orchestrate virtual machines on multiple physical hosts.
+        </p>
+        <a
+          href="/quick-start"
+          title="Quick Start"
+          class="md-button"
+        >
+          Learn More
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+<!-- Content -->
+{% block content %}{% endblock %}
+
+<!-- Application footer -->
+{% block footer %}{% endblock %}
+
