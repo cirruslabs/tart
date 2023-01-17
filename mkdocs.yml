@@ -15,7 +15,7 @@ theme:
   name: 'material'
   custom_dir: 'docs/theme'
   favicon: 'assets/images/favicon.ico'
-  logo: 'assets/images/TartLogo.webp'
+  logo: 'assets/images/TartLogo.png'
   icon:
     repo: fontawesome/brands/github
   language: en
@@ -40,6 +40,7 @@ extra_css:
   - 'stylesheets/landing.css'
 
 plugins:
+  - social
   - search
   - minify
 
