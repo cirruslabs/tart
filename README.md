@@ -48,7 +48,8 @@ tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
 tart run ventura-base
 ```
 
-<img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartScreenshot.png"/>
+Please check the [official documentation](https://tart.run) for more information and/or feel free to use [discussions](https://github.com/cirruslabs/tart/discussions)
+for remaining questions.
 
 ## FAQ
 
