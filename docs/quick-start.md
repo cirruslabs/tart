@@ -5,7 +5,7 @@ hide:
 
 Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
 
-```shell
+```bash
 brew install cirruslabs/cli/tart
 tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
 tart run ventura-base
@@ -19,7 +19,7 @@ tart run ventura-base
 
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
-```shell
+```bash
 ssh admin@$(tart ip macos-monterey-base)
 ```
 
@@ -27,7 +27,7 @@ ssh admin@$(tart ip macos-monterey-base)
 
 To mount a directory, run the VM with the `--dir` argument:
 
-```shell
+```bash
 tart run --dir=project:~/src/project vm
 ```
 
@@ -35,13 +35,13 @@ Here, the `project` specifies a mount name, whereas the `~/src/project` is a pat
 
 It is also possible to mount directories in read-only mode by adding a third parameter, `ro`:
 
-```shell
+```bash
 tart run --dir=project:~/src/project:ro vm
 ```
 
 To mount multiple directories, repeat the `--dir` argument for each directory:
 
-```shell
+```bash
 tart run --dir=www1:~/project1/www --dir=www2:~/project2/www
 ```
 
@@ -61,7 +61,7 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
 
-```shell
+```bash
 mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 

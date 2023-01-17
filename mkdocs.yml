@@ -29,6 +29,7 @@ theme:
   features:
     - announce.dismiss
     - content.tabs.link
+    - content.code.copy
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top

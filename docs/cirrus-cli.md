@@ -28,7 +28,7 @@ task:
 
 Put the above `.cirrus.yml` file in the root of your repository and run it with the following command:
 
-```shell
+```bash
 brew install cirruslabs/cli/cirrus
 cirrus run
 ```
@@ -58,7 +58,7 @@ task:
 
 Running Cirrus CLI with `--artifacts-dir` will write defined `artifacts` to the provided local directory on the host:
 
-```shell
+```bash
 cirrus run --artifacts-dir artifacts
 ```
 

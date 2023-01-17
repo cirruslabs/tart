@@ -15,7 +15,7 @@ The only difference is how such VM images are created. Please check sections bel
 Tart can create VMs from `*.ipsw` files. You can download a specific `*.ipsw` file [here](https://ipsw.me/) or you can
 use `latest` instead of a path to `*.ipsw` to download the latest available version:
 
-```shell
+```bash
 tart create --from-ipsw=latest monterey-vanilla
 tart run monterey-vanilla
 ```
@@ -32,7 +32,7 @@ After the initial booting of the VM you'll need to manually go through the macOS
 
 Linux VMs are supported on hosts running macOS 13.0 (Ventura) or newer.
 
-```shell
+```bash
 # Create a bare VM
 tart create --linux ubuntu
 
@@ -45,7 +45,7 @@ tart run ubuntu
 
 After the initial setup please make sure your VM can be SSH-ed into by running the following commands inside your VM:
 
-```shell
+```bash
 sudo apt update
 sudo apt install -y openssh-server
 sudo ufw allow ssh
@@ -103,7 +103,7 @@ For example, let's say you want to push/pull images to a registry hosted at http
 
 First, you need to log in and save credential for `acme.io` host via `tart login` command:
 
-```shell
+```bash
 tart login acme.io
 ```
 
@@ -119,7 +119,7 @@ for all registries which might useful for integrating with your CI's secret mana
 
 Once credentials are saved for `acme.io`, run the following command to push a local images remotely with two tags:
 
-```shell
+```bash
 tart push my-local-vm-name acme.io/remoteorg/name:latest acme.io/remoteorg/name:v1.0.0
 ```
 
@@ -127,13 +127,13 @@ tart push my-local-vm-name acme.io/remoteorg/name:latest acme.io/remoteorg/name:
 
 You can either pull an image:
 
-```shell
+```bash
 tart pull acme.io/remoteorg/name:latest
 ```
 
 ...or instantiate a VM from a remote image:
 
-```shell
+```bash
 tart clone acme.io/remoteorg/name:latest my-local-vm-name
 ```
 

@@ -42,7 +42,7 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
 
-```shell
+```bash
 brew install cirruslabs/cli/tart
 tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
 tart run ventura-base
@@ -77,7 +77,7 @@ for remaining questions.
 
   You can choose disk size upon creation of a virtual machine:
 
-  ```shell
+  ```bash
   tart create --from-ipsw=latest --disk-size=25 monterey-vanilla
   ```
 
@@ -104,7 +104,7 @@ for remaining questions.
 
   To change the default network to `192.168.77.1`:
 
-  ```shell
+  ```bash
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Address -string 192.168.77.1
   ```
 
@@ -112,7 +112,7 @@ for remaining questions.
 
   The default subnet mask `255.255.255.0` should suffice for most use-cases, however, you can also change it to `255.255.0.0`, for example:
 
-  ```shell
+  ```bash
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
   ```
 </details>
