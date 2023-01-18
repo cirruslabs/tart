@@ -83,6 +83,7 @@ nav:
   - "GitHub Actions": github-actions.md
   - "Self-hosted CI": cirrus-cli.md
   - "Managing VMs": vm-management.md
+  - "FAQ": faq.md
 
 extra:
   analytics:

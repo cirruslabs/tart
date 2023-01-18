@@ -1,0 +1,56 @@
+---
+hide:
+  - navigation
+---
+
+## How Tart is different from Anka?
+
+Under the hood Tart is using the same technology as Anka 3.0 so there should be no real difference in performance
+or features supported. If there is some feature missing please don't hesitate to [create a feature request](https://github.com/cirruslabs/tart/issues).
+
+Instead of Anka Registry, Tart can work with any OCI-compatible container registry. This provides a much more consistent
+and scalable experience for distributing virtual machines.
+
+Tart doesn't yet have an analogue of Anka Controller for managing long living VMs but [soon will be](https://github.com/cirruslabs/tart/issues/372).
+
+## VM location on disk
+
+Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
+Remote images are pulled into `~/.tart/cache/OCIs/`.
+
+## Nested virtualization support?
+
+Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
+doesn't support nested virtualization.
+
+## Connecting to a service running on host
+
+To connect from within a virtual machine to a service running on the host machine
+please first make sure that the service is binded to `0.0.0.0`.
+
+Then from within a virtual machine you can access the service using the router's IP address that you can get either from `Preferences -> Network`
+or by running the following command in the Terminal:
+
+```bash
+netstat -nr | grep default | head -n 1 | awk '{print $2}'
+```
+
+Note: that accessing host is only possible with the default NAT network. If you are running your virtual machines with
+[Softnet](https://github.com/cirruslabs/softnet) (via `tart run --net-softnet <VM NAME>)`, then the network isolation
+is stricter and it's not only possible to access the host.
+
+## Changing the default NAT subnet
+
+To change the default network to `192.168.77.1`:
+
+```bash
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Address -string 192.168.77.1
+```
+
+Note that even through a network would normally be specified as `192.168.77.0`, the [vmnet framework](https://developer.apple.com/documentation/vmnet) seems to treat this as a starting address too and refuses to pick up such network-like values.
+
+The default subnet mask `255.255.255.0` should suffice for most use-cases, however, you can also change it to `255.255.0.0`, for example:
+
+  ```bash
+  sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
+  ```
