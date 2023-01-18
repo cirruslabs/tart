@@ -13,3 +13,6 @@ tart.xcodeproj/
 
 # GoReleaser
 dist/
+
+# mkdocs
+.cache
