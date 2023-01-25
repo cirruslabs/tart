@@ -53,6 +53,7 @@ enum RuntimeError : Error {
   case VMTerminationFailed(_ message: String)
   case InvalidCredentials(_ message: String)
   case VMDirectoryAlreadyInitialized(_ message: String)
+  case ExportFile(_ message: String)
 }
 
 protocol HasExitCode {
@@ -86,6 +87,8 @@ extension RuntimeError : CustomStringConvertible {
       return message
     case .VMDirectoryAlreadyInitialized(let message):
       return message
+    case .ExportFile(let message):
+      return "export file \(message)"
     }
   }
 }

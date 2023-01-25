@@ -27,6 +27,8 @@ struct Root: AsyncParsableCommand {
       IP.self,
       Pull.self,
       Push.self,
+      Import.self,
+      Export.self,
       Prune.self,
       Rename.self,
       Stop.self,

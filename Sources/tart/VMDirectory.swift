@@ -68,11 +68,21 @@ struct VMDirectory: Prunable {
     try FileManager.default.copyItem(at: diskURL, to: to.diskURL)
 
     // Re-generate MAC address
-    var newVMConfig = try VMConfig(fromURL: to.configURL)
     if generateMAC {
-      newVMConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+      try to.regenerateMACAddress()
     }
-    try newVMConfig.save(toURL: to.configURL)
+  }
+
+  func macAddress() throws -> String {
+    try VMConfig(fromURL: configURL).macAddress.string
+  }
+
+  func regenerateMACAddress() throws {
+    var vmConfig = try VMConfig(fromURL: configURL)
+
+    vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+
+    try vmConfig.save(toURL: configURL)
   }
 
   func resizeDisk(_ sizeGB: UInt16) throws {

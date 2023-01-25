@@ -39,6 +39,7 @@ struct Clone: AsyncParsableCommand {
     try tmpVMDirLock.lock()
 
     try await withTaskCancellationHandler(operation: {
+      // Acquire a global lock
       let lock = try FileLock(lockURL: Config().tartHomeDir)
       try lock.lock()
 
@@ -50,17 +51,5 @@ struct Clone: AsyncParsableCommand {
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
     })
-  }
-}
-
-fileprivate extension VMDirectory {
-  func macAddress() throws -> String {
-    try VMConfig(fromURL: configURL).macAddress.string
-  }
-}
-
-fileprivate extension VMStorageLocal {
-  func hasVMsWithMACAddress(macAddress: String) throws -> Bool {
-    try list().contains { try $1.macAddress() == macAddress }
   }
 }

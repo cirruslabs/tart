@@ -16,15 +16,15 @@ extension VMDirectory {
   private static let diskMediaType = "application/vnd.cirruslabs.tart.disk.v1"
   private static let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
 
-  func pullFromRegistry(registry: Registry, reference: String) async throws {
-    defaultLogger.appendNewLine("pulling manifest...")
+  func pullFromRegistry(registry: RegistryReader, reference: String) async throws {
+    defaultLogger.appendNewLine("\(registry.pullOperationName()) manifest...")
 
     let (manifest, _) = try await registry.pullManifest(reference: reference)
 
     return try await pullFromRegistry(registry: registry, manifest: manifest)
   }
 
-  func pullFromRegistry(registry: Registry, manifest: OCIManifest) async throws {
+  func pullFromRegistry(registry: RegistryReader, manifest: OCIManifest) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     let configLayers = manifest.layers.filter {
       $0.mediaType == Self.configMediaType
@@ -66,7 +66,7 @@ extension VMDirectory {
       $0 + $1
     })
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
-    defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
+    defaultLogger.appendNewLine("\(registry.pullOperationName()) disk (\(prettyDiskSize) GB compressed)...")
     let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
@@ -81,7 +81,7 @@ extension VMDirectory {
     SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte);
 
     // Pull VM's NVRAM file layer and store it in an NVRAM file
-    defaultLogger.appendNewLine("pulling NVRAM...")
+    defaultLogger.appendNewLine("\(registry.pullOperationName()) NVRAM...")
 
     let nvramLayers = manifest.layers.filter {
       $0.mediaType == Self.nvramMediaType
@@ -99,20 +99,20 @@ extension VMDirectory {
     try nvram.close()
   }
 
-  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int) async throws -> RemoteName {
+  func pushToRegistry(registry: RegistryWriter, references: [String], chunkSizeMb: Int) async throws -> Reference {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
     let config = try VMConfig(fromURL: configURL)
     let configJSON = try JSONEncoder().encode(config)
-    defaultLogger.appendNewLine("pushing config...")
+    defaultLogger.appendNewLine("\(registry.pushOperationName()) config...")
     let configDigest = try await registry.pushBlob(fromData: configJSON, chunkSizeMb: chunkSizeMb)
     layers.append(OCIManifestLayer(mediaType: Self.configMediaType, size: configJSON.count, digest: configDigest))
 
     // Progress
     let diskSize = try FileManager.default.attributesOfItem(atPath: diskURL.path)[.size] as! Int64
 
-    defaultLogger.appendNewLine("pushing disk... this will take a while...")
+    defaultLogger.appendNewLine("\(registry.pushOperationName()) disk... this will take a while...")
     let progress = Progress(totalUnitCount: diskSize)
     ProgressObserver(progress).log(defaultLogger)
 
@@ -136,7 +136,7 @@ extension VMDirectory {
     }
 
     // Read VM's NVRAM and push it as blob
-    defaultLogger.appendNewLine("pushing NVRAM...")
+    defaultLogger.appendNewLine("\(registry.pushOperationName()) NVRAM...")
 
     let nvram = try FileHandle(forReadingFrom: nvramURL).readToEnd()!
     let nvramDigest = try await registry.pushBlob(fromData: nvram, chunkSizeMb: chunkSizeMb)
@@ -153,13 +153,12 @@ extension VMDirectory {
 
     // Manifest
     for reference in references {
-      defaultLogger.appendNewLine("pushing manifest for \(reference)...")
+      defaultLogger.appendNewLine("\(registry.pushOperationName()) manifest for \(reference)...")
 
       _ = try await registry.pushManifest(reference: reference, manifest: manifest)
     }
 
-    let pushedReference = Reference(digest: try manifest.digest())
-    return RemoteName(host: registry.baseURL.host!, namespace: registry.namespace, reference: pushedReference)
+    return Reference(digest: try manifest.digest())
   }
 }
 
