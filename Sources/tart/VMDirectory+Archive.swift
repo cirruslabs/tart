@@ -3,6 +3,11 @@ import AppleArchive
 
 fileprivate let permissions = FilePermissions(rawValue: 0o644)
 
+// Compresses VMDirectory using Apple's proprietary archive format[1] and LZFSE compression,
+// which is recommended on Apple platforms[2].
+//
+// [1]: https://developer.apple.com/documentation/accelerate/compressing_file_system_directories
+// [2]: https://developer.apple.com/documentation/compression/algorithm/lzfse
 extension VMDirectory {
   func exportToArchive(path: String) throws {
     guard let fileStream = ArchiveByteStream.fileStream(
