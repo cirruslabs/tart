@@ -23,18 +23,6 @@ enum HTTPCode: Int {
   case Unauthorized = 401
 }
 
-protocol RegistryReader {
-  func pullOperationName() -> String
-  func pullManifest(reference: String) async throws -> (OCIManifest, Data)
-  func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws
-}
-
-protocol RegistryWriter {
-  func pushOperationName() -> String
-  func pushManifest(reference: String, manifest: OCIManifest) async throws -> String
-  func pushBlob(fromData: Data, chunkSizeMb: Int) async throws -> String
-}
-
 extension Data {
   func asText() -> String {
     String(decoding: self, as: UTF8.self)
@@ -103,7 +91,7 @@ struct TokenResponse: Decodable, Authentication {
   }
 }
 
-class Registry: RegistryReader, RegistryWriter {
+class Registry {
   let baseURL: URL
   let namespace: String
   let credentialsProviders: [CredentialsProvider]
@@ -129,14 +117,6 @@ class Registry: RegistryReader, RegistryWriter {
     let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
 
     try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProviders: credentialsProviders)
-  }
-
-  func pullOperationName() -> String {
-    "pulling"
-  }
-
-  func pushOperationName() -> String {
-    "pushing"
   }
 
   func ping() async throws {

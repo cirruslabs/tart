@@ -10,9 +10,6 @@ struct Export: AsyncParsableCommand {
   var path: String
 
   func run() async throws {
-    let vm = try VMStorageHelper.open(name)
-    let archive = try ArchiveWriter(path)
-
-    _ = try await vm.pushToRegistry(registry: archive, references: [""], chunkSizeMb: 0)
+    try VMStorageHelper.open(name).exportToArchive(path: path)
   }
 }

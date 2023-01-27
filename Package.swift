@@ -20,7 +20,6 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.0.0")),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.50.6"),
     .package(url: "https://github.com/getsentry/sentry-cocoa", from: "7.31.3"),
-    .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.0"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -33,7 +32,7 @@ let package = Package(
       .product(name: "Antlr4Static", package: "Antlr4"),
       .product(name: "Atomics", package: "swift-atomics"),
       .product(name: "Sentry", package: "sentry-cocoa"),
-      .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",

@@ -18,7 +18,6 @@ struct Import: AsyncParsableCommand {
 
   func run() async throws {
     let localStorage = VMStorageLocal()
-    let archive = try ArchiveReader(path)
 
     // Create a temporary VM directory to which we will load the export file
     let tmpVMDir = try VMDirectory.temporary()
@@ -29,7 +28,7 @@ struct Import: AsyncParsableCommand {
     try tmpVMDirLock.lock()
 
     // Populate the temporary VM directory with the export file contents
-    try await tmpVMDir.pullFromRegistry(registry: archive, reference: "")
+    try tmpVMDir.importFromArchive(path: path)
 
     try await withTaskCancellationHandler(operation: {
       // Acquire a global lock

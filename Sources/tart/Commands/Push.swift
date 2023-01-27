@@ -53,13 +53,11 @@ struct Push: AsyncParsableCommand {
       defaultLogger.appendNewLine("pushing \(localName) to "
         + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
-      let pushedReference = try await localVMDir.pushToRegistry(
+      let pushedRemoteName = try await localVMDir.pushToRegistry(
         registry: registry,
         references: remoteNamesForRegistry.map{ $0.reference.value },
         chunkSizeMb: chunkSize
       )
-      let pushedRemoteName = RemoteName(host: registry.baseURL.host!, namespace: registry.namespace,
-                                        reference: pushedReference)
 
       // Populate the local cache (if requested)
       if populateCache {
