@@ -49,7 +49,7 @@ extension VMDirectory {
 
   func importFromArchive(path: String) throws {
     guard let fileStream = ArchiveByteStream.fileStream(path: FilePath(path), mode: .readOnly, options: [],
-      permissions: permissions) else {
+                                                        permissions: permissions) else {
       let details = Errno(rawValue: CInt(errno))
 
       throw RuntimeError.ImportFailed("ArchiveByteStream.fileStream() failed: \(details)")
