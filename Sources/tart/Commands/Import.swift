@@ -28,6 +28,7 @@ struct Import: AsyncParsableCommand {
     try tmpVMDirLock.lock()
 
     // Populate the temporary VM directory with the export file contents
+    print("importing...")
     try tmpVMDir.importFromArchive(path: path)
 
     try await withTaskCancellationHandler(operation: {
