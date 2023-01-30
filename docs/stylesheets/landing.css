@@ -123,7 +123,6 @@
   flex-shrink: 0;
   border-radius: 0.2rem;
   box-shadow: var(--md-shadow-z2);
-  height: auto;
   width: 25rem;
   max-width: 100%;
 }
@@ -204,6 +203,7 @@
   .mdx-spotlight__feature > img {
     margin-left: auto;
     margin-right: auto;
+    height: auto;
   }
 
   .mdx-users {
