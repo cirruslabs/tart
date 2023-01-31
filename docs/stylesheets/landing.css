@@ -209,6 +209,11 @@
   .mdx-users {
     flex-direction: column;
   }
+
+  /* Reset one padding between sections */
+  .md-content__inner-testimonials {
+    padding: 0px 0px 2.2rem !important;
+  }
 }
 
 @media screen and (min-width: 60em) {
