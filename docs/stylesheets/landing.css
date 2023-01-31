@@ -231,7 +231,6 @@
   .tx-landing__image {
     order: 1;
     width: 38rem;
-    transform: translateX(4rem);
   }
 
   .tx-landing__quotes {
@@ -240,12 +239,6 @@
 
   .mdx-spotlight__feature:nth-child(odd) {
     flex-direction: row-reverse;
-  }
-}
-
-@media screen and (min-width: 77em) {
-  .tx-landing__image {
-    transform: translateX(8rem);
   }
 }
 
