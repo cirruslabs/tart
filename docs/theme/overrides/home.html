@@ -1,11 +1,22 @@
 {% extends "base.html" %}
 
 <!-- Render landing page under tabs -->
-{% block tabs %}
-{{ super() }}
+{% block tabs %} {{ super() }}
 
 <!-- Additional styles for landing page -->
 <style>
+  body {
+    overflow-x: hidden;
+  }
+
+  .md-content__inner {
+    margin-bottom: 0;
+    padding: 2.2rem 0;
+  }
+
+  .md-content__inner:before {
+    display: none;
+  }
 
   /* Application header should be static for the landing page */
   .md-header {
@@ -17,9 +28,36 @@
     margin: 0;
   }
 
-  /* Hide main content for now */
-  .md-content {
+  /* Hide sidebar, preventing unnecessary margins on the page */
+  .md-main__inner > .md-content,
+  .md-main__inner > .md-sidebar--secondary {
     display: none;
+  }
+
+  /* Prevent removing default title on the page */
+  .md-content__inner h1:first-child {
+    display: block;
+  }
+
+  .tx-landing__image {
+    margin-top: 45px;
+  }
+
+  /* Prevent layout shift after image loading */
+  .tx-landing__image dotlottie-player {
+    aspect-ratio: 1.66;
+  }
+
+  @media (max-width: 959px) {
+    .tx-landing__image {
+      margin-bottom: 10px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .md-typeset .headerlink {
+      display: none;
+    }
   }
 
   /* Hide table of contents */
@@ -38,6 +76,7 @@
 </style>
 
 <!-- landing page for landing page -->
+<!-- Hero -->
 <section class="tx-container">
   <div class="md-grid md-typeset">
     <div class="tx-landing">
@@ -47,44 +86,196 @@
         <dotlottie-player
           src="/assets/animations/TartLogo.lottie"
           mode="normal"
-          style="width: 75%; margin: auto;"
+          style="width: 75%; margin: auto"
           autoplay
         />
       </div>
 
       <!-- landing content -->
       <div class="tx-landing__content">
-        <h2><strong>Tart</strong> is a virtualization toolset to build, run and manage <i>macOS</i> and <i>Linux</i> virtual machines on <i>Apple Silicon.</i></h2>
-        <p>
-          Tart utilizes <i>Virtualization.Framework</i> to achieve nearly native performance.
-          Benefit from clean ephemeral environments for your automations with no performance implications.
-        </p>
-        <p>
-          For storing virtual machine images Tart integrates with OCI-compatible container registries.
-          Push and pull virtual machines like you used to with Docker containers.
-        </p>
-        <p>
-          Tart powers several continuous integration systems including <a href="/github-actions">on-demand GitHub Actions</a>
-          and <a href="https://cirrus-ci.org/guide/macOS/">Cirrus CI</a>. Tart can be easily <a href="/cirrus-cli">integrated with any other CI</a>
-          and soon will get <a href="https://github.com/cirruslabs/tart/issues/372">clustering capabilities</a>
-          to orchestrate virtual machines on multiple physical hosts.
-        </p>
-        <a
-          href="/quick-start"
-          title="Quick Start"
-          class="md-button"
-        >
+        <h2>
+          <strong>Tart</strong> is a virtualization toolset to build, run and
+          manage <i>macOS</i> and <i>Linux</i> virtual machines on
+          <i>Apple Silicon.</i>
+        </h2>
+        <a href="/quick-start" title="Quick Start" class="md-button">
           Learn More
         </a>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Spotlights -->
+<section class="mdx-parallax__group" data-md-color-scheme="default">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner">
+      <header class="md-typeset">
+        <h1 id="virtualization-and-beyond">
+          Virtualization and beyond
+          <a
+            href="#virtualization-and-beyond"
+            class="headerlink"
+            title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <div class="mdx-spotlight">
+        <figure class="mdx-spotlight__feature">
+          <img
+            src="assets/images/spotlight/virtualization-framework.png"
+            alt="Apple’s native Virtualization.Framework"
+            loading="lazy"
+            width="500"
+            height="212"
+          />
+          <figcaption class="md-typeset">
+            <h2>Native performance</h2>
+            <p>
+              Tart is&nbsp;using Apple&rsquo;s native
+              <i>Virtualization.Framework</i> that was developed along with
+              architecting the first M1&nbsp;chip. This seamless integration
+              between hardware and software ensures smooth performance without
+              any drawbacks.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <img
+            src="assets/images/spotlight/supported-registries.png"
+            alt="OCI-compatible container registries"
+            loading="lazy"
+            width="500"
+            height="160"
+          />
+          <figcaption class="md-typeset">
+            <p>
+              For storing virtual machine images Tart integrates with
+              OCI-compatible container registries. Work with virtual machines as
+              you used to&nbsp;with Docker containers.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <img
+            src="assets/images/spotlight/github-actions runners.png"
+            alt="GitHub Actions Runners"
+            loading="lazy"
+            width="500"
+            height="280"
+          />
+          <figcaption class="md-typeset">
+            <p>
+              Tart powers several continuous integration systems including
+              <a href="/github-actions"
+                >on&#8209;demand GitHub Actions Runners</a
+              >
+              and
+              <a href="https://cirrus-ci.org/guide/macOS/" target="_blank"
+                >Cirrus&nbsp;CI</a
+              >. Double the performance of&nbsp;your macOS actions with
+              a&nbsp;couple lines of&nbsp;code.
+            </p>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="mdx-parallax__group" data-md-color-scheme="default">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner md-content__inner-testimonials">
+      <header class="md-typeset">
+        <h1 id="what-our-users-say">
+          What our users say
+          <a
+            href="#what-our-users-say"
+            class="headerlink"
+            title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <div class="mdx-users">
+        <figure class="mdx-users__testimonial">
+          <img
+            src="assets/images/users/seb-jachec.jpg"
+            alt="Sebastian Jachec"
+            loading="lazy"
+            width="200"
+            height="200"
+          />
+          <figcaption class="md-typeset">
+            <h2>Sebastian Jachec</h2>
+            <h3>
+              Mobile Engineer at
+              <a href="https://daybridge.com/" target="_blank">Daybridge</a>
+            </h3>
+            <hr />
+            <cite>
+              It&rsquo;s been plain-sailing with the
+              <a href="/github-actions">Cirrus Runners</a>&nbsp;&mdash;
+              they&rsquo;ve been great! They&rsquo;re consistently&nbsp;60+%
+              faster on&nbsp;workflows that we&nbsp;previously used Github
+              Actions&rsquo; macOS runners for.
+            </cite>
+          </figcaption>
+        </figure>
+        <figure class="mdx-users__testimonial">
+          <img
+            src="assets/images/users/mikhail-tokarev.jpeg"
+            alt="Mikhail Tokarev"
+            loading="lazy"
+            width="200"
+            height="200"
+          />
+          <figcaption class="md-typeset">
+            <h2>Mikhail Tokarev</h2>
+            <h3>
+              CTO at
+              <a href="https://codemagic.io/start/" target="_blank"
+                >Codemagic</a
+              >
+            </h3>
+            <hr />
+            <cite>
+              Thanks to the minimal overhead of using the Apple Virtualization
+              API, we’ve seen some performance improvements in booting new
+              virtual machines compared with Anka.
+            </cite>
+          </figcaption>
+        </figure>
+        <figure class="mdx-users__testimonial">
+          <img
+            src="assets/images/users/max-lapides.jpeg"
+            alt="Max Lapides"
+            loading="lazy"
+            width="200"
+            height="200"
+          />
+          <figcaption class="md-typeset">
+            <h2>Max Lapides</h2>
+            <h3>
+              Senior Mobile Engineer at
+              <a href="https://www.tonal.com/" target="_blank">Tonal</a>
+            </h3>
+            <hr />
+            <cite>
+              Previously, we were using the GitHub&#8209;hosted macOS runners
+              and our iOS build took ~30&nbsp;minutes. Now with
+              <a href="/github-actions">Cirrus Runners</a>, the iOS build only
+              takes ~12&nbsp;minutes. That’s a huge boost to our productivity,
+              and for only $150/month per runner it is much less expensive too.
+            </cite>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}
-
-<!-- Content -->
-{% block content %}{% endblock %}
-
-<!-- Application footer -->
-{% block footer %}{% endblock %}
-
