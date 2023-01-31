@@ -5,19 +5,13 @@
 
 <!-- Additional styles for landing page -->
 <style>
-  /* Stretch Hero to screen height excluding header */
-  .tx-container .md-grid {
-    height: calc(100vh - 2.4rem * 2);
-  }
-  @media screen and (max-width: 76.1875em) {
-    .tx-container .md-grid {
-      height: calc(100vh - 2.4rem);
-    }
+  body {
+    overflow-x: hidden;
   }
 
   .md-content__inner {
     margin-bottom: 0;
-    padding: 3.2rem 0;
+    padding: 2.2rem 0;
   }
 
   .md-content__inner:before {
@@ -43,6 +37,27 @@
   /* Prevent removing default title on the page */
   .md-content__inner h1:first-child {
     display: block;
+  }
+
+  .tx-landing__image {
+    margin-top: 45px;
+  }
+
+  /* Prevent layout shift after image loading */
+  .tx-landing__image dotlottie-player {
+    aspect-ratio: 1.66;
+  }
+
+  @media (max-width: 959px) {
+    .tx-landing__image {
+      margin-bottom: 10px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .md-typeset .headerlink {
+      display: none;
+    }
   }
 
   /* Hide table of contents */
