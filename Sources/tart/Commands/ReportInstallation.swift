@@ -7,9 +7,9 @@ struct ReportInstallation: AsyncParsableCommand {
     commandName: "report-installation",
     abstract: "Send installation event to Sentry if configured",
     discussion: """
-                Reports macOS version and device model for analytics purposes.
-                Helps Cirrus Labs team to prioritize testing on most popular devices.
-                """,
+    Reports macOS version and device model for analytics purposes.
+    Helps Cirrus Labs team to prioritize testing on most popular devices.
+    """,
     shouldDisplay: false
   )
 
