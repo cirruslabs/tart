@@ -39,10 +39,15 @@ brews:
       name: homebrew-cli
     caveats: See the GitHub repository for more information
     homepage: https://github.com/cirruslabs/tart
+    license: "AGPL-3.0"
     description: Run macOS VMs on Apple Silicon
     skip_upload: auto
     dependencies:
       - "cirruslabs/cli/softnet"
+    post_install: |
+      ENV["SENTRY_DSN"] = "https://606fab64ced94f0991109ac5467e23da@o4504250314522624.ingest.sentry.io/4504606552424448"
+      system "#{bin}/tart report-installation"
+      ENV.delete("SENTRY_DSN")
     custom_block: |
       depends_on :macos => :monterey
       
