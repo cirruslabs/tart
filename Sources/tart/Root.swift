@@ -33,6 +33,7 @@ struct Root: AsyncParsableCommand {
       Rename.self,
       Stop.self,
       Delete.self,
+      ReportInstallation.self,
     ])
 
   public static func main() async throws {
