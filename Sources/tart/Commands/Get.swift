@@ -20,7 +20,7 @@ struct Get: AsyncParsableCommand {
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     let vmConfig = try VMConfig(fromURL: vmDir.configURL)
-    let diskSizeInGb = try vmDir.sizeBytes() / 1000 / 1000 / 1000
+    let diskSizeInGb = try vmDir.sizeGB()
     let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 
     let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: diskSizeInGb, Display: vmConfig.display.description)

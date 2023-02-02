@@ -107,6 +107,10 @@ struct VMDirectory: Prunable {
     try configURL.sizeBytes() + diskURL.sizeBytes() + nvramURL.sizeBytes()
   }
 
+  func sizeGB() throws -> Int {
+    try sizeBytes() / 1000 / 1000 / 1000
+  }
+
   func markExplicitlyPulled() {
     FileManager.default.createFile(atPath: explicitlyPulledMark.path, contents: nil)
   }
