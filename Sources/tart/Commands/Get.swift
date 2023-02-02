@@ -1,52 +1,29 @@
 import ArgumentParser
 import Foundation
 
+fileprivate struct VMInfo: Encodable {
+  let CPU: Int
+  let Memory: UInt64
+  let Disk: Int
+  let Display: String
+}
+
 struct Get: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "get", abstract: "Get a VM's configuration")
 
   @Argument(help: "VM name.")
   var name: String
 
-  @Flag(help: "Number of VM CPUs.")
-  var cpu: Bool = false
-
-  @Flag(help: "VM memory size in megabytes.")
-  var memory: Bool = false
-
-  @Flag(help: "Disk size in gigabytes.")
-  var diskSize: Bool = false
-
-  @Flag(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800.")
-  var display: Bool = false
-
-  func validate() throws {
-    if [cpu, memory, diskSize, display].filter({$0}).count > 1 {
-      throw ValidationError("Options --cpu, --memory, --disk-size and --display are mutually exclusive")
-    }
-  }
+  @Flag(help: "Output format")
+  var format: Format = .table
 
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     let vmConfig = try VMConfig(fromURL: vmDir.configURL)
     let diskSizeInGb = try vmDir.sizeBytes() / 1000 / 1000 / 1000
-    let memorySizeInMb = vmConfig.memorySize  / 1024 / 1024
+    let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 
-    if cpu {
-      print(vmConfig.cpuCount)
-    } else if memory {
-      print(memorySizeInMb)
-    } else if diskSize {
-      print(diskSizeInGb)
-    } else if display {
-      print("\(vmConfig.display.width)x\(vmConfig.display.height)")
-    } else {
-      print(
-        "CPU\tMemory\tDisk\tDisplay\n" +
-          "\(vmConfig.cpuCount)\t" +
-          "\(memorySizeInMb) MB\t" +
-          "\(diskSizeInGb) GB\t" +
-          "\(vmConfig.display)"
-      )
-    }
+    let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: diskSizeInGb, Display: vmConfig.display.description)
+    print(format.renderSingle(data: info))
   }
 }
