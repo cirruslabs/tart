@@ -5,10 +5,10 @@ import TextTable
 enum Format: String, EnumerableFlag {
   case table, json
 
-  func renderSingle<T>(data: T) -> String where T: Encodable {
+  func renderSingle<T>(_ data: T) -> String where T: Encodable {
     switch self {
     case .table:
-      return renderList(data: [data])
+      return renderList([data])
     case .json:
       let encoder = JSONEncoder()
       encoder.outputFormatting = .prettyPrinted
@@ -16,7 +16,7 @@ enum Format: String, EnumerableFlag {
     }
   }
 
-  func renderList<T>(data: Array<T>) -> String where T: Encodable {
+  func renderList<T>(_ data: Array<T>) -> String where T: Encodable {
     switch self {
     case .table:
       if (data.count == 0) {

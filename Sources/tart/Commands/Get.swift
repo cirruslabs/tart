@@ -26,6 +26,6 @@ struct Get: AsyncParsableCommand {
     let running = try PIDLock(lockURL: vmDir.configURL).pid() > 0
 
     let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: diskSizeInGb, Display: vmConfig.display.description, Running: running)
-    print(format.renderSingle(data: info))
+    print(format.renderSingle(info))
   }
 }

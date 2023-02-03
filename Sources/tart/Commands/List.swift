@@ -40,7 +40,7 @@ struct List: AsyncParsableCommand {
         try VMInfo(Source: "oci", Size: vmDir.sizeGB(), Name: name)
       })
     }
-    print(format.renderList(data: infos))
+    print(format.renderList(infos))
   }
 
   private func sortedInfos(_ infos: [VMInfo]) -> [VMInfo] {
