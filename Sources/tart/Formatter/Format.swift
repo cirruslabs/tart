@@ -31,7 +31,7 @@ enum Format: String, ExpressibleByArgument, CaseIterable {
           return Column(title: fieldName, value: element.value)
         }
       }
-      return table.string(for: data, style: Style.plain) ?? ""
+      return table.string(for: data, style: Style.plain)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     case .json:
       let encoder = JSONEncoder()
       encoder.outputFormatting = .prettyPrinted
