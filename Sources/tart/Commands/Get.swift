@@ -15,7 +15,7 @@ struct Get: AsyncParsableCommand {
   @Argument(help: "VM name.")
   var name: String
 
-  @Option(help: "Output format")
+  @Option(help: "Output format: text or json")
   var format: Format = .text
 
   func run() async throws {
