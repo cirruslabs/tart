@@ -17,6 +17,9 @@ struct List: AsyncParsableCommand {
   @Option(help: "Output format")
   var format: Format = .text
 
+  @Flag(name: [.short, .long], help: ArgumentHelp("Only display VM names."))
+  var quiet: Bool = false
+
   func validate() throws {
     guard let source = source else {
       return
@@ -40,7 +43,13 @@ struct List: AsyncParsableCommand {
         try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB())
       })
     }
-    print(format.renderList(infos))
+    if (quiet) {
+      for info in infos {
+        print(info.Name)
+      }
+    } else {
+      print(format.renderList(infos))
+    }
   }
 
   private func sortedInfos(_ infos: [VMInfo]) -> [VMInfo] {
