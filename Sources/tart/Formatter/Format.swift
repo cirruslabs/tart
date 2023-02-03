@@ -4,7 +4,7 @@ import TextTable
 
 enum Format: String, ExpressibleByArgument, CaseIterable {
   case text, json
-  
+
   private(set) static var allValueStrings: [String] = Format.allCases.map { "\($0)"}
 
   func renderSingle<T>(_ data: T) -> String where T: Encodable {
