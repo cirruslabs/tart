@@ -2,12 +2,12 @@ import ArgumentParser
 import Foundation
 import TextTable
 
-enum Format: String, EnumerableFlag {
-  case table, json
+enum Format: String, ExpressibleByArgument {
+  case text, json
 
   func renderSingle<T>(_ data: T) -> String where T: Encodable {
     switch self {
-    case .table:
+    case .text:
       return renderList([data])
     case .json:
       let encoder = JSONEncoder()
@@ -18,7 +18,7 @@ enum Format: String, EnumerableFlag {
 
   func renderList<T>(_ data: Array<T>) -> String where T: Encodable {
     switch self {
-    case .table:
+    case .text:
       if (data.count == 0) {
         return ""
       }

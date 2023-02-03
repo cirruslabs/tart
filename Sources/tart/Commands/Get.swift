@@ -15,8 +15,8 @@ struct Get: AsyncParsableCommand {
   @Argument(help: "VM name.")
   var name: String
 
-  @Flag(help: "Output format")
-  var format: Format = .table
+  @Option(help: "Output format")
+  var format: Format = .text
 
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)

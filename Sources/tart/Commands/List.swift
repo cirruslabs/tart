@@ -14,8 +14,8 @@ struct List: AsyncParsableCommand {
   @Option(help: ArgumentHelp("Only display VMs from the specified source (e.g. --source local, --source oci)."))
   var source: String?
 
-  @Flag(help: "Output format")
-  var format: Format = .table
+  @Option(help: "Output format")
+  var format: Format = .text
 
   func validate() throws {
     guard let source = source else {
