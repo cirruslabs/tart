@@ -2,14 +2,23 @@ import ArgumentParser
 import Dispatch
 import SwiftUI
 
+fileprivate struct VMInfo: Encodable {
+  let Source: String
+  let Name: String
+  let Size: Int
+}
+
 struct List: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "List created VMs")
 
-  @Flag(name: [.short, .long], help: ArgumentHelp("Only display VM names."))
-  var quiet: Bool = false
-
   @Option(help: ArgumentHelp("Only display VMs from the specified source (e.g. --source local, --source oci)."))
   var source: String?
+
+  @Option(help: "Output format: text or json")
+  var format: Format = .text
+
+  @Flag(name: [.short, .long], help: ArgumentHelp("Only display VM names."))
+  var quiet: Bool = false
 
   func validate() throws {
     guard let source = source else {
@@ -22,27 +31,28 @@ struct List: AsyncParsableCommand {
   }
 
   func run() async throws {
-    if !quiet {
-      print("Source\tName")
-    }
-
+    var infos: [VMInfo] = []
     if source == nil || source == "local" {
-      displayTable("local", try VMStorageLocal().list())
+      infos += sortedInfos(try VMStorageLocal().list().map { (name, vmDir) in
+        try VMInfo(Source: "local", Name: name, Size: vmDir.sizeGB())
+      })
     }
 
     if source == nil || source == "oci" {
-      displayTable("oci", try VMStorageOCI().list().map { (name, vmDir, _) in (name, vmDir) })
+      infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
+        try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB())
+      })
+    }
+    if (quiet) {
+      for info in infos {
+        print(info.Name)
+      }
+    } else {
+      print(format.renderList(infos))
     }
   }
 
-  private func displayTable(_ source: String, _ vms: [(String, VMDirectory)]) {
-    for (name, _) in vms.sorted(by: { left, right in left.0 < right.0 }) {
-      if quiet {
-        print(name)
-      } else {
-        let source = source.padding(toLength: "Source".count, withPad: " ", startingAt: 0)
-        print("\(source)\t\(name)")
-      }
-    }
+  private func sortedInfos(_ infos: [VMInfo]) -> [VMInfo] {
+    infos.sorted(by: { left, right in left.Name < right.Name })
   }
 }
