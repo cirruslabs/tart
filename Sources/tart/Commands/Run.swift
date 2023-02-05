@@ -38,9 +38,6 @@ struct Run: AsyncParsableCommand {
       + "Note that this feature is experimental and there may be bugs present when using VNC."))
   var vncExperimental: Bool = false
 
-  @Flag(help: ArgumentHelp(visibility: .private))
-  var withSoftnet: Bool = false
-
   @Option(help: ArgumentHelp("""
   Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
   """, discussion: """
@@ -88,11 +85,6 @@ struct Run: AsyncParsableCommand {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
-
-    if withSoftnet && netBridged != nil {
-      throw ValidationError("--with-softnet and --net-bridged are mutually exclusive")
-    }
-
     if netBridged != nil && netSoftnet {
       throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
     }
@@ -203,7 +195,7 @@ struct Run: AsyncParsableCommand {
   }
 
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
-    if withSoftnet || netSoftnet {
+    if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
 
       return try Softnet(vmMACAddress: config.macAddress.string)
