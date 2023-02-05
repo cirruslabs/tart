@@ -195,7 +195,7 @@ struct Run: AsyncParsableCommand {
   }
 
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
-    if withSoftnet || netSoftnet {
+    if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
 
       return try Softnet(vmMACAddress: config.macAddress.string)
