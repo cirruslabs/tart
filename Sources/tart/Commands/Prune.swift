@@ -100,10 +100,9 @@ struct Prune: AsyncParsableCommand {
 
       cacheReclaimedBytes += try prunable.sizeBytes()
       try prunable.delete()
-      puppy.info("deleting \(prunable.url)...")
-    }
 
-    puppy.info("reclaimed \(cacheReclaimedBytes) bytes")
+      try SentrySDK.span?.setExtra(value: prunable.sizeBytes(), key: prunable.url.formatted());
+    }
 
     SentrySDK.span?.setMeasurement(name: "gc_disk_reclaimed", value: cacheReclaimedBytes as NSNumber, unit: MeasurementUnitInformation.byte);
   }

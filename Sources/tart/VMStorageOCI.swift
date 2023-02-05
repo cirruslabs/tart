@@ -166,16 +166,25 @@ class VMStorageOCI: PrunableStorage {
         let availableCapacityBytes = max(UInt64(capacityImportant), UInt64(capacityAvailable))
 
         if capacityImportant == 0 || capacityAvailable == 0 {
-          puppy.warning("important capacity \(capacityImportant) bytes, "
-            + "available capacity is \(capacityAvailable) bytes")
+          SentrySDK.capture(message: "Zero capacity") { scope in
+            scope.setLevel(.warning)
+
+            scope.setContext(value: [
+              "volumeAvailableCapacityForImportantUsageKey": capacityImportant,
+              "volumeAvailableCapacityKey": capacityAvailable,
+            ], key: "Attributes")
+          }
         }
 
         // There is a suspicious that occasionally capacity is returned as zero which can't be true.
         // Let's validate to avoid unnecessary pruning.
         if 0 < availableCapacityBytes && availableCapacityBytes < requiredCapacityBytes {
-          puppy.info("pruning cache to accommodate \(name) with a disk of size \(uncompressedDiskSize) bytes ("
-            + "available capacity is \(availableCapacityBytes) bytes, required capacity "
-            + "is \(requiredCapacityBytes) bytes)")
+          let transaction = SentrySDK.startTransaction(name: "Automatically Pruning Cache", operation: "prune", bindToScope: true)
+          transaction.setData(value: name, key: "name")
+          transaction.setData(value: uncompressedDiskSize, key: "uncompressedDiskSize")
+          transaction.setData(value: availableCapacityBytes, key: "availableCapacity")
+          transaction.setData(value: requiredCapacityBytes, key: "requiredCapacity")
+          defer { transaction.finish() }
 
           try Prune.pruneReclaim(reclaimBytes: requiredCapacityBytes - availableCapacityBytes)
         }
