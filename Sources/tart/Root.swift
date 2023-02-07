@@ -76,7 +76,7 @@ struct Root: AsyncParsableCommand {
       var command = try parseAsRoot()
 
       // Run garbage-collection before each command (shouldn't take too long)
-      try Config().gc()
+      try? Config().gc()
 
       if var asyncCommand = command as? AsyncParsableCommand {
         try await asyncCommand.run()
