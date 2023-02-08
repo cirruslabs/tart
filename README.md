@@ -3,7 +3,7 @@
 *Tart* is a virtualization toolset to build, run and manage macOS and Linux virtual machines (VMs) on Apple Silicon.
 Built by CI engineers for your automation needs. Here are some highlights of Tart:
 
-* Tart uses Apple's own `Virtualization.Framework` for [near-native performance](https://browser.geekbench.com/v5/cpu/compare/14966395?baseline=14966339).
+* Tart uses Apple's own `Virtualization.Framework` for [near-native performance](https://browser.geekbench.com/v5/cpu/compare/20382844?baseline=20382722).
 * Push/Pull virtual machines from any OCI-compatible container registry.
 * Use Tart Packer Plugin to automate VM creation.
 * Built-in CI integration.
