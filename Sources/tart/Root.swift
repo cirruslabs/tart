@@ -1,4 +1,5 @@
 import ArgumentParser
+import Darwin
 import Foundation
 import Sentry
 
@@ -76,7 +77,11 @@ struct Root: AsyncParsableCommand {
       var command = try parseAsRoot()
 
       // Run garbage-collection before each command (shouldn't take too long)
-      try? Config().gc()
+      do {
+        try Config().gc()
+      } catch {
+        fputs("Failed to perform garbage collection!\n\(error)\n", stderr)
+      }
 
       if var asyncCommand = command as? AsyncParsableCommand {
         try await asyncCommand.run()
