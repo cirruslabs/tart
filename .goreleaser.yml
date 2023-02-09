@@ -44,10 +44,6 @@ brews:
     skip_upload: auto
     dependencies:
       - "cirruslabs/cli/softnet"
-    post_install: |
-      ENV["SENTRY_DSN"] = "https://606fab64ced94f0991109ac5467e23da@o4504250314522624.ingest.sentry.io/4504606552424448"
-      system "#{bin}/tart report-installation"
-      ENV.delete("SENTRY_DSN")
     custom_block: |
       depends_on :macos => :monterey
       
