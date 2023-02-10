@@ -149,6 +149,12 @@ struct Run: AsyncParsableCommand {
       throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
     }
 
+    // Initialize the network before we start any GUI window
+    // to avoid distracting the user in case a Sudo password
+    // will be needed when running with Softnet, TTY and no
+    // passwordless Sudo configured
+    try vm!.network.run(vm!.sema)
+
     let task = Task {
       do {
         if let vncImpl = vncImpl {

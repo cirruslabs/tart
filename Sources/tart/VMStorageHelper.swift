@@ -55,6 +55,7 @@ enum RuntimeError : Error {
   case VMDirectoryAlreadyInitialized(_ message: String)
   case ExportFailed(_ message: String)
   case ImportFailed(_ message: String)
+  case SoftnetFailed(_ message: String)
 }
 
 protocol HasExitCode {
@@ -92,6 +93,8 @@ extension RuntimeError : CustomStringConvertible {
       return "VM export failed: \(message)"
     case .ImportFailed(let message):
       return "VM import failed: \(message)"
+    case .SoftnetFailed(let message):
+      return "Softnet failed: \(message)"
     }
   }
 }

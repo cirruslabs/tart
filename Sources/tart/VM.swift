@@ -217,8 +217,6 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run(_ recovery: Bool) async throws {
-    try network.run(sema)
-
     let startTask = DispatchQueue.main.sync {
       Task {
         if #available(macOS 13, *) {
