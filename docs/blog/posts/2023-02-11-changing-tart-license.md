@@ -9,7 +9,7 @@ categories:
   - announcement
 ---
 
-# Changing Tart Licence
+# Changing Tart License
 
 **TLDR:** We are transitioning Tart's licensing from AGPL-3.0 to [Fair Source 100](https://fair.io/). This change will
 permit unlimited installations on personal computers, but organizations that exceed a certain number of server
