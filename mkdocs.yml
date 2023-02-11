@@ -35,12 +35,13 @@ theme:
     - navigation.top
     - search.suggest
     - toc.follow
-      
+
 extra_css:
   - 'stylesheets/extra.css'
   - 'stylesheets/landing.css'
 
 plugins:
+  - blog
   - social
   - search
   - minify
@@ -84,6 +85,8 @@ nav:
   - "Self-hosted CI": cirrus-cli.md
   - "Managing VMs": vm-management.md
   - "FAQ": faq.md
+  - Blog:
+      - blog/index.md
 
 extra:
   analytics:
