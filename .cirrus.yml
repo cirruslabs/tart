@@ -5,7 +5,7 @@ task:
   alias: test
   persistent_worker:
     labels:
-      name: scaleway-m1
+      name: dev-mini
   test_script:
     - swift test
   integration_test_script:

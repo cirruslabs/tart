@@ -98,6 +98,10 @@ struct Run: AsyncParsableCommand {
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
 
+    if netSoftnet && isInteractiveSession() {
+      try Softnet.configureSUIDBitIfNeeded()
+    }
+
     let additionalDiskAttachments = try additionalDiskAttachments()
 
     // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
@@ -192,6 +196,10 @@ struct Run: AsyncParsableCommand {
     } else {
       runUI()
     }
+  }
+
+  func isInteractiveSession() -> Bool {
+    isatty(STDOUT_FILENO) == 1
   }
 
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
