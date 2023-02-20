@@ -1,8 +1,3 @@
----
-hide:
-  - navigation
----
-
 # GitHub Actions
 
 Tart already powers several CI services mentioned above including our own [Cirrus CI](https://cirrus-ci.org/guide/macOS/) which offers unlimited concurrency with per-second billing.

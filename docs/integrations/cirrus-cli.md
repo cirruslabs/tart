@@ -1,8 +1,3 @@
----
-hide:
-  - navigation
----
-
 # Cirrus CLI
 
 Tart itself is only responsible for managing virtual machines, but we've built Tart support into a tool called Cirrus CLI

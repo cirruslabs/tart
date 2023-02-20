@@ -60,9 +60,9 @@ device without a physical display connected. For example, a Mac Mini with a HDMI
 but a Mac Mini on a desk with a connected physical display is considered a personal computer. **Usage on personal computers
 and before reaching the 100 CPU cores limit is royalty-free and does not have the viral properties of AGPL.**
 
-When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Sponsorship](https://buy.stripe.com/8wM7wg3Osfu17S08wz),
-which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Sponsorship](https://buy.stripe.com/8wMaIsfxa95D7S0004)
-(\$5000 per month) will be required, and for organizations that exceed 5000 CPU cores, a custom [Diamond Sponsorship](mailto:sales@cirruslabs.org)
+When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Sponsorship](/licensing#sponsorships),
+which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Sponsorship](/licensing#sponsorships)
+(\$5000 per month) will be required, and for organizations that exceed 5000 CPU cores, a custom [Diamond Sponsorship](/licensing#sponsorships)
 (\$1 per core per month) will be necessary. **All sponsorships will include priority feature development and SLAs on support with urgent issues.**
 
 ## Have we considered alternatives?
