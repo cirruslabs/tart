@@ -74,7 +74,7 @@ struct Run: AsyncParsableCommand {
   Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
   """, discussion: """
   Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
-  """, valueName: "interface name"))
+  """, valueName: "interface name", visibility: .hidden))
   var netBridged: String?
 
   @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
