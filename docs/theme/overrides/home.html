@@ -176,17 +176,59 @@
             <p>
               Tart powers several continuous integration systems including
               <a href="/github-actions"
-                >on&#8209;demand GitHub Actions Runners</a
+              >on&#8209;demand GitHub Actions Runners</a
               >
               and
               <a href="https://cirrus-ci.org/guide/macOS/" target="_blank"
-                >Cirrus&nbsp;CI</a
+              >Cirrus&nbsp;CI</a
               >. Double the performance of&nbsp;your macOS actions with
               a&nbsp;couple lines of&nbsp;code.
             </p>
           </figcaption>
         </figure>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="mdx-parallax__group" data-md-color-scheme="slate" data-md-color-primary="indigo">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner mdx-installations md-typeset">
+      <header class="md-typeset">
+        <h1 id="powerhouse">
+          Automation Powerhouse
+          <a
+            href="#powerhouse"
+            class="headerlink"
+            title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <script>
+        fetch("https://api.github.com/repos/cirruslabs/tart/releases?per_page=100")
+          .then((response) => response.json())
+          .then((releases) => {
+            let allDownloads = 0;
+            for (let release of releases) {
+              for (let asset of release.assets) {
+                if (asset && asset.content_type === "application/octet-stream") {
+                  allDownloads += asset.download_count || 0
+                }
+              }
+            }
+            let counterElement = document.getElementById('installation-counter');
+            if (counterElement) {
+              counterElement.textContent = Math.round(allDownloads / 1000) + ",000"
+            }
+          })
+      </script>
+      <h2>
+        With <strong id="installation-counter">...</strong>  installations to date, Tart has been adopted for various scenarios.
+        Its applications range from powering CI/CD pipelines and reproducible local development environments,
+        to helping in the testing of device management systems without actual physical devices.
+      </h2>
     </div>
   </div>
 </section>
@@ -222,7 +264,7 @@
               Mobile Engineer at
               <a href="https://daybridge.com/" target="_blank">Daybridge</a>
             </h3>
-            <hr />
+            <hr/>
             <cite>
               It&rsquo;s been plain-sailing with the
               <a href="/github-actions">Cirrus Runners</a>&nbsp;&mdash;
@@ -245,10 +287,10 @@
             <h3>
               CTO at
               <a href="https://codemagic.io/start/" target="_blank"
-                >Codemagic</a
+              >Codemagic</a
               >
             </h3>
-            <hr />
+            <hr/>
             <cite>
               Thanks to the minimal overhead of using the Apple Virtualization
               API, we’ve seen some performance improvements in booting new
@@ -270,7 +312,7 @@
               Senior Mobile Engineer at
               <a href="https://www.tonal.com/" target="_blank">Tonal</a>
             </h3>
-            <hr />
+            <hr/>
             <cite>
               Previously, we were using the GitHub&#8209;hosted macOS runners
               and our iOS build took ~30&nbsp;minutes. Now with

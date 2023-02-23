@@ -147,6 +147,10 @@
   background-color: var(--md-default-bg-color);
 }
 
+.mdx-installations {
+  display: block;
+}
+
 .mdx-users {
   display: flex;
   gap: 3.2rem;
