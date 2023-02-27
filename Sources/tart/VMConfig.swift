@@ -147,7 +147,7 @@ struct VMConfig: Codable {
   mutating func setMemory(memorySize: UInt64) throws {
     if memorySize < memorySizeMin {
       throw LessThanMinimalResourcesError("VM should have \(memorySizeMin) bytes"
-        + " of memory at minimum (requested \(memorySizeMin))")
+        + " of memory at minimum (requested \(memorySize))")
     }
 
     self.memorySize = memorySize
