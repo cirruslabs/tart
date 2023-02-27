@@ -16,6 +16,7 @@ builds:
     hooks:
       post: 
         - gon gon.hcl
+        - .ci/create-pkg.sh
 
 archives:
   - name_template: "{{ .ProjectName }}"
@@ -29,6 +30,8 @@ archives:
 
 release:
   prerelease: auto
+  extra_files:
+    - glob: ./dist/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
