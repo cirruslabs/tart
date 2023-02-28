@@ -13,10 +13,10 @@ archives:
   - name_template: "{{ .ProjectName }}"
     files:
       - src: Resources/embedded.provisionprofile
-        dst: Tart.app/Contents
+        dst: tart.app/Contents
         strip_parent: true
-      - src: ".build/arm64-apple-macosx/debug/Tart"
-        dst: Tart.app/Contents/MacOS
+      - src: ".build/arm64-apple-macosx/debug/tart"
+        dst: tart.app/Contents/MacOS
         strip_parent: true
 
 release:
@@ -36,7 +36,7 @@ brews:
       - "cirruslabs/cli/softnet"
     install: |
       libexec.install Dir["*"]
-      bin.write_exec_script "#{libexec}/Tart.app/Contents/MacOS/tart"
+      bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :monterey
       

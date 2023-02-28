@@ -84,7 +84,6 @@ task:
     - .ci/set-version.sh
     - swift build -c debug --product tart
     - gon gon.hcl
-    - cp .build/arm64-apple-macosx/debug/tart .build/arm64-apple-macosx/debug/Tart
   release_script: goreleaser
   upload_sentry_debug_files_script:
     - cd .build/arm64-apple-macosx/debug/
