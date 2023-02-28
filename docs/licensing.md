@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-Both [Tart Virtualization](https://github.com/cirruslabs/tart) and [Orchard Orchestration](https://github.com/cirruslabs/orchard)
+Both [Tart Virtualization](https://github.com/cirruslabs/tart) and **Orchard Orchestration** (coming soon)
 are licensed under [Fair Source 100 License](https://fair.io/). Usage on personal computers including personal workstations is royalty-free,
 but organizations that exceed a certain number of server installations utilizing 100 CPU cores will be required to obtain a paid sponsorship. 
 
@@ -27,7 +27,7 @@ Our support team will answer it by replying to the issue or by updating the docu
 
 # Priority Support
 
-In addition to the general support we provide a *Priority Support*with guaranteed response times included in all the paid sponsorships .
+In addition to the general support we provide a *Priority Support* with guaranteed response times included in all the paid sponsorships .
 
 | Severity | Support Impact                                                                                | First Response Time SLA | Hours | How to Submit                                                                                    |
 |----------|-----------------------------------------------------------------------------------------------|-------------------------|-------|--------------------------------------------------------------------------------------------------|
