@@ -21,8 +21,6 @@ archives:
 
 release:
   prerelease: auto
-  extra_files:
-    - glob: ./.ci/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
