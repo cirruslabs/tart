@@ -11,7 +11,7 @@ task:
   integration_test_script:
     # Build Tart
     - swift build
-    - codesign --sign - --entitlements Resources/tart.entitlements --force .build/debug/tart
+    - codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart
     - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
     # Run integration tests
     - cd integration-tests
@@ -43,7 +43,7 @@ task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
   build_script: swift build --product tart
-  sign_script: codesign --sign - --entitlements Resources/tart.entitlements --force .build/debug/tart
+  sign_script: codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart
   binary_artifacts:
     path: .build/debug/tart
 

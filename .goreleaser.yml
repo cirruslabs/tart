@@ -1,5 +1,10 @@
 project_name: tart
 
+before:
+  hooks:
+    - .ci/set-version.sh
+    - swift build -c debug --product tart
+
 builds:
   - builder: prebuilt
     goos:
@@ -13,17 +18,15 @@ builds:
         - gon gon.hcl
         - .ci/create-pkg.sh
 
-before:
-  hooks:
-    - .ci/set-version.sh
-    - swift build -c debug --product tart
-
 archives:
-  - id: binary
-    format: binary
-    name_template: "{{ .ProjectName }}"
-  - id: regular
-    name_template: "{{ .ProjectName }}"
+  - name_template: "{{ .ProjectName }}"
+    files:
+      - src: Resources/embedded.provisionprofile
+        dst: Tart.app/Contents
+        strip_parent: true
+      - src: ".build/arm64-apple-macosx/debug/tart"
+        dst: Tart.app/Contents/MacOS
+        strip_parent: true
 
 release:
   prerelease: auto
@@ -32,8 +35,6 @@ release:
 
 brews:
   - name: tart
-    ids:
-      - regular
     tap:
       owner: cirruslabs
       name: homebrew-cli
@@ -44,6 +45,9 @@ brews:
     skip_upload: auto
     dependencies:
       - "cirruslabs/cli/softnet"
+    install: |
+      libexec.install Dir["*"]
+      bin.write_exec_script "#{libexec}/Tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :monterey
       

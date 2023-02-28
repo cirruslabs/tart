@@ -8,5 +8,5 @@ apple_id {
 
 sign {
   application_identity = "Developer ID Application: Cirrus Labs, Inc."
-  entitlements_file = "Resources/tart.entitlements"
+  entitlements_file = "Resources/tart-prod.entitlements"
 }
