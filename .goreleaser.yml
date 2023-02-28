@@ -1,5 +1,10 @@
 project_name: tart
 
+before:
+  hooks:
+    - .ci/set-version.sh
+    - swift build -c debug --product tart
+
 builds:
   - builder: prebuilt
     goos:
@@ -7,7 +12,10 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/arm64-apple-macosx/debug/tart
+      path: .build/arm64-apple-macosx/debug/tart 
+    hooks:
+      post: 
+        - gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
@@ -36,7 +44,7 @@ brews:
       - "cirruslabs/cli/softnet"
     install: |
       libexec.install Dir["*"]
-      bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
+      bin.write_exec_script "#{libexec}/Tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :monterey
       
