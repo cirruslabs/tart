@@ -11,6 +11,6 @@ pkgbuild --root .ci/pkg/Tart.app --identifier com.github.cirruslabs.tart --versi
   --scripts .ci/pkg/scripts \
   --install-location "/Library/Application Support/Tart/Tart.app" \
   --sign "Developer ID Installer: Cirrus Labs, Inc. (9M2P8L4D89)" \
-  "./dist/Tart-$VERSION.pkg"
-xcrun notarytool submit "./dist/Tart-$VERSION.pkg" --keychain-profile "notarytool" --wait
-xcrun stapler staple "./dist/Tart-$VERSION.pkg"
+  "./.ci/Tart-$VERSION.pkg"
+xcrun notarytool submit "./.ci/Tart-$VERSION.pkg" --keychain-profile "notarytool" --wait
+xcrun stapler staple "./.ci/Tart-$VERSION.pkg"
