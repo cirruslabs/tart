@@ -1,10 +1,5 @@
 project_name: tart
 
-before:
-  hooks:
-    - .ci/set-version.sh
-    - swift build -c debug --product tart
-
 builds:
   - builder: prebuilt
     goos:
@@ -12,12 +7,7 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/arm64-apple-macosx/debug/tart 
-    hooks:
-      post: 
-        - gon gon.hcl
-        - .ci/create-pkg.sh
-        - cp .build/arm64-apple-macosx/debug/tart .build/arm64-apple-macosx/debug/Tart
+      path: .build/arm64-apple-macosx/debug/tart
 
 archives:
   - name_template: "{{ .ProjectName }}"
