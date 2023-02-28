@@ -39,7 +39,7 @@ brews:
       name: homebrew-cli
     caveats: See the GitHub repository for more information
     homepage: https://github.com/cirruslabs/tart
-    license: "AGPL-3.0"
+    license: "Fair Source"
     description: Run macOS VMs on Apple Silicon
     skip_upload: auto
     dependencies:

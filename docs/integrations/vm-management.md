@@ -1,8 +1,3 @@
----
-hide:
-  - navigation
----
-
 # Managing Virtual Machine
 
 ## Creating from scratch

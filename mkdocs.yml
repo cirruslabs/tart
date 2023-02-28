@@ -81,10 +81,15 @@ markdown_extensions:
 nav:
   - "Home": index.md
   - "Quick Start": quick-start.md
-  - "GitHub Actions": github-actions.md
-  - "Self-hosted CI": cirrus-cli.md
-  - "Managing VMs": vm-management.md
+  - "Integrations":
+    - "GitHub Actions": integrations/github-actions.md
+    - "Self-hosted CI": integrations/cirrus-cli.md
+    - "Managing VMs": integrations/vm-management.md
+  - "Licensing": licensing.md
   - "FAQ": faq.md
+  - "Legal":
+      - 'Terms of Service': legal/terms.md
+      - 'Privacy': legal/privacy.md
   - Blog:
       - blog/index.md
 
