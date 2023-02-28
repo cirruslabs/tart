@@ -17,6 +17,7 @@ builds:
       post: 
         - gon gon.hcl
         - .ci/create-pkg.sh
+        - cp .build/arm64-apple-macosx/debug/tart .build/arm64-apple-macosx/debug/Tart
 
 archives:
   - name_template: "{{ .ProjectName }}"
@@ -24,7 +25,7 @@ archives:
       - src: Resources/embedded.provisionprofile
         dst: Tart.app/Contents
         strip_parent: true
-      - src: ".build/arm64-apple-macosx/debug/tart"
+      - src: ".build/arm64-apple-macosx/debug/Tart"
         dst: Tart.app/Contents/MacOS
         strip_parent: true
 
