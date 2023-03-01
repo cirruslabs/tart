@@ -3,6 +3,6 @@
 set -e
 
 echo "#!/bin/sh" > /usr/local/bin/tart
-echo "exec '$2/Contents/MacOS/Tart' \"\$@\"" >> /usr/local/bin/tart
+echo "exec '$2/Tart.app/Contents/MacOS/Tart' \"\$@\"" >> /usr/local/bin/tart
 
 chmod +x /usr/local/bin/tart
