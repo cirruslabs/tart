@@ -27,6 +27,10 @@ archives:
       - src: ".build/arm64-apple-macosx/debug/tart"
         dst: tart.app/Contents/MacOS
         strip_parent: true
+    hooks:
+      after:
+        - xcrun notarytool submit "dist/tart.tar.gz" --keychain-profile "notarytool" --wait
+        - xcrun stapler staple "dist/tart.tar.gz"
 
 release:
   prerelease: auto
