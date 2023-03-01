@@ -5,7 +5,13 @@ hide:
 
 Both [Tart Virtualization](https://github.com/cirruslabs/tart) and **Orchard Orchestration** (coming soon)
 are licensed under [Fair Source 100 License](https://fair.io/). Usage on personal computers including personal workstations is royalty-free,
-but organizations that exceed a certain number of server installations utilizing 100 CPU cores will be required to obtain a paid sponsorship. 
+but organizations that exceed a certain number of server installations utilizing 100 CPU cores will be required to obtain a paid sponsorship.
+
+??? note "Performance and Efficiency Cores"
+    The virtual CPU cores in Tart VMs do not differentiate between the high-performance  and high-efficient cores
+    of the host CPU. Instead, Tart VMs automatically alternate between these types of cores depending on the workload
+    being executed within the virtual machines. As a result, both performance and energy-efficient cores of the host CPU
+    are treated equally in terms of licensing.
 
 # Sponsorships
 
