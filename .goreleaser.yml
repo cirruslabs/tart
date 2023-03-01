@@ -20,6 +20,7 @@ builds:
 
 archives:
   - name_template: "{{ .ProjectName }}"
+    format: zip
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
@@ -29,8 +30,8 @@ archives:
         strip_parent: true
     hooks:
       after:
-        - xcrun notarytool submit "dist/tart.tar.gz" --keychain-profile "notarytool" --wait
-        - xcrun stapler staple "dist/tart.tar.gz"
+        - xcrun notarytool submit "dist/tart.zip" --keychain-profile "notarytool" --wait
+        - xcrun stapler staple "dist/tart.zip"
 
 release:
   prerelease: auto
