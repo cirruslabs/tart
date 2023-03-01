@@ -357,7 +357,13 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              NSApplication.shared.terminate(self)
+              let ret = kill(getpid(), SIGINT)
+              if ret != 0 {
+                // Fallback to the old termination method that doesn't
+                // propagate the cancellation to Task's in case graceful
+                // termination via kill(2) is not successful
+                NSApplication.shared.terminate(self)
+              }
             }
           }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
         }.commands {
