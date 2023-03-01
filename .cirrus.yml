@@ -49,7 +49,7 @@ task:
 
 task:
   name: Release (Dry Run)
-  only_if: $CIRRUS_TAG == '' && ($CIRRUS_USER_PERMISSIONS == 'write' || $CIRRUS_USER_PERMISSIONS == 'admin')
+  only_if: $CIRRUS_TAG == '' && ($CIRRUS_USER_PERMISSION == 'write' || $CIRRUS_USER_PERMISSION == 'admin')
   depends_on:
     - lint
     - build
