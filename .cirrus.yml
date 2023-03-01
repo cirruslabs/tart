@@ -77,8 +77,9 @@ task:
     - xcodebuild -version
     - swift -version
   release_script: goreleaser release --skip-publish --snapshot --clean
-  dist_artifacts:
-    path: "dist/*"
+  always:
+    dist_artifacts:
+      path: "dist/*"
 
 task:
   name: Release

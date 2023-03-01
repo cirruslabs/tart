@@ -4,6 +4,7 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c debug --product tart
+    - gon gon.hcl
 
 builds:
   - builder: prebuilt
@@ -15,7 +16,6 @@ builds:
       path: .build/arm64-apple-macosx/debug/tart 
     hooks:
       post: 
-        - gon gon.hcl
         - ./.ci/create-pkg.sh
 
 archives:
