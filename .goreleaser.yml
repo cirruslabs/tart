@@ -47,8 +47,10 @@ brews:
     dependencies:
       - "cirruslabs/cli/softnet"
     install: |
-      libexec.install Dir["*"]
-      bin.write_exec_script "#{libexec}/Tart.app/Contents/MacOS/tart"
+      mkdir_p libexec/"tart.app/Contents/MacOS/"
+      libexec.install "tart" => "tart.app/Contents/MacOS/tart"
+      libexec.install "embedded.provisionprofile" => "tart.app/Contents/embedded.provisionprofile"
+      bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :monterey
       
