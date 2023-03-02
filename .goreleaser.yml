@@ -27,7 +27,6 @@ archives:
     hooks:
       after:
         - xcrun notarytool submit "dist/tart.zip" --keychain-profile "notarytool" --wait
-        - xcrun stapler staple "dist/tart.zip"
 
 release:
   prerelease: auto
