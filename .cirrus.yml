@@ -78,7 +78,7 @@ task:
     - swift -version
   release_script: goreleaser release --skip-publish --snapshot --clean
   always:
-    dist_artifacts:
+    release_artifacts:
       path: "dist/*"
 
 task:
