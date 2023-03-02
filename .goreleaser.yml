@@ -23,10 +23,6 @@ archives:
     format: zip
     files:
       - src: Resources/embedded.provisionprofile
-        dst: tart.app/Contents
-        strip_parent: true
-      - src: ".build/arm64-apple-macosx/debug/tart"
-        dst: tart.app/Contents/MacOS
         strip_parent: true
     hooks:
       after:
