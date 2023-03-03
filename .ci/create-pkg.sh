@@ -4,7 +4,7 @@ set -e
 
 export VERSION="${CIRRUS_TAG:-0}"
 
-mkdir -p .ci/pkg/Tart.app/Contents/MacOS
+mkdir -p .ci/pkg/tart.app/Contents/MacOS
 cp .build/arm64-apple-macosx/debug/tart .ci/pkg/tart.app/Contents/MacOS/tart
 cp Resources/embedded.provisionprofile .ci/pkg/tart.app/Contents/embedded.provisionprofile
 pkgbuild --root .ci/pkg/ --identifier com.github.cirruslabs.tart --version $VERSION \
