@@ -2,7 +2,12 @@
 
 set -e
 
+# fix structure
+mkdir -p "$2/tart.app/Contents/MacOS"
+mv "$2/tart" "$2/tart.app/Contents/MacOS/tart"
+mv "$2/embedded.provisionprofile" "$2/tart.app/Contents/embedded.provisionprofile"
+
 echo "#!/bin/sh" > /usr/local/bin/tart
-echo "exec '$2/Contents/MacOS/Tart' \"\$@\"" >> /usr/local/bin/tart
+echo "exec '$2/tart.app/Contents/MacOS/tart' \"\$@\"" >> /usr/local/bin/tart
 
 chmod +x /usr/local/bin/tart
