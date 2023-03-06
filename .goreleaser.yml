@@ -4,6 +4,7 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c debug --product tart
+    - xattr -cr .build/arm64-apple-macosx/debug/tart
     - gon gon.hcl
 
 builds:
