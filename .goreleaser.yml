@@ -4,7 +4,10 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c debug --product tart
+    - xattr -cr .build/arm64-apple-macosx/debug/tart
     - gon gon.hcl
+    - codesign --verify --deep --strict .build/arm64-apple-macosx/debug/tart
+    - ./.ci/create-pkg.sh
 
 builds:
   - builder: prebuilt
@@ -13,10 +16,7 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/arm64-apple-macosx/debug/tart 
-    hooks:
-      post: 
-        - ./.ci/create-pkg.sh
+      path: .build/arm64-apple-macosx/debug/tart
 
 archives:
   - name_template: "{{ .ProjectName }}"
