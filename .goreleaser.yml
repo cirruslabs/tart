@@ -4,10 +4,6 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c debug --product tart
-    - xattr -cr .build/arm64-apple-macosx/debug/tart
-    - gon gon.hcl
-    - codesign --verify --deep --strict .build/arm64-apple-macosx/debug/tart
-    - ./.ci/create-pkg.sh
 
 builds:
   - builder: prebuilt
@@ -17,12 +13,22 @@ builds:
       - arm64
     prebuilt:
       path: .build/arm64-apple-macosx/debug/tart
+    hooks:
+      post:
+        - gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
     files:
       - src: Resources/embedded.provisionprofile
+        dst: tart.app/Contents
         strip_parent: true
+      - src: ".build/arm64-apple-macosx/debug/tart"
+        dst: tart.app/Contents/MacOS
+        strip_parent: true
+    hooks:
+      after:
+        - ./.ci/create-pkg.sh
 
 release:
   prerelease: auto
@@ -42,9 +48,7 @@ brews:
     dependencies:
       - "cirruslabs/cli/softnet"
     install: |
-      mkdir_p libexec/"tart.app/Contents/MacOS/"
-      libexec.install "tart" => "tart.app/Contents/MacOS/tart"
-      libexec.install "embedded.provisionprofile" => "tart.app/Contents/embedded.provisionprofile"
+      libexec.install Dir["*"]
       bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :monterey
