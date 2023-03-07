@@ -26,14 +26,9 @@ archives:
       - src: ".build/arm64-apple-macosx/debug/tart"
         dst: tart.app/Contents/MacOS
         strip_parent: true
-    hooks:
-      after:
-        - ./.ci/create-pkg.sh
 
 release:
   prerelease: auto
-  extra_files:
-    - glob: ./.ci/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
