@@ -37,6 +37,9 @@ Many more companies are using Tart in their internal setups. Here are a few of t
   <a href="https://symflower.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Symflower.png" height="65"/>
   </a>
+  <a href="https://transloadit.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Transloadit.png" height="65"/>
+  </a>
 </p>
 
 **Note:** If your company or project is using Tart please consider [adding yourself to the list above](/Resources/Users/HowToAddYourself.md).
