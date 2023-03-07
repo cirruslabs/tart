@@ -20,13 +20,9 @@ builds:
 
 archives:
   - name_template: "{{ .ProjectName }}"
-    format: zip
     files:
       - src: Resources/embedded.provisionprofile
         strip_parent: true
-    hooks:
-      after:
-        - xcrun notarytool submit "dist/tart.zip" --keychain-profile "notarytool" --wait
 
 release:
   prerelease: auto
