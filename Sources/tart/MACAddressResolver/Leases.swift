@@ -107,7 +107,7 @@ class Leases {
     return rawLeases
   }
 
-  func resolveMACAddress(macAddress: MACAddress) throws -> IPv4Address? {
+  func ResolveMACAddress(macAddress: MACAddress) throws -> IPv4Address? {
     leases[macAddress]?.ip
   }
 }

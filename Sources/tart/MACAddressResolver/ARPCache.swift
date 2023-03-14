@@ -67,7 +67,7 @@ struct ARPCache {
     self.arpCommandOutput = arpCommandOutput
   }
 
-  func ResolveMACAddress(macAddress: MACAddress, bridgeOnly: Bool = true) throws -> IPv4Address? {
+  func ResolveMACAddress(macAddress: MACAddress) throws -> IPv4Address? {
     let lines = String(decoding: arpCommandOutput, as: UTF8.self)
       .trimmingCharacters(in: .whitespacesAndNewlines)
       .components(separatedBy: "\n")
@@ -93,11 +93,6 @@ struct ARPCache {
       }
       guard let mac = MACAddress(fromString: rawMAC) else {
         throw ARPCommandYieldedInvalidOutputError(explanation: "failed to parse MAC address \(rawMAC)")
-      }
-
-      let interface = try match.getCaptureGroup(name: "interface", for: line)
-      if bridgeOnly && !interface.starts(with: "bridge") {
-        continue
       }
 
       if macAddress == mac {
