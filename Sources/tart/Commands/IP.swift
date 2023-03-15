@@ -20,13 +20,13 @@ struct IP: AsyncParsableCommand {
   var wait: UInt16 = 0
 
   @Option(help: ArgumentHelp("Strategy for resolving IP adress: dhcp or arp",
-    discussion: """
-                By default, Tart is looking up and parsing DHCP lease file to determine aт IP for the VM.\n
-                This method is fast and the most reliable but only returns local IP adresses.\n
-                Alternatively, Tart can call external `arp` executable and parse it's output.\n
-                In case of enabled Bridged Networking this method will return an IP adress on the network interface used for Bridged Networking.\n
-                Note that `arp` strategy won't work for VMs using `--net-softnet`.
-                """))
+                             discussion: """
+                             By default, Tart is looking up and parsing DHCP lease file to determine aт IP for the VM.\n
+                             This method is fast and the most reliable but only returns local IP adresses.\n
+                             Alternatively, Tart can call external `arp` executable and parse it's output.\n
+                             In case of enabled Bridged Networking this method will return an IP adress on the network interface used for Bridged Networking.\n
+                             Note that `arp` strategy won't work for VMs using `--net-softnet`.
+                             """))
   var resolver: IPResolutionStrategy = .dhcp
 
   func run() async throws {
@@ -61,4 +61,4 @@ struct IP: AsyncParsableCommand {
 
     return nil
   }
-    }
+}
