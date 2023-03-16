@@ -133,7 +133,7 @@ struct Run: AsyncParsableCommand {
     if serial {
       let tty_fd = createPTY()
       if (tty_fd < 0) {
-        throw RuntimeError.VMConfigurationError(name: "Failed to create PTY")
+        throw RuntimeError.VMConfigurationError("Failed to create PTY")
       }
       let tty_read = FileHandle.init(fileDescriptor: tty_fd)
       let tty_write = FileHandle.init(fileDescriptor: tty_fd)
