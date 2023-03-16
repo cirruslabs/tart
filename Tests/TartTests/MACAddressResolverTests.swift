@@ -12,7 +12,7 @@ final class MACAddressResolverTests: XCTestCase {
     """)
 
     XCTAssertEqual(IPv4Address("1.2.3.4"),
-                   try leases.resolveMACAddress(macAddress: MACAddress(fromString: "00:11:22:33:44:55")!))
+                   try leases.ResolveMACAddress(macAddress: MACAddress(fromString: "00:11:22:33:44:55")!))
   }
 
   func testMultipleEntries() throws {
@@ -28,8 +28,8 @@ final class MACAddressResolverTests: XCTestCase {
     """)
 
     XCTAssertEqual(IPv4Address("1.2.3.4"),
-                   try leases.resolveMACAddress(macAddress: MACAddress(fromString: "00:11:22:33:44:55")!))
+                   try leases.ResolveMACAddress(macAddress: MACAddress(fromString: "00:11:22:33:44:55")!))
     XCTAssertEqual(IPv4Address("5.6.7.8"),
-                   try leases.resolveMACAddress(macAddress: MACAddress(fromString: "AA:BB:CC:DD:EE:FF")!))
+                   try leases.ResolveMACAddress(macAddress: MACAddress(fromString: "AA:BB:CC:DD:EE:FF")!))
   }
 }

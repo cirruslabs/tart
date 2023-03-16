@@ -4,6 +4,12 @@ import Network
 import SystemConfiguration
 import Sentry
 
+enum IPResolutionStrategy: String, ExpressibleByArgument, CaseIterable {
+  case dhcp, arp
+
+  private(set) static var allValueStrings: [String] = Format.allCases.map { "\($0)"}
+}
+
 struct IP: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Get VM's IP address")
 
@@ -13,46 +19,40 @@ struct IP: AsyncParsableCommand {
   @Option(help: "Number of seconds to wait for a potential VM booting")
   var wait: UInt16 = 0
 
+  @Option(help: ArgumentHelp("Strategy for resolving IP address: dhcp or arp",
+                             discussion: """
+                             By default, Tart is looking up and parsing DHCP lease file to determine the IP of the VM.\n
+                             This method is fast and the most reliable but only returns local IP adresses.\n
+                             Alternatively, Tart can call external `arp` executable and parse it's output.\n
+                             In case of enabled Bridged Networking this method will return VM's IP address on the network interface used for Bridged Networking.\n
+                             Note that `arp` strategy won't work for VMs using `--net-softnet`.
+                             """))
+  var resolver: IPResolutionStrategy = .dhcp
+
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
     let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
-    guard let ipViaDHCP = try await IP.resolveIP(vmMACAddress, secondsToWait: wait) else {
+    guard let ip = try await IP.resolveIP(vmMACAddress, resolutionStrategy: resolver, secondsToWait: wait) else {
       throw RuntimeError.NoIPAddressFound("no IP address found, is your VM running?")
     }
-
-    let arpCache = try ARPCache()
-
-    if let ipViaARP = try arpCache.ResolveMACAddress(macAddress: vmMACAddress), ipViaARP != ipViaDHCP {
-      // Capture the warning into Sentry
-      SentrySDK.capture(message: "DHCP lease and ARP cache entries for a single MAC address differ") { scope in
-        scope.setLevel(.warning)
-
-        scope.setContext(value: [
-          "MAC address": vmMACAddress,
-          "IP via ARP": ipViaARP,
-          "IP via DHCP": ipViaDHCP,
-        ], key: "Address conflict details")
-
-        scope.add(Attachment(path: "/var/db/dhcpd_leases", filename: "dhcpd_leases.txt", contentType: "text/plain"))
-        scope.add(Attachment(data: arpCache.arpCommandOutput, filename: "arp-an-output.txt", contentType: "text/plain"))
-      }
-
-      fputs("WARNING: DHCP lease and ARP cache entries for MAC address \(vmMACAddress) differ: "
-        + "got \(ipViaDHCP) and \(ipViaARP) respectively, consider reporting this case to"
-        + " https://github.com/cirruslabs/tart/issues/172\n", stderr)
-    }
-
-    print(ipViaDHCP)
+    print(ip)
   }
 
-  static public func resolveIP(_ vmMACAddress: MACAddress, secondsToWait: UInt16) async throws -> IPv4Address? {
+  static public func resolveIP(_ vmMACAddress: MACAddress, resolutionStrategy: IPResolutionStrategy = .dhcp, secondsToWait: UInt16 = 0) async throws -> IPv4Address? {
     let waitUntil = Calendar.current.date(byAdding: .second, value: Int(secondsToWait), to: Date.now)!
 
     repeat {
-      if let leases = try Leases(), let ip = try leases.resolveMACAddress(macAddress: vmMACAddress) {
-        return ip
+      switch resolutionStrategy {
+      case .arp:
+        if let ip = try ARPCache().ResolveMACAddress(macAddress: vmMACAddress) {
+          return ip
+        }
+      case .dhcp:
+        if let leases = try Leases(), let ip = try leases.ResolveMACAddress(macAddress: vmMACAddress) {
+          return ip
+        }
       }
 
       // wait a second
