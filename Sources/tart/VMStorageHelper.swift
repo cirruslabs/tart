@@ -41,6 +41,7 @@ extension Error {
 }
 
 enum RuntimeError : Error {
+  case VMConfigurationError(_ message: String)
   case VMDoesNotExist(name: String)
   case VMMissingFiles(_ message: String)
   case VMNotRunning(_ message: String)
@@ -65,6 +66,8 @@ protocol HasExitCode {
 extension RuntimeError : CustomStringConvertible {
   public var description: String {
     switch self {
+    case .VMConfigurationError(let message):
+      return message
     case .VMDoesNotExist(let name):
       return "the specified VM \"\(name)\" does not exist"
     case .VMMissingFiles(let message):
