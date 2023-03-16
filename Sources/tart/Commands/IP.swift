@@ -19,7 +19,7 @@ struct IP: AsyncParsableCommand {
   @Option(help: "Number of seconds to wait for a potential VM booting")
   var wait: UInt16 = 0
 
-  @Option(help: ArgumentHelp("Strategy for resolving IP adress: dhcp or arp",
+  @Option(help: ArgumentHelp("Strategy for resolving IP address: dhcp or arp",
                              discussion: """
                              By default, Tart is looking up and parsing DHCP lease file to determine the IP of the VM.\n
                              This method is fast and the most reliable but only returns local IP adresses.\n
