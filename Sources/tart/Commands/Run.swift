@@ -26,7 +26,7 @@ struct Run: AsyncParsableCommand {
   var serial: Bool = false
 
   @Option(help: ArgumentHelp(
-    "Attache an externally created serial console",
+    "Attach an externally created serial console",
     discussion: "Alternative to `--serial` flag for programmatic integrations."
   ))
   var serialPath: String?
@@ -140,7 +140,7 @@ struct Run: AsyncParsableCommand {
       serialPorts.append(createSerialPortConfiguration(tty_read, tty_write))
     } else if serialPath != nil {
       let tty_read = FileHandle.init(forReadingAtPath: serialPath!)
-      let tty_write = FileHandle.init(forReadingAtPath: serialPath!)
+      let tty_write = FileHandle.init(forWritingAtPath: serialPath!)
       if (tty_read == nil || tty_write == nil) {
         throw RuntimeError.VMConfigurationError("Failed to open PTY")
       }
