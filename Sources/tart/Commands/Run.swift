@@ -17,18 +17,24 @@ struct Run: AsyncParsableCommand {
 
   @Flag(help: ArgumentHelp(
     "Don't open a UI window.",
-    discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM.")) 
+    discussion: "Useful for integrating Tart VMs into other tools.\nUse `tart ip` in order to get an IP for SSHing or VNCing into the VM."))
   var noGraphics: Bool = false
 
   @Flag(help: ArgumentHelp(
     "Open serial console in /dev/ttySXX",
-    discussion: "Useful for debugging Linux Kernel"))
+    discussion: "Useful for debugging Linux Kernel."))
   var serial: Bool = false
+
+  @Option(help: ArgumentHelp(
+    "Attach an externally created serial console",
+    discussion: "Alternative to `--serial` flag for programmatic integrations."
+  ))
+  var serialPath: String?
 
   @Flag(help: "Force open a UI window, even when VNC is enabled.")
   var graphics: Bool = false
 
-  @Flag(help: "Boot into recovery mode") 
+  @Flag(help: "Boot into recovery mode")
   var recovery: Bool = false
 
   @Flag(help: ArgumentHelp(
@@ -123,12 +129,30 @@ struct Run: AsyncParsableCommand {
       }
     }
 
+    var serialPorts: [VZSerialPortConfiguration] = []
+    if serial {
+      let tty_fd = createPTY()
+      if (tty_fd < 0) {
+        throw RuntimeError.VMConfigurationError("Failed to create PTY")
+      }
+      let tty_read = FileHandle.init(fileDescriptor: tty_fd)
+      let tty_write = FileHandle.init(fileDescriptor: tty_fd)
+      serialPorts.append(createSerialPortConfiguration(tty_read, tty_write))
+    } else if serialPath != nil {
+      let tty_read = FileHandle.init(forReadingAtPath: serialPath!)
+      let tty_write = FileHandle.init(forWritingAtPath: serialPath!)
+      if (tty_read == nil || tty_write == nil) {
+        throw RuntimeError.VMConfigurationError("Failed to open PTY")
+      }
+      serialPorts.append(createSerialPortConfiguration(tty_read!, tty_write!))
+    }
+
     vm = try VM(
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
-      serial: serial
+      serialPorts: serialPorts
     )
 
     let vncImpl: VNC? = try {
@@ -202,6 +226,16 @@ struct Run: AsyncParsableCommand {
     } else {
       runUI()
     }
+  }
+
+  private func createSerialPortConfiguration(_ tty_read: FileHandle, _ tty_write: FileHandle) -> VZVirtioConsoleDeviceSerialPortConfiguration {
+    let serialPortConfiguration = VZVirtioConsoleDeviceSerialPortConfiguration()
+    let serialPortAttachment = VZFileHandleSerialPortAttachment(
+      fileHandleForReading: tty_read,
+      fileHandleForWriting: tty_write)
+
+    serialPortConfiguration.attachment = serialPortAttachment
+    return serialPortConfiguration
   }
 
   func isInteractiveSession() -> Bool {
