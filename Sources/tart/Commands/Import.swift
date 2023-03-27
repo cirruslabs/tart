@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 struct Import: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Import VM from a file")
+  static var configuration = CommandConfiguration(abstract: "Import VM from a compressed .tvm file")
 
   @Argument(help: "Path to a file created with \"tart export\".")
   var path: String
