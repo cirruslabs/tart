@@ -1,5 +1,11 @@
 project_name: tart
 
+before:
+  hooks:
+    - .ci/set-version.sh
+    - swift build -c release --product tart
+    - ./.ci/create-pkg.sh
+
 builds:
   - builder: prebuilt
     goos:
