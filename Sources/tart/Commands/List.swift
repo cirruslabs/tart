@@ -6,7 +6,7 @@ fileprivate struct VMInfo: Encodable {
   let Source: String
   let Name: String
   let Size: Int
-  let State: String
+  let Running: Bool
 }
 
 struct List: AsyncParsableCommand {
@@ -36,13 +36,13 @@ struct List: AsyncParsableCommand {
 
     if source == nil || source == "local" {
       infos += sortedInfos(try VMStorageLocal().list().map { (name, vmDir) in
-        try VMInfo(Source: "local", Name: name, Size: vmDir.sizeGB(), State: vmDir.running() ? "running" : "stopped")
+        try VMInfo(Source: "local", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running())
       })
     }
 
     if source == nil || source == "oci" {
       infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
-        try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB(), State: vmDir.running() ? "running" : "stopped")
+        try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running())
       })
     }
 
