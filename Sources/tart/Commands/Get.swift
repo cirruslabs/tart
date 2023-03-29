@@ -25,7 +25,7 @@ struct Get: AsyncParsableCommand {
     let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 
     let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: diskSizeInGb,
-      Display: vmConfig.display.description, Running: try vmDir.running())
+                      Display: vmConfig.display.description, Running: try vmDir.running())
     print(format.renderSingle(info))
   }
 }
