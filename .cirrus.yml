@@ -76,6 +76,10 @@ task:
     - security find-identity -v
     - xcodebuild -version
     - swift -version
+  build_script:
+    - .ci/set-version.sh
+    - swift build -c release --product tart
+    - ./.ci/create-pkg.sh
   goreleaser_script: goreleaser release --skip-publish --snapshot --clean
   always:
     dist_artifacts:
@@ -114,6 +118,10 @@ task:
     - security find-identity -v
     - xcodebuild -version
     - swift -version
+  build_script:
+    - .ci/set-version.sh
+    - swift build -c release --product tart
+    - ./.ci/create-pkg.sh
   release_script: goreleaser
   upload_sentry_debug_files_script:
     - cd .build/arm64-apple-macosx/release/

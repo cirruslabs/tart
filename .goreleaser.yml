@@ -1,10 +1,5 @@
 project_name: tart
 
-before:
-  hooks:
-    - .ci/set-version.sh
-    - swift build -c release --product tart
-
 builds:
   - builder: prebuilt
     goos:
@@ -29,6 +24,8 @@ archives:
 
 release:
   prerelease: auto
+  extra_files:
+    - glob: ./.ci/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
