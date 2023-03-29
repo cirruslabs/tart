@@ -26,6 +26,10 @@ struct VMDirectory: Prunable {
     baseURL
   }
 
+  func running() throws -> Bool {
+    try PIDLock(lockURL: configURL).pid() != 0
+  }
+
   static func temporary() throws -> VMDirectory {
     let tmpDir = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
