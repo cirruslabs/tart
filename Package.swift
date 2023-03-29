@@ -18,7 +18,7 @@ let package = Package(
     .package(url: "https://github.com/antlr/antlr4", branch: "dev"),
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.0.0")),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.50.6"),
-    .package(url: "https://github.com/getsentry/sentry-cocoa", from: "7.31.3"),
+    .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.3.3"),
     .package(url: "https://github.com/cfilipov/TextTable", branch: "master"),
   ],
   targets: [
