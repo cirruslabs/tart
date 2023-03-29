@@ -3,7 +3,7 @@ project_name: tart
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build -c debug --product tart
+    - swift build -c release --product tart
 
 builds:
   - builder: prebuilt
@@ -12,7 +12,7 @@ builds:
     goarch:
       - arm64
     prebuilt:
-      path: .build/arm64-apple-macosx/debug/tart
+      path: .build/arm64-apple-macosx/release/tart
     hooks:
       post:
         - gon gon.hcl
@@ -23,7 +23,7 @@ archives:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
         strip_parent: true
-      - src: ".build/arm64-apple-macosx/debug/tart"
+      - src: ".build/arm64-apple-macosx/release/tart"
         dst: tart.app/Contents/MacOS
         strip_parent: true
 

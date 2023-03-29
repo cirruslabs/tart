@@ -1,4 +1,4 @@
-source = [".build/arm64-apple-macosx/debug/tart"]
+source = [".build/arm64-apple-macosx/release/tart"]
 bundle_id = "com.github.cirruslabs.tart"
 
 apple_id {

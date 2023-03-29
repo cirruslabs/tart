@@ -116,7 +116,7 @@ task:
     - swift -version
   release_script: goreleaser
   upload_sentry_debug_files_script:
-    - cd .build/arm64-apple-macosx/debug/
+    - cd .build/arm64-apple-macosx/release/
     # Generate and upload symbols
     - dsymutil tart
     - sentry-cli debug-files upload tart.dSYM/
