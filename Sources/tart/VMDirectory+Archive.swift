@@ -81,7 +81,8 @@ extension VMDirectory {
       try? decodeStream.close()
     }
 
-    guard let extractStream = ArchiveStream.extractStream(extractingTo: FilePath(baseURL.path)) else {
+    guard let extractStream = ArchiveStream.extractStream(extractingTo: FilePath(baseURL.path),
+                                                          flags: [.ignoreOperationNotPermitted]) else {
       let details = Errno(rawValue: CInt(errno))
 
       throw RuntimeError.ImportFailed("ArchiveStream.extractStream() failed: \(details)")
