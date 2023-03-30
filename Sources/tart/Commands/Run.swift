@@ -475,7 +475,8 @@ struct VMView: NSViewRepresentable {
 
   func makeNSView(context: Context) -> NSViewType {
     let machineView = VZVirtualMachineView()
-    machineView.capturesSystemKeys = true
+    // so keys like take a windows screenshot (cmd+shift+4+space) works on the host and not guest
+    machineView.capturesSystemKeys = false
     return machineView
   }
 
