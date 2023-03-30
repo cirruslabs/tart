@@ -416,8 +416,17 @@ struct Run: AsyncParsableCommand {
           CommandGroup(replacing: .undoRedo, addition: {})
           CommandGroup(replacing: .windowSize, addition: {})
           // Replace some standard menu options
-          CommandGroup(replacing: .appInfo) {
-            AboutTart(config: vm!.config)
+          CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.config) }
+          CommandMenu("Control") {
+            Button("Start") {
+              Task { try await vm!.virtualMachine.start() }
+            }
+            Button("Stop") {
+              Task { try await vm!.virtualMachine.stop() }
+            }
+            Button("Request Stop") {
+              Task { try await vm!.virtualMachine.requestStop() }
+            }
           }
         }
       }
