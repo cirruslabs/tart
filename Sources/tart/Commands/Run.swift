@@ -1,4 +1,5 @@
 import ArgumentParser
+import Cocoa
 import Dispatch
 import SwiftUI
 import Virtualization
@@ -415,7 +416,9 @@ struct Run: AsyncParsableCommand {
           CommandGroup(replacing: .undoRedo, addition: {})
           CommandGroup(replacing: .windowSize, addition: {})
           // Replace some standard menu options
-          CommandGroup(replacing: .appInfo) { AboutTart() }
+          CommandGroup(replacing: .appInfo) {
+            AboutTart(config: vm!.config)
+          }
         }
       }
     }
@@ -425,13 +428,32 @@ struct Run: AsyncParsableCommand {
 }
 
 struct AboutTart: View {
+  var credits: NSAttributedString
+
+  init(config: VMConfig) {
+    let mutableAttrStr = NSMutableAttributedString()
+    let style = NSMutableParagraphStyle()
+    style.alignment = NSTextAlignment.center
+    let attrCenter: [NSAttributedString.Key : Any] = [
+      .paragraphStyle: style,
+    ]
+    mutableAttrStr.append(NSAttributedString(string: "CPU: \(config.cpuCount)\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "Memory: \(config.memorySize / 1024 / 1024)\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "Display: \(config.display.description)\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "https://github.com/cirruslabs/tart", attributes: [
+      .paragraphStyle: style,
+      .link : "https://github.com/cirruslabs/tart"
+    ]))
+    credits = mutableAttrStr
+  }
+
   var body: some View {
     Button("About Tart") {
       NSApplication.shared.orderFrontStandardAboutPanel(options: [
         NSApplication.AboutPanelOptionKey.applicationIcon: NSApplication.shared.applicationIconImage as Any,
         NSApplication.AboutPanelOptionKey.applicationName: "Tart",
         NSApplication.AboutPanelOptionKey.applicationVersion: CI.version,
-        NSApplication.AboutPanelOptionKey.credits: try! NSAttributedString(markdown: "https://github.com/cirruslabs/tart"),
+        NSApplication.AboutPanelOptionKey.credits: credits,
       ])
     }
   }
