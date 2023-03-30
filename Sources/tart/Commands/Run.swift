@@ -392,6 +392,8 @@ struct Run: AsyncParsableCommand {
     nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
+      @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
+      
       var body: some Scene {
         WindowGroup(vm!.name) {
           Group {
@@ -433,6 +435,15 @@ struct Run: AsyncParsableCommand {
     }
 
     MainApp.main()
+  }
+}
+
+// The only way to fully remove Edit menu item.
+class MinimalMenuAppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+  let indexOfEditMenu = 2
+
+  func applicationDidFinishLaunching(_ : Notification) {
+    NSApplication.shared.mainMenu?.removeItem(at: indexOfEditMenu)
   }
 }
 
