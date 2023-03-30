@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="tart create" type="SwiftPackageManagerRunConfiguration" factoryName="Swift Package Run" PROGRAM_PARAMS="create latest --from-ipsw=latest" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="tart" TARGET_NAME="tart" CONFIG_NAME="tart" RUN_TARGET_PROJECT_NAME="tart" RUN_TARGET_NAME="tart" WAS_MODIFIED="">
-    <method v="2">
-      <option name="SPM.BUILD_TASK_PROVIDER" enabled="true" />
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="sign debug" run_configuration_type="ShConfigurationType" />
-    </method>
-  </configuration>
-</component>
