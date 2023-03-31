@@ -457,7 +457,7 @@ struct AboutTart: View {
     let attrCenter: [NSAttributedString.Key : Any] = [
       .paragraphStyle: style,
     ]
-    mutableAttrStr.append(NSAttributedString(string: "CPU: \(config.cpuCount)\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "CPU: \(config.cpuCount) cores\n", attributes: attrCenter))
     mutableAttrStr.append(NSAttributedString(string: "Memory: \(config.memorySize / 1024 / 1024) MB\n", attributes: attrCenter))
     mutableAttrStr.append(NSAttributedString(string: "Display: \(config.display.description)\n", attributes: attrCenter))
     mutableAttrStr.append(NSAttributedString(string: "https://github.com/cirruslabs/tart", attributes: [
