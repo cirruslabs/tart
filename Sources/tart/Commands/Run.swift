@@ -393,7 +393,7 @@ struct Run: AsyncParsableCommand {
 
     struct MainApp: App {
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
-      
+
       var body: some Scene {
         WindowGroup(vm!.name) {
           Group {
