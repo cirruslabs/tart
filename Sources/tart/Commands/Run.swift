@@ -1,4 +1,5 @@
 import ArgumentParser
+import Cocoa
 import Dispatch
 import SwiftUI
 import Virtualization
@@ -391,6 +392,8 @@ struct Run: AsyncParsableCommand {
     nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
+      @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
+
       var body: some Scene {
         WindowGroup(vm!.name) {
           Group {
@@ -415,7 +418,18 @@ struct Run: AsyncParsableCommand {
           CommandGroup(replacing: .undoRedo, addition: {})
           CommandGroup(replacing: .windowSize, addition: {})
           // Replace some standard menu options
-          CommandGroup(replacing: .appInfo) { AboutTart() }
+          CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.config) }
+          CommandMenu("Control") {
+            Button("Start") {
+              Task { try await vm!.virtualMachine.start() }
+            }
+            Button("Stop") {
+              Task { try await vm!.virtualMachine.stop() }
+            }
+            Button("Request Stop") {
+              Task { try await vm!.virtualMachine.requestStop() }
+            }
+          }
         }
       }
     }
@@ -424,14 +438,42 @@ struct Run: AsyncParsableCommand {
   }
 }
 
+// The only way to fully remove Edit menu item.
+class MinimalMenuAppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+  let indexOfEditMenu = 2
+
+  func applicationDidFinishLaunching(_ : Notification) {
+    NSApplication.shared.mainMenu?.removeItem(at: indexOfEditMenu)
+  }
+}
+
 struct AboutTart: View {
+  var credits: NSAttributedString
+
+  init(config: VMConfig) {
+    let mutableAttrStr = NSMutableAttributedString()
+    let style = NSMutableParagraphStyle()
+    style.alignment = NSTextAlignment.center
+    let attrCenter: [NSAttributedString.Key : Any] = [
+      .paragraphStyle: style,
+    ]
+    mutableAttrStr.append(NSAttributedString(string: "CPU: \(config.cpuCount) cores\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "Memory: \(config.memorySize / 1024 / 1024) MB\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "Display: \(config.display.description)\n", attributes: attrCenter))
+    mutableAttrStr.append(NSAttributedString(string: "https://github.com/cirruslabs/tart", attributes: [
+      .paragraphStyle: style,
+      .link : "https://github.com/cirruslabs/tart"
+    ]))
+    credits = mutableAttrStr
+  }
+
   var body: some View {
     Button("About Tart") {
       NSApplication.shared.orderFrontStandardAboutPanel(options: [
         NSApplication.AboutPanelOptionKey.applicationIcon: NSApplication.shared.applicationIconImage as Any,
         NSApplication.AboutPanelOptionKey.applicationName: "Tart",
         NSApplication.AboutPanelOptionKey.applicationVersion: CI.version,
-        NSApplication.AboutPanelOptionKey.credits: try! NSAttributedString(markdown: "https://github.com/cirruslabs/tart"),
+        NSApplication.AboutPanelOptionKey.credits: credits,
       ])
     }
   }
@@ -444,7 +486,8 @@ struct VMView: NSViewRepresentable {
 
   func makeNSView(context: Context) -> NSViewType {
     let machineView = VZVirtualMachineView()
-    machineView.capturesSystemKeys = true
+    // so keys like take a windows screenshot (cmd+shift+4+space) works on the host and not guest
+    machineView.capturesSystemKeys = false
     return machineView
   }
 
