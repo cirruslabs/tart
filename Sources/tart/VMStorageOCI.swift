@@ -212,12 +212,25 @@ class VMStorageOCI: PrunableStorage {
     }
   }
 
-  func link(from: RemoteName, to: RemoteName) throws {
-    if FileManager.default.fileExists(atPath: vmURL(from).path) {
-      try FileManager.default.removeItem(at: vmURL(from))
+  func link(from: RemoteName, to: RemoteName, resolveSymlinks: Bool = false) throws {
+    let sourceURL = vmURL(from)
+
+    if FileManager.default.fileExists(atPath: sourceURL.path) {
+      try FileManager.default.removeItem(at: sourceURL)
     }
 
-    try FileManager.default.createSymbolicLink(at: vmURL(from), withDestinationURL: vmURL(to))
+    // Pre-create intermediate directories (e.g. creates ~/.tart/cache/OCIs/github.com/org/repo/
+    // for github.com/org/repo:latest)
+    try FileManager.default.createDirectory(at: sourceURL.deletingLastPathComponent(),
+                                            withIntermediateDirectories: true)
+
+    var destinationURL = vmURL(to)
+
+    if resolveSymlinks {
+      destinationURL.resolveSymlinksInPath()
+    }
+
+    try FileManager.default.createSymbolicLink(at: sourceURL, withDestinationURL: destinationURL)
 
     try gc()
   }

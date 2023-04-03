@@ -24,6 +24,7 @@ struct Root: AsyncParsableCommand {
       Prune.self,
       Rename.self,
       Stop.self,
+      Tag.self,
       Delete.self,
     ])
 
