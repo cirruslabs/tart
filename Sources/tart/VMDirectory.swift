@@ -55,9 +55,9 @@ struct VMDirectory: Prunable {
     try? FileManager.default.removeItem(at: nvramURL)
   }
 
-  func validate() throws {
+  func validate(userFriendlyName: String) throws {
     if !FileManager.default.fileExists(atPath: baseURL.path) {
-      throw RuntimeError.VMDoesNotExist(name: baseURL.lastPathComponent)
+      throw RuntimeError.VMDoesNotExist(name: userFriendlyName)
     }
 
     if !initialized {
