@@ -59,7 +59,9 @@ struct Push: AsyncParsableCommand {
 
       // If we're pushing a local OCI VM, check if points to an already existing registry manifest
       // and if so, only upload manifests (without config, disk and NVRAM) to the user-specified references
-      if let remoteName = try await lightweightPushToRegistry(registry: registry, references: references) {
+      if let remoteName = try? RemoteName(localName),
+         let remoteName = try await lightweightPushToRegistry(registry: registry, remoteName: remoteName,
+                                                              references: references) {
         pushedRemoteName = remoteName
         lightweightPush = true
       } else {
@@ -87,12 +89,7 @@ struct Push: AsyncParsableCommand {
     }
   }
 
-  func lightweightPushToRegistry(registry: Registry, references: [String]) async throws -> RemoteName? {
-    // Is the local name we're pushing is actually an OCI VM?
-    guard let remoteName = try? RemoteName(localName) else {
-      return nil
-    }
-
+  func lightweightPushToRegistry(registry: Registry, remoteName: RemoteName, references: [String]) async throws -> RemoteName? {
     // Is the local OCI VM already present in the registry?
     let digest = try VMStorageOCI().digest(remoteName)
 
