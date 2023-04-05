@@ -34,20 +34,17 @@ struct IP: AsyncParsableCommand {
     let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
     let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
-    let lock = try PIDLock(lockURL: vmDir.configURL)
-    if try lock.pid() == 0 {
+    if try !vmDir.running() {
       throw RuntimeError.NoIPAddressFound("no IP address found, is your VM running?")
     }
 
-    let ip = try await IP.resolveIP(vmMACAddress, resolutionStrategy: resolver, secondsToWait: wait)
-
-    if (ip == nil && vmConfig.os == .linux && resolver == .arp) {
-      throw RuntimeError.NoIPAddressFound("no IP address found, not all Linux distributions are compatible with ARP resolver")      
-    }
-    if (ip == nil) {
+    guard let ip =  ip = try await IP.resolveIP(vmMACAddress, resolutionStrategy: resolver, secondsToWait: wait) else {
+      if (vmConfig.os == .linux && resolver == .arp) {
+        throw RuntimeError.NoIPAddressFound("no IP address found, not all Linux distributions are compatible with ARP resolver")
+      }
       throw RuntimeError.NoIPAddressFound("no IP address found")
     }
-    print(ip!)
+    print(ip)
   }
 
   static public func resolveIP(_ vmMACAddress: MACAddress, resolutionStrategy: IPResolutionStrategy = .dhcp, secondsToWait: UInt16 = 0) async throws -> IPv4Address? {
