@@ -28,6 +28,7 @@ struct Push: AsyncParsableCommand {
   var populateCache: Bool = false
 
   func run() async throws {
+    let ociStorage = VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
 
     // Parse remote names supplied by the user
