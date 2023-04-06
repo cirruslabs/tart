@@ -16,10 +16,20 @@ class VMStorageOCI: PrunableStorage {
     VMDirectory(baseURL: vmURL(name)).initialized
   }
 
+  func digest(_ name: RemoteName) throws -> String {
+    let digest = vmURL(name).resolvingSymlinksInPath().lastPathComponent
+
+    if !digest.starts(with: "sha256:") {
+      throw RuntimeError.OCIStorageError("\(name) is not a digest and doesn't point to a digest")
+    }
+
+    return digest
+  }
+
   func open(_ name: RemoteName) throws -> VMDirectory {
     let vmDir = VMDirectory(baseURL: vmURL(name))
 
-    try vmDir.validate()
+    try vmDir.validate(userFriendlyName: name.description)
 
     try vmDir.baseURL.updateAccessDate()
 

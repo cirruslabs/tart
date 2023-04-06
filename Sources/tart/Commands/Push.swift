@@ -6,7 +6,7 @@ import Compression
 struct Push: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Push a VM to a registry")
 
-  @Argument(help: "local VM name")
+  @Argument(help: "local or remote VM name")
   var localName: String
 
   @Argument(help: "remote VM name(s)")
@@ -28,7 +28,8 @@ struct Push: AsyncParsableCommand {
   var populateCache: Bool = false
 
   func run() async throws {
-    let localVMDir = try VMStorageLocal().open(localName)
+    let ociStorage = VMStorageOCI()
+    let localVMDir = try VMStorageHelper.open(localName)
 
     // Parse remote names supplied by the user
     let remoteNames = try remoteNames.map{
@@ -53,22 +54,54 @@ struct Push: AsyncParsableCommand {
       defaultLogger.appendNewLine("pushing \(localName) to "
         + "\(registryIdentifier.host)/\(registryIdentifier.namespace)\(remoteNamesForRegistry.referenceNames())...")
 
-      let pushedRemoteName = try await localVMDir.pushToRegistry(
-        registry: registry,
-        references: remoteNamesForRegistry.map{ $0.reference.value },
-        chunkSizeMb: chunkSize
-      )
+      let references = remoteNamesForRegistry.map{ $0.reference.value }
 
-      // Populate the local cache (if requested)
+      let pushedRemoteName: RemoteName
+      // If we're pushing a local OCI VM, check if points to an already existing registry manifest
+      // and if so, only upload manifests (without config, disk and NVRAM) to the user-specified references
+      if let remoteName = try? RemoteName(localName) {
+        pushedRemoteName = try await lightweightPushToRegistry(
+          registry: registry, 
+          remoteName: remoteName,
+          references: references
+        )
+      } else {
+        pushedRemoteName = try await localVMDir.pushToRegistry(
+          registry: registry,
+          references: references,
+          chunkSizeMb: chunkSize
+        )
+        // Populate the local cache (if requested)
+        if populateCache {
+          let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
+          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
+        }
+      }
+
+      // link the rest remote names
       if populateCache {
-        let ociStorage = VMStorageOCI()
-        let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
-        try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
         for remoteName in remoteNamesForRegistry {
           try ociStorage.link(from: remoteName, to: pushedRemoteName)
         }
       }
     }
+  }
+
+  func lightweightPushToRegistry(registry: Registry, remoteName: RemoteName, references: [String]) async throws -> RemoteName {
+    // Is the local OCI VM already present in the registry?
+    let digest = try VMStorageOCI().digest(remoteName)
+
+    let (remoteManifest, _) = try await registry.pullManifest(reference: digest)
+
+    // Overwrite registry's references with the retrieved manifest
+    for reference in references {
+      defaultLogger.appendNewLine("pushing manifest for \(reference)...")
+
+      _ = try await registry.pushManifest(reference: reference, manifest: remoteManifest)
+    }
+
+    return RemoteName(host: registry.baseURL.host!, namespace: registry.namespace,
+                      reference: Reference(digest: digest))
   }
 }
 

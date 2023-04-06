@@ -57,6 +57,7 @@ enum RuntimeError : Error {
   case ExportFailed(_ message: String)
   case ImportFailed(_ message: String)
   case SoftnetFailed(_ message: String)
+  case OCIStorageError(_ message: String)
 }
 
 protocol HasExitCode {
@@ -98,6 +99,8 @@ extension RuntimeError : CustomStringConvertible {
       return "VM import failed: \(message)"
     case .SoftnetFailed(let message):
       return "Softnet failed: \(message)"
+    case .OCIStorageError(let message):
+      return "OCI storage error: \(message)"
     }
   }
 }

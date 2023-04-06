@@ -14,7 +14,7 @@ class VMStorageLocal {
   func open(_ name: String) throws -> VMDirectory {
     let vmDir = VMDirectory(baseURL: vmURL(name))
 
-    try vmDir.validate()
+    try vmDir.validate(userFriendlyName: name)
 
     return vmDir
   }
