@@ -4,7 +4,6 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c release --product tart
-    - ./.ci/create-pkg.sh
 
 builds:
   - builder: prebuilt
@@ -30,8 +29,6 @@ archives:
 
 release:
   prerelease: auto
-  extra_files:
-    - glob: ./.ci/Tart-{{ .Tag }}.pkg
 
 brews:
   - name: tart
