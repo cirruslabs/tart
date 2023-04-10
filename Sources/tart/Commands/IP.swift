@@ -34,16 +34,20 @@ struct IP: AsyncParsableCommand {
     let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
     let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
-    if try !vmDir.running() {
-      throw RuntimeError.NoIPAddressFound("no IP address found, is your VM running?")
+    guard let ip = try await IP.resolveIP(vmMACAddress, resolutionStrategy: resolver, secondsToWait: wait) else {
+      var message = "no IP address found"
+
+      if try !vmDir.running() {
+        message += ", is your VM running?"
+      }
+
+      if (vmConfig.os == .linux && resolver == .arp) {
+        message += " (not all Linux distributions are compatible with the ARP resolver)"
+      }
+
+      throw RuntimeError.NoIPAddressFound(message)
     }
 
-    guard let ip = try await IP.resolveIP(vmMACAddress, resolutionStrategy: resolver, secondsToWait: wait) else {
-      if (vmConfig.os == .linux && resolver == .arp) {
-        throw RuntimeError.NoIPAddressFound("no IP address found, not all Linux distributions are compatible with ARP resolver")
-      }
-      throw RuntimeError.NoIPAddressFound("no IP address found")
-    }
     print(ip)
   }
 
