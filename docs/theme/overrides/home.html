@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block announce %}
+<a href="/blog/2023/04/24/announcing-orchard-orchestration-for-managing-macos-virtual-machines-at-scale/">
+  🚀🚀🚀&nbsp&nbspAnnouncing <strong>Orchard</strong> orchestration for managing macOS virtual machines at scale&nbsp;&nbsp;🚀🚀🚀
+</a>
+{% endblock %}
+
 <!-- Render landing page under tabs -->
 {% block tabs %} {{ super() }}
 
@@ -75,6 +81,8 @@
   }
 </style>
 
+<script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
+
 <!-- landing page for landing page -->
 <!-- Hero -->
 <section class="tx-container">
@@ -82,7 +90,6 @@
     <div class="tx-landing">
       <!-- landing image -->
       <div class="tx-landing__image">
-        <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
         <dotlottie-player
           src="/assets/animations/TartLogo.lottie"
           mode="normal"
@@ -151,6 +158,7 @@
             height="160"
           />
           <figcaption class="md-typeset">
+            <h2>Remote storage for Virtual Machines</h2>
             <p>
               For storing virtual machine images Tart integrates with
               OCI-compatible container registries. Work with virtual machines as
@@ -167,6 +175,7 @@
             height="280"
           />
           <figcaption class="md-typeset">
+            <h2>Seamless integration with your existing automations</h2>
             <p>
               Tart powers several continuous integration systems including
               <a href="/integrations/github-actions"
@@ -177,6 +186,25 @@
               >Cirrus&nbsp;CI</a
               >. Double the performance of&nbsp;your macOS actions with
               a&nbsp;couple lines of&nbsp;code.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <div id="lottie-player">
+            <dotlottie-player
+              src="/assets/animations/Orchard.lottie"
+              mode="normal"
+              style="height: 280px; margin: auto"
+              autoplay
+              loop
+            />
+          </div>
+          <figcaption class="md-typeset">
+            <h2>Run at scale with <a href="https://github.com/cirruslabs/orchard">Orchard</a></h2>
+            <p>
+              Tart toolset includes Orchard Orchestration &mdash; tool to run and manage Tart virtual machines
+              at scale on a cluster of Apple Silicon hosts. An Orchard Cluster exposes a simple REST API to manage
+              thousands virtual machines. Orchard CLI allows accessing remote virtual machines like they run locally.
             </p>
           </figcaption>
         </figure>
