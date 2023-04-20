@@ -42,6 +42,15 @@ for [Cirrus CI’s persistent workers](https://cirrus-ci.org/guide/persistent-wo
 With the UX constraints and expectations in place we started thinking about architecture for the orchestrator that we
 started calling **Orchard**.
 
+<script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.js"></script>
+<dotlottie-player
+src="/assets/animations/Orchard.lottie"
+mode="normal"
+style="width: 100%; height: 360px; margin: auto; background-color: rgb(5 62 94)"
+autoplay
+loop
+/>
+
 Since Orchard will manage a maximum of a couple thousands virtual machines and not millions we **decided to not think much
 about horizontal scalability.** Just a single instance of Orchard controller should be enough if it can restart quickly and
 persist state between restarts.
