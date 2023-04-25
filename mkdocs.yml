@@ -42,6 +42,7 @@ extra_css:
 
 plugins:
   - blog
+  - privacy
   - rss:
       match_path: blog/posts/.*
       date_from_meta:
