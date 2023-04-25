@@ -127,6 +127,16 @@
   max-width: 100%;
 }
 
+.mdx-spotlight__feature > #lottie-player {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 0.2rem;
+  box-shadow: var(--md-shadow-z2);
+  width: 25rem;
+  max-width: 100%;
+  background-color: rgb(5 62 94);
+}
+
 .mdx-spotlight__feature figcaption {
   margin-top: 0.8rem;
 }
