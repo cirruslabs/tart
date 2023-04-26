@@ -387,6 +387,9 @@ class Registry {
       request.addValue(value, forHTTPHeaderField: name)
     }
 
+    request.setValue("Tart/\(CI.version) (\(DeviceInfo.os); \(DeviceInfo.model))",
+                     forHTTPHeaderField: "User-Agent")
+
     return try await Fetcher.fetch(request, viaFile: viaFile)
   }
 }
