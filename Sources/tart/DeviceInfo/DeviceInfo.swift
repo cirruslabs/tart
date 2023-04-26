@@ -36,9 +36,8 @@ class DeviceInfo {
     defer { IOObjectRelease(deviceService) }
 
     if let modelProperty = IORegistryEntryCreateCFProperty(deviceService, "model" as CFString, kCFAllocatorDefault, 0),
-       let modelData = modelProperty.takeRetainedValue() as? Data,
-       let modelString = String(data: modelData, encoding: .utf8) {
-      return modelString
+       let modelData = modelProperty.takeRetainedValue() as? Data {
+      return String(cString: [UInt8](modelData))
     }
 
     return "unknown"
