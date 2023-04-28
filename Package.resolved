@@ -82,6 +82,15 @@
       }
     },
     {
+      "identity" : "swift-sysctl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sersoft-gmbh/swift-sysctl.git",
+      "state" : {
+        "revision" : "71fd64ee84819bb19fbecfb36d5a4503726b6fb7",
+        "version" : "1.6.0"
+      }
+    },
+    {
       "identity" : "swiftdate",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/malcommac/SwiftDate",

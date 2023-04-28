@@ -1,5 +1,5 @@
 import Foundation
-import IOKit
+import Sysctl
 
 class DeviceInfo {
   private static var osMemoized: String? = nil
@@ -32,14 +32,6 @@ class DeviceInfo {
   }
 
   private static func getModel() -> String {
-    let deviceService = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPlatformExpertDevice"))
-    defer { IOObjectRelease(deviceService) }
-
-    if let modelProperty = IORegistryEntryCreateCFProperty(deviceService, "model" as CFString, kCFAllocatorDefault, 0),
-       let modelData = modelProperty.takeRetainedValue() as? Data {
-      return String(cString: [UInt8](modelData))
-    }
-
-    return "unknown"
+    return SystemControl().hardware.model
   }
 }
