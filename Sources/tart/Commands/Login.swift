@@ -35,6 +35,9 @@ struct Login: AsyncParsableCommand {
 
       let passwordData = FileHandle.standardInput.readDataToEndOfFile()
       password = String(decoding: passwordData, as: UTF8.self)
+
+      // Support "echo $PASSWORD | tart login --username $USERNAME --password-stdin $REGISTRY"
+      password.trimSuffix { c in c.isNewline }
     } else {
       (user, password) = try StdinCredentials.retrieve()
     }
