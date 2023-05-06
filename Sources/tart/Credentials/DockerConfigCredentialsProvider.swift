@@ -25,6 +25,8 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     let process = Process.init()
     process.executableURL = executableURL
+    // pass environment variables so things like AWS_PROFILE are picked up
+    process.environment = ProcessInfo.processInfo.environment
     process.arguments = ["get"]
 
     let outPipe = Pipe()
