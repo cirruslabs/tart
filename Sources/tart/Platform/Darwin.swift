@@ -61,13 +61,13 @@ struct Darwin: Platform {
 
     result.machineIdentifier = ecid
     result.auxiliaryStorage = VZMacAuxiliaryStorage(contentsOf: nvramURL)
-    
+
     if !hardwareModel.isSupported {
       // At the moment support of M1 chip is not yet dropped in any macOS version
       // This mean that host software is not supporting this hardware model and should be updated
       throw UnsupportedHostOSError()
     }
-    
+
     result.hardwareModel = hardwareModel
 
     return result
