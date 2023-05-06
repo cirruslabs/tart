@@ -14,7 +14,7 @@ struct Linux: Platform {
     return result
   }
 
-  func platform(nvramURL: URL) -> VZPlatformConfiguration {
+  func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
     VZGenericPlatformConfiguration()
   }
 
