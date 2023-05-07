@@ -1,5 +1,11 @@
 import Virtualization
 
+struct UnsupportedHostOSError: Error, CustomStringConvertible {
+  var description: String {
+    "error: host macOS version is outdated to run this virtual machine"
+  }
+}
+
 struct Darwin: Platform {
   var ecid: VZMacMachineIdentifier
   var hardwareModel: VZMacHardwareModel
@@ -50,11 +56,18 @@ struct Darwin: Platform {
     VZMacOSBootLoader()
   }
 
-  func platform(nvramURL: URL) -> VZPlatformConfiguration {
+  func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
     let result = VZMacPlatformConfiguration()
 
     result.machineIdentifier = ecid
     result.auxiliaryStorage = VZMacAuxiliaryStorage(contentsOf: nvramURL)
+
+    if !hardwareModel.isSupported {
+      // At the moment support of M1 chip is not yet dropped in any macOS version
+      // This mean that host software is not supporting this hardware model and should be updated
+      throw UnsupportedHostOSError()
+    }
+
     result.hardwareModel = hardwareModel
 
     return result

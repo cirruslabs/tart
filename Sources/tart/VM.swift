@@ -278,7 +278,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.memorySize = vmConfig.memorySize
 
     // Platform
-    configuration.platform = vmConfig.platform.platform(nvramURL: nvramURL)
+    configuration.platform = try vmConfig.platform.platform(nvramURL: nvramURL)
 
     // Display
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
