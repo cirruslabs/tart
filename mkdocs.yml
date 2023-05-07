@@ -91,7 +91,7 @@ nav:
     - "GitLab Runner": integrations/gitlab-runner.md
     - "Self-hosted CI": integrations/cirrus-cli.md
     - "Managing VMs": integrations/vm-management.md
-  - "Licensing": licensing.md
+  - "Support & Licensing": licensing.md
   - "Orchestration": https://github.com/cirruslabs/orchard
   - "FAQ": faq.md
   - "Legal":
