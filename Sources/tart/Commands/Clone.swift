@@ -14,6 +14,12 @@ struct Clone: AsyncParsableCommand {
   @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
   var insecure: Bool = false
 
+  @Flag(
+    name: .customLong("unique-mac-address"), inversion: .prefixedNo, 
+    help: "ensures that cloned VM will have a unique MAC address among all local VMs"
+  )
+  var uniqueMACAddress: Bool = true
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -43,7 +49,8 @@ struct Clone: AsyncParsableCommand {
       let lock = try FileLock(lockURL: Config().tartHomeDir)
       try lock.lock()
 
-      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
+      let hasMACCollision = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
+      let generateMAC = uniqueMACAddress && hasMACCollision
       try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
       try localStorage.move(newName, from: tmpVMDir)
 

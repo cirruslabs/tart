@@ -10,6 +10,12 @@ struct Import: AsyncParsableCommand {
   @Argument(help: "Destination VM name.")
   var name: String
 
+  @Flag(
+    name: .customLong("unique-mac-address"), inversion: .prefixedNo,
+    help: "ensures that imported VM will have a unique MAC address among all local VMs"
+  )
+  var uniqueMACAddress: Bool = true
+
   func validate() throws {
     if name.contains("/") {
       throw ValidationError("<name> should be a local name")
@@ -37,7 +43,8 @@ struct Import: AsyncParsableCommand {
       try lock.lock()
 
       // Re-generate the VM's MAC address importing it will result in address collision
-      if try localStorage.hasVMsWithMACAddress(macAddress: tmpVMDir.macAddress()) {
+      let hasMACCollision = try localStorage.hasVMsWithMACAddress(macAddress: tmpVMDir.macAddress())
+      if uniqueMACAddress && hasMACCollision {
         try tmpVMDir.regenerateMACAddress()
       }
 
