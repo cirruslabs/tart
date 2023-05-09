@@ -31,7 +31,7 @@ please first make sure that the service is binded to `0.0.0.0`.
 Then from within a virtual machine you can access the service using the router's IP address that you can get either from `Preferences -> Network`
 or by running the following command in the Terminal:
 
-```bash
+```shell
 netstat -nr | grep default | head -n 1 | awk '{print $2}'
 ```
 
@@ -43,7 +43,7 @@ is stricter and it's not only possible to access the host.
 
 To change the default network to `192.168.77.1`:
 
-```bash
+```shell
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Address -string 192.168.77.1
 ```
 
@@ -51,6 +51,18 @@ Note that even through a network would normally be specified as `192.168.77.0`, 
 
 The default subnet mask `255.255.255.0` should suffice for most use-cases, however, you can also change it to `255.255.0.0`, for example:
 
-  ```bash
-  sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
-  ```
+```shell
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
+```
+
+## Changing the default DHCP lease time
+
+By default, the built-in macOS DHCP server allocates IP-addresses to the VMs for the duration of 86,400 seconds (one day), which may easily cause DHCP exhaustion if you run more than ~253 VMs per day, or in other words, more than one VM every ~6 minutes.
+
+This issue is worked around automatically [when using Softnet](http://github.com/cirruslabs/softnet), however, if you don't use or can't use it, the following command will reduce the lease time from the default 86,400 seconds (one day) to 600 seconds (10 minutes):
+
+```shell
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.InternetSharing.default.plist bootpd -dict DHCPLeaseTimeSecs -int 600
+```
+
+Note that this tweak persists across reboots, so normally you'll only need to do it once per new host.
