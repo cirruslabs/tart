@@ -54,3 +54,13 @@ The default subnet mask `255.255.255.0` should suffice for most use-cases, howev
   ```bash
   sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist Shared_Net_Mask -string 255.255.0.0
   ```
+
+## Changing the default DHCP lease time
+
+By default, the built-in macOS DHCP server allocates IP-addresses to the VMs for the duration of 86,400 seconds (one day), which may easily cause DHCP exhaustion if you run more than ~253 VMs per day, or in other words, more than one VM every ~6 minutes.
+
+This issue is worked around automatically [when using Softnet](http://github.com/cirruslabs/softnet), however, if you don't use or can't use it, the following command will reduce the lease time from the default 86,400 seconds (one day) to 600 seconds (10 minutes):
+
+```
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.InternetSharing.default.plist bootpd -dict DHCPLeaseTimeSecs -int 600
+```
