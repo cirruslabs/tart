@@ -64,3 +64,5 @@ This issue is worked around automatically [when using Softnet](http://github.com
 ```shell
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.InternetSharing.default.plist bootpd -dict DHCPLeaseTimeSecs -int 600
 ```
+
+Note that this tweak persists across reboots, so normally you'll only need to do it once per new host.
