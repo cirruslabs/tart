@@ -40,7 +40,11 @@ Many more companies are using Tart in their internal setups. Here are a few of t
   <a href="https://transloadit.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Transloadit.png" height="65"/>
   </a>
+  <a href="https://www.pitsdatarecovery.net/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/assets/77569421/b5a99e54-c59e-48c8-b6ef-411eda894a48" height="65"/>
+  </a>
 </p>
+
 
 **Note:** If your company or project is using Tart please consider [adding yourself to the list above](/Resources/Users/HowToAddYourself.md).
 
