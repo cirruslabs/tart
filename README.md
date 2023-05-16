@@ -45,7 +45,6 @@ Many more companies are using Tart in their internal setups. Here are a few of t
   </a>
 </p>
 
-
 **Note:** If your company or project is using Tart please consider [adding yourself to the list above](/Resources/Users/HowToAddYourself.md).
 
 ## Usage
