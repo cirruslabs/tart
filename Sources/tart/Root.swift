@@ -94,7 +94,7 @@ struct Root: AsyncParsableCommand {
 
       // Handle a non-ArgumentParser's exception that requires a specific exit code to be set
       if let errorWithExitCode = error as? HasExitCode {
-        print(error)
+        fputs("\(error)\n", stderr)
 
         Foundation.exit(errorWithExitCode.exitCode)
       }

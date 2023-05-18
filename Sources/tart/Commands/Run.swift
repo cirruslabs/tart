@@ -209,7 +209,7 @@ struct Run: AsyncParsableCommand {
         SentrySDK.capture(error: error)
         SentrySDK.flush(timeout: 2.seconds.timeInterval)
 
-        print(error)
+        fputs("\(error)\n", stderr)
 
         Foundation.exit(1)
       }
