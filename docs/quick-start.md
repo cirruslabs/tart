@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Ventura) or later (will download a 25 GB image):
+Try running a Tart VM on your Apple Silicon device running macOS 13.x (Ventura) or later (will download a 25 GB image):
 
 ```bash
 brew install cirruslabs/cli/tart
