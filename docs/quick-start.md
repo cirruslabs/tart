@@ -20,7 +20,7 @@ tart run ventura-base
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip macos-monterey-base)
+ssh admin@$(tart ip macos-ventura-base)
 ```
 
 ## Mounting directories
