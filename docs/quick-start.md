@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
+Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Ventura) or later (will download a 25 GB image):
 
 ```bash
 brew install cirruslabs/cli/tart
@@ -20,7 +20,7 @@ tart run ventura-base
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip macos-monterey-base)
+ssh admin@$(tart ip macos-ventura-base)
 ```
 
 ## Mounting directories
