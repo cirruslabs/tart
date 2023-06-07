@@ -427,7 +427,7 @@ struct Run: AsyncParsableCommand {
               Task { try await vm!.virtualMachine.stop() }
             }
             Button("Request Stop") {
-              Task { try await vm!.virtualMachine.requestStop() }
+              Task { try vm!.virtualMachine.requestStop() }
             }
           }
         }

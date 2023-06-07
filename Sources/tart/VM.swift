@@ -223,24 +223,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   func run(_ recovery: Bool) async throws {
     try network.run(sema)
 
-    let startTask = DispatchQueue.main.sync {
-      Task {
-        if #available(macOS 13, *) {
-          // new API introduced in Ventura
-          let startOptions = VZMacOSVirtualMachineStartOptions()
-          startOptions.startUpFromMacOSRecovery = recovery
-          try await virtualMachine.start(options: startOptions)
-        } else {
-          // use method that also available on Monterey
-          try await virtualMachine.start(recovery)
-        }
-      }
-    }
+    try await start(recovery)
 
-    try await withTaskCancellationHandler(operation: {
-      // Await on VZVirtualMachine.start() result
-      _ = try await startTask.value
-
+    await withTaskCancellationHandler(operation: {
       // Wait for the VM to finish running
       // or for the exit condition
       sema.wait()
@@ -249,14 +234,28 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     })
 
     if Task.isCancelled {
-      DispatchQueue.main.sync {
-        Task {
-          try await self.virtualMachine.stop()
-        }
-      }
+      try await stop()
     }
 
     try await network.stop()
+  }
+
+  @MainActor
+  private func start(_ recovery: Bool) async throws {
+    if #available(macOS 13, *) {
+      // new API introduced in Ventura
+      let startOptions = VZMacOSVirtualMachineStartOptions()
+      startOptions.startUpFromMacOSRecovery = recovery
+      try await virtualMachine.start(options: startOptions)
+    } else {
+      // use method that also available on Monterey
+      try await virtualMachine.start(recovery)
+    }
+  }
+
+  @MainActor
+  private func stop() async throws {
+    try await self.virtualMachine.stop()
   }
 
   static func craftConfiguration(
