@@ -22,7 +22,7 @@ tart run ventura-base
     ```
 
     Please note that `./tart.app/Contents/MacOS/tart` binary is required to be used in order to trick macOS
-    to pick `tart.app/Contents/embedded.provisionprofile` for elevated provileges that Tart needs.
+    to pick `tart.app/Contents/embedded.provisionprofile` for elevated privileges that Tart needs.
 
 <p align="center">
   <img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartScreenshot.png"/>
