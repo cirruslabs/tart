@@ -11,6 +11,19 @@ tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
 tart run ventura-base
 ```
 
+??? info "Manual installation from a release archive"
+    It's also possible to manually install `tart` binary from the latest released archive:
+    
+    ```bash
+    curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
+    tar -xzvf tart.tar.gz
+    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
+    ./tart.app/Contents/MacOS/tart run ventura-base
+    ```
+
+    Please note that `./tart.app/Contents/MacOS/tart` binary is required to be used in order to trick macOS
+    to pick `tart.app/Contents/embedded.provisionprofile` for elevated privileges that Tart needs.
+
 <p align="center">
   <img src="https://github.com/cirruslabs/tart/raw/main/Resources/TartScreenshot.png"/>
 </p>
