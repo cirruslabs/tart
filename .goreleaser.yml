@@ -26,6 +26,7 @@ archives:
       - src: ".build/arm64-apple-macosx/release/tart"
         dst: tart.app/Contents/MacOS
         strip_parent: true
+      - LICENSE
 
 release:
   prerelease: auto
