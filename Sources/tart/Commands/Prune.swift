@@ -98,7 +98,7 @@ struct Prune: AsyncParsableCommand {
         break
       }
 
-      try SentrySDK.span?.setExtra(value: prunable.sizeBytes(), key: prunable.url.path);
+      try SentrySDK.span?.setExtra(value: prunable.sizeBytes(), key: prunable.url.path)
 
       cacheReclaimedBytes += try prunable.sizeBytes()
 
