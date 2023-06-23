@@ -108,9 +108,7 @@ struct Darwin: Platform {
 
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
     if #available(macOS 13, *) {
-      // Trackpad is only supported starting with macOS Ventura
-      // macOS Monterey will continue using a USB device == .darwin 
-      return [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
+      return [VZMacTrackpadConfiguration()]
     } else {
       return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
     }
