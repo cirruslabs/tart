@@ -98,11 +98,17 @@ struct Darwin: Platform {
     return result
   }
 
+  func keyboards() -> [VZKeyboardConfiguration] {
+    if #available(macOS 14, *) {
+      return [VZMacKeyboardConfiguration()]
+    } else {
+      return [VZUSBKeyboardConfiguration()]
+    }
+  }
+
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
     if #available(macOS 13, *) {
-      // Trackpad is only supported starting with macOS Ventura
-      // macOS Monterey will continue using a USB device == .darwin 
-      return [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
+      return [VZMacTrackpadConfiguration()]
     } else {
       return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
     }

@@ -31,6 +31,10 @@ struct Linux: Platform {
     return result
   }
 
+  func keyboards() -> [VZKeyboardConfiguration] {
+    [VZUSBKeyboardConfiguration()]
+  }
+
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
     [VZUSBScreenCoordinatePointingDeviceConfiguration()]
   }

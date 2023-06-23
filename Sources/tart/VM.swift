@@ -292,7 +292,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.audioDevices = [soundDeviceConfiguration]
 
     // Keyboard and mouse
-    configuration.keyboards = [VZUSBKeyboardConfiguration()]
+    configuration.keyboards = vmConfig.platform.keyboards()
     configuration.pointingDevices = vmConfig.platform.pointingDevices()
 
     // Networking
