@@ -408,7 +408,14 @@ struct Run: AsyncParsableCommand {
                 NSApplication.shared.terminate(self)
               }
             }
-          }.frame(width: CGFloat(vm!.config.display.width), height: CGFloat(vm!.config.display.height))
+          }.frame(
+            minWidth: CGFloat(vm!.config.display.width),
+            idealWidth: CGFloat(vm!.config.display.width),
+            maxWidth: .infinity,
+            minHeight: CGFloat(vm!.config.display.height),
+            idealHeight: CGFloat(vm!.config.display.height),
+            maxHeight: .infinity
+          )
         }.commands {
           // Remove some standard menu options
           CommandGroup(replacing: .help, addition: {})
@@ -486,8 +493,18 @@ struct VMView: NSViewRepresentable {
 
   func makeNSView(context: Context) -> NSViewType {
     let machineView = VZVirtualMachineView()
-    // so keys like take a windows screenshot (cmd+shift+4+space) works on the host and not guest
+
+    // Do not capture system keys so that shortcuts like
+    // Shift-Command-4 + Space (capture a screenshot of window)
+    // work on the host instead of the guest
     machineView.capturesSystemKeys = false
+
+    // Enable automatic display reconfiguration
+    // for guests that support it
+    if #available(macOS 14.0, *) {
+      machineView.automaticallyReconfiguresDisplay = true
+    }
+
     return machineView
   }
 
