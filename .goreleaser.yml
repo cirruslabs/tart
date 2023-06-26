@@ -4,6 +4,8 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c release --product tart
+    - mkdir -p tart.app/Contents/MacOS
+    - cp .build/arm64-apple-macosx/release/tart tart.app/Contents/MacOS/
 
 builds:
   - builder: prebuilt
@@ -11,8 +13,9 @@ builds:
       - darwin
     goarch:
       - arm64
+    binary: tart.app/Contents/MacOS/tart
     prebuilt:
-      path: .build/arm64-apple-macosx/release/tart
+      path: tart.app/Contents/MacOS/tart
     hooks:
       post:
         - gon gon.hcl
@@ -22,9 +25,6 @@ archives:
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
-        strip_parent: true
-      - src: ".build/arm64-apple-macosx/release/tart"
-        dst: tart.app/Contents/MacOS
         strip_parent: true
       - LICENSE
 
