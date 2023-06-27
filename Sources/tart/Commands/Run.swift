@@ -270,7 +270,7 @@ struct Run: AsyncParsableCommand {
 
             task.cancel()
           } else {
-            print("failed to create snapshot: this functionality is only supported on macOS 14 (Sonoma) or newer")
+            print(RuntimeError.SuspendFailed("this functionality is only supported on macOS 14 (Sonoma) or newer"))
 
             Foundation.exit(1)
           }
