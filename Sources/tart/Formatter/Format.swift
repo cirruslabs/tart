@@ -27,7 +27,11 @@ enum Format: String, ExpressibleByArgument, CaseIterable {
       let table = TextTable<T> { (item: T) in
         let mirroredObject = Mirror(reflecting: item)
         return mirroredObject.children.enumerated()
-          .filter {(_, element) in element.label! != "Running"}
+          .filter {(_, element) in
+            // Deprecate the "Running" field: only make it available
+            // from JSON for backwards-compatibility
+            element.label! != "Running"
+          }
           .map { (_, element) in
             let fieldName = element.label!
             return Column(title: fieldName, value: element.value)
