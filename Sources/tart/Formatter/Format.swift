@@ -26,10 +26,12 @@ enum Format: String, ExpressibleByArgument, CaseIterable {
       }
       let table = TextTable<T> { (item: T) in
         let mirroredObject = Mirror(reflecting: item)
-        return mirroredObject.children.enumerated().map { (_, element) in
-          let fieldName = element.label!
-          return Column(title: fieldName, value: element.value)
-        }
+        return mirroredObject.children.enumerated()
+          .filter {(_, element) in element.label! != "Running"}
+          .map { (_, element) in
+            let fieldName = element.label!
+            return Column(title: fieldName, value: element.value)
+          }
       }
       return table.string(for: data, style: Style.plain)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     case .json:

@@ -93,16 +93,31 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
-  func validate() throws {
+  @Flag(help: ArgumentHelp("Disable audio devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
+  var noAudio: Bool = false
+
+  @Flag(help: ArgumentHelp("Disable entropy devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
+  var noEntropy: Bool = false
+
+  @Flag(help: ArgumentHelp("An alias for --no-audio and --no-entropy."))
+  var suspendable: Bool = false
+
+  mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
+
     if netBridged != nil && netSoftnet {
       throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
     }
 
     if graphics && noGraphics {
       throw ValidationError("--graphics and --no-graphics are mutually exclusive")
+    }
+
+    if suspendable {
+      self.noAudio = true
+      self.noEntropy = true
     }
   }
 
@@ -153,7 +168,9 @@ struct Run: AsyncParsableCommand {
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
-      serialPorts: serialPorts
+      serialPorts: serialPorts,
+      noAudio: noAudio,
+      noEntropy: noEntropy
     )
 
     let vncImpl: VNC? = try {
@@ -197,7 +214,19 @@ struct Run: AsyncParsableCommand {
           }
         }
 
-        try await vm!.run(recovery)
+        var resume = false
+
+        if #available(macOS 14, *) {
+          if FileManager.default.fileExists(atPath: vmDir.stateURL.path) {
+            print("restoring VM state from a snapshot...")
+            try await vm!.virtualMachine.restoreMachineStateFrom(url: vmDir.stateURL)
+            try FileManager.default.removeItem(at: vmDir.stateURL)
+            resume = true
+            print("resuming VM...")
+          }
+        }
+
+        try await vm!.run(recovery: recovery, resume: resume)
 
         if let vncImpl = vncImpl {
           try vncImpl.stop()
@@ -215,11 +244,44 @@ struct Run: AsyncParsableCommand {
       }
     }
 
+    // "tart stop" support
     let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
     sigintSrc.setEventHandler {
       task.cancel()
     }
     sigintSrc.activate()
+
+    // "tart suspend" support
+    signal(SIGUSR1, SIG_IGN)
+    let sigusr1Src = DispatchSource.makeSignalSource(signal: SIGUSR1)
+    sigusr1Src.setEventHandler {
+      Task {
+        do {
+          if #available(macOS 14, *) {
+            try vm!.configuration.validateSaveRestoreSupport()
+
+            print("pausing VM to take a snapshot...")
+            try await vm!.virtualMachine.pause()
+
+            print("creating a snapshot...")
+            try await vm!.virtualMachine.saveMachineStateTo(url: vmDir.stateURL)
+
+            print("snapshot created successfully! shutting down the VM...")
+
+            task.cancel()
+          } else {
+            print("failed to create snapshot: this functionality is only supported on macOS 14 (Sonoma) or newer")
+
+            Foundation.exit(1)
+          }
+        } catch (let e) {
+          print(RuntimeError.SuspendFailed(e.localizedDescription))
+
+          Foundation.exit(1)
+        }
+      }
+    }
+    sigusr1Src.activate()
 
     let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
     if noGraphics || useVNCWithoutGraphics {
@@ -435,6 +497,11 @@ struct Run: AsyncParsableCommand {
             }
             Button("Request Stop") {
               Task { try vm!.virtualMachine.requestStop() }
+            }
+            if #available(macOS 14, *) {
+              Button("Suspend") {
+                kill(getpid(), SIGUSR1)
+              }
             }
           }
         }

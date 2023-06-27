@@ -57,6 +57,11 @@ struct Root: AsyncParsableCommand {
       }
     }
 
+    // Add commands that are only available on specific macOS versions
+    if #available(macOS 14, *) {
+      configuration.subcommands.append(Suspend.self)
+    }
+
     // Ensure the default SIGINT handled is disabled,
     // otherwise there's a race between two handlers
     signal(SIGINT, SIG_IGN);

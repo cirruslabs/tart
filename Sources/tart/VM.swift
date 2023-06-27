@@ -26,6 +26,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   // Virtualization.Framework's virtual machine
   @Published var virtualMachine: VZVirtualMachine
 
+  // Virtualization.Framework's virtual machine configuration
+  var configuration: VZVirtualMachineConfiguration
+
   // Semaphore used to communicate with the VZVirtualMachineDelegate
   var sema = DispatchSemaphore(value: 0)
 
@@ -41,7 +44,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        network: Network = NetworkShared(),
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
-       serialPorts: [VZSerialPortConfiguration] = []
+       serialPorts: [VZSerialPortConfiguration] = [],
+       noAudio: Bool = false,
+       noEntropy: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -52,11 +57,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Initialize the virtual machine and its configuration
     self.network = network
-    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
-                                                    nvramURL: vmDir.nvramURL, vmConfig: config,
-                                                    network: network, additionalDiskAttachments: additionalDiskAttachments,
-                                                    directorySharingDevices: directorySharingDevices,
-                                                    serialPorts: serialPorts
+    configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
+                                                nvramURL: vmDir.nvramURL, vmConfig: config,
+                                                network: network, additionalDiskAttachments: additionalDiskAttachments,
+                                                directorySharingDevices: directorySharingDevices,
+                                                serialPorts: serialPorts,
+                                                noAudio: noAudio,
+                                                noEntropy: noEntropy
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -179,11 +186,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Initialize the virtual machine and its configuration
     self.network = network
-    let configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-                                                    vmConfig: config, network: network,
-                                                    additionalDiskAttachments: additionalDiskAttachments,
-                                                    directorySharingDevices: directorySharingDevices,
-                                                    serialPorts: serialPorts
+    configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
+                                                vmConfig: config, network: network,
+                                                additionalDiskAttachments: additionalDiskAttachments,
+                                                directorySharingDevices: directorySharingDevices,
+                                                serialPorts: serialPorts
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -220,10 +227,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return try VM(vmDir: vmDir)
   }
 
-  func run(_ recovery: Bool) async throws {
+  func run(recovery: Bool, resume shouldResume: Bool) async throws {
     try network.run(sema)
 
-    try await start(recovery)
+    if shouldResume {
+      try await resume()
+    } else {
+      try await start(recovery)
+    }
 
     await withTaskCancellationHandler(operation: {
       // Wait for the VM to finish running
@@ -254,6 +265,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   @MainActor
+  private func resume() async throws {
+    try await virtualMachine.resume()
+  }
+
+  @MainActor
   private func stop() async throws {
     try await self.virtualMachine.stop()
   }
@@ -265,7 +281,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     network: Network = NetworkShared(),
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
-    serialPorts: [VZSerialPortConfiguration]
+    serialPorts: [VZSerialPortConfiguration],
+    noAudio: Bool = false,
+    noEntropy: Bool = false
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -283,13 +301,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
 
     // Audio
-    let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
-    let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
-    inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
-    let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
-    outputAudioStreamConfiguration.sink = VZHostAudioOutputStreamSink()
-    soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
-    configuration.audioDevices = [soundDeviceConfiguration]
+    if !noAudio {
+      let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
+      let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
+      inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
+      let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
+      outputAudioStreamConfiguration.sink = VZHostAudioOutputStreamSink()
+      soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
+      configuration.audioDevices = [soundDeviceConfiguration]
+    }
 
     // Keyboard and mouse
     configuration.keyboards = vmConfig.platform.keyboards()
@@ -307,7 +327,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.storageDevices = attachments.map { VZVirtioBlockDeviceConfiguration(attachment: $0) }
 
     // Entropy
-    configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
+    if !noEntropy {
+      configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
+    }
 
     // Directory sharing devices
     configuration.directorySharingDevices = directorySharingDevices

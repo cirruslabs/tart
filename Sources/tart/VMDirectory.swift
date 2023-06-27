@@ -13,6 +13,9 @@ struct VMDirectory: Prunable {
   var nvramURL: URL {
     baseURL.appendingPathComponent("nvram.bin")
   }
+  var stateURL: URL {
+    baseURL.appendingPathComponent("state.vzvmsave")
+  }
 
   var explicitlyPulledMark: URL {
     baseURL.appendingPathComponent(".explicitly-pulled")
@@ -37,6 +40,16 @@ struct VMDirectory: Prunable {
     }
 
     return try lock.pid() != 0
+  }
+
+  func state() throws -> String {
+    if try running() {
+      return "running"
+    } else if FileManager.default.fileExists(atPath: stateURL.path) {
+      return "suspended"
+    } else {
+      return "stopped"
+    }
   }
 
   static func temporary() throws -> VMDirectory {
