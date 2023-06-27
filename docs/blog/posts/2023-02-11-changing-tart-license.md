@@ -13,7 +13,7 @@ categories:
 
 **TLDR:** We are transitioning Tart's licensing from AGPL-3.0 to [Fair Source 100](https://fair.io/). This change will
 permit unlimited installations on personal computers, but organizations that exceed a certain number of server
-installations utilizing 100 CPU cores will be required to obtain a paid sponsorship.
+installations utilizing 100 CPU cores will be required to obtain a paid license.
 
 ## Background
 
@@ -55,15 +55,15 @@ of Tart virtual machines on a cluster of Apple Silicon servers. Concurrently, we
 which will establish a stable API and offer long-term support under a new Fair Source 100 license.
 
 The Fair Source 100 license for Tart means that once a certain threshold of server installations utilizing 100 CPU cores
-is exceeded, a paid sponsorship will be required. A "server installation" refers to the installation of Tart on a physical
+is exceeded, a paid license will be required. A "server installation" refers to the installation of Tart on a physical
 device without a physical display connected. For example, a Mac Mini with a HDMI Dummy Plug is considered a server,
 but a Mac Mini on a desk with a connected physical display is considered a personal computer. **Usage on personal computers
 and before reaching the 100 CPU cores limit is royalty-free and does not have the viral properties of AGPL.**
 
-When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Sponsorship](/licensing#sponsorships),
-which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Sponsorship](/licensing#sponsorships)
-(\$5000 per month) will be required, and for organizations that exceed 5000 CPU cores, a custom [Diamond Sponsorship](/licensing#sponsorships)
-(\$1 per core per month) will be necessary. **All sponsorships will include priority feature development and SLAs on support with urgent issues.**
+When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Tier License](/licensing#license-tiers),
+which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Tier License](/licensing#license-tiers)
+(\$5000 per month) will be required, and for organizations that exceed 5000 CPU cores, a custom [Diamond Tier License](/licensing#license-tiers)
+(\$1 per core per month) will be necessary. **All paid license tiers will include priority feature development and SLAs on support with urgent issues.**
 
 ## Have we considered alternatives?
 

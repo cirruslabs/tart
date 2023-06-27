@@ -6,7 +6,7 @@ hide:
 Both [Tart Virtualization](https://github.com/cirruslabs/tart) and [Orchard Orchestration](https://github.com/cirruslabs/orchard)
 are licensed under [Fair Source License](https://fair.io/). Usage on personal computers including personal workstations is royalty-free,
 but organizations that exceed a certain number of server installations (100 CPU cores for Tart and/or 4 hosts for Orchard)
-will be required to obtain a paid sponsorship.
+will be required to obtain a paid license.
 
 ??? note "Performance and Efficiency Cores"
     The virtual CPU cores in Tart VMs do not differentiate between the high-performance  and high-efficient cores
@@ -14,27 +14,27 @@ will be required to obtain a paid sponsorship.
     being executed within the virtual machines. As a result, both performance and energy-efficient cores of the host CPU
     are treated equally in terms of licensing.
 
-# Sponsorships
+# License Tiers
 
-When an organization surpasses the 100 CPU cores limit, it is required to obtain a Gold Sponsorship, which costs \$1000 per month.
-Upon reaching a limit of 500 CPU cores, a Platinum Sponsorship (\$5000 per month) will be required, and for organizations
-that exceed 5000 CPU cores, a custom Diamond Sponsorship (\$1 per core per month) will be necessary.
+When an organization surpasses the 100 CPU cores limit, it is required to obtain a Gold Tier License, which costs \$1000 per month.
+Upon reaching a limit of 500 CPU cores, a Platinum Tier License (\$5000 per month) will be required, and for organizations
+that exceed 5000 CPU cores, a custom Diamond Tier License (\$1 per core per month) will be necessary.
 
-If your organization is interested in purchasing one of the sponsorships, please email [licensing@cirruslabs.org](mailto:licensing@cirruslabs.org).
-You can see a template of a sponsorship subscription agreement [here](assets/TartSponsorshipSubscriptionTemplate.pdf).
+If your organization is interested in purchasing one of the license tiers, please email [licensing@cirruslabs.org](mailto:licensing@cirruslabs.org).
+You can see a template of a license subscription agreement [here](assets/TartLicenseSubscription.pdf).
 
 # General Support
 
 The best way to ask general questions about particular use cases is to email our support team at [support@cirruslabs.org](mailto:support@cirruslabs.org).
 Our support team is trying our best to respond ASAP, but there is no guarantee on a response time unless your organization
-has a sponsorship subscription which includes [Priority Support](#priority-support).
+has a paid license subscription which includes [Priority Support](#priority-support).
 
 If you have a feature request or noticed lack of some documentation please feel free to [create a GitHub issue](https://github.com/cirruslabs/tart/issues/new).
 Our support team will answer it by replying to the issue or by updating the documentation.
 
 # Priority Support
 
-In addition to the general support we provide a *Priority Support* with guaranteed response times included in all the paid sponsorships .
+In addition to the general support we provide a *Priority Support* with guaranteed response times included in all the paid license tiers.
 
 | Severity | Support Impact                                                                                | First Response Time SLA | Hours | How to Submit                                                                                    |
 |----------|-----------------------------------------------------------------------------------------------|-------------------------|-------|--------------------------------------------------------------------------------------------------|
@@ -57,5 +57,5 @@ In addition to the general support we provide a *Priority Support* with guarante
       Information, an enhancement, or documentation clarification is requested, but there is no impact on the operation of Tart and/or Orchard.
 
 !!! info "How to submit a priority or an urgent issue"
-    Once your organization [signs the Sponsorship Subscription contract](#sponsorships), members of your organization
+    Once your organization [obtains a license](#license-tiers), members of your organization
     will get access to separate support emails specified in your subscription contract.
