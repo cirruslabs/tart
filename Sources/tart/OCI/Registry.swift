@@ -45,7 +45,8 @@ struct TokenResponse: Decodable, Authentication {
   let defaultIssuedAt = Date()
   let defaultExpiresIn = 60
 
-  var token: String
+  var token: String?
+  var accessToken: String?
   var expiresIn: Int?
   var issuedAt: Date?
 
@@ -65,7 +66,13 @@ struct TokenResponse: Decodable, Authentication {
       return dateFormatter.date(from: dateString) ?? Date()
     }
 
-    return try decoder.decode(TokenResponse.self, from: fromData)
+    let response = try decoder.decode(TokenResponse.self, from: fromData)
+
+    guard response.token != nil || response.accessToken != nil else {
+        throw DecodingError.keyNotFound(CodingKeys.token, .init(codingPath: [], debugDescription: "Missing token or access_token. One must be present."))
+    }
+
+    return response
   }
 
   var tokenExpiresAt: Date {
@@ -83,7 +90,7 @@ struct TokenResponse: Decodable, Authentication {
   }
 
   func header() -> (String, String) {
-    ("Authorization", "Bearer \(token)")
+      return ("Authorization", "Bearer \(token ?? accessToken ?? "")")
   }
 
   func isValid() -> Bool {
