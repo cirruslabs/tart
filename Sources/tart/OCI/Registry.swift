@@ -69,7 +69,7 @@ struct TokenResponse: Decodable, Authentication {
     let response = try decoder.decode(TokenResponse.self, from: fromData)
 
     guard response.token != nil || response.accessToken != nil else {
-        throw DecodingError.keyNotFound(CodingKeys.token, .init(codingPath: [], debugDescription: "Missing token or access_token. One must be present."))
+      throw DecodingError.keyNotFound(CodingKeys.token, .init(codingPath: [], debugDescription: "Missing token or access_token. One must be present."))
     }
 
     return response
