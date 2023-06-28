@@ -139,6 +139,12 @@ class VMStorageOCI: PrunableStorage {
 
     let digestName = RemoteName(host: name.host, namespace: name.namespace,
                                 reference: Reference(digest: Digest.hash(manifestData)))
+    
+    if exists(name) && exists(digestName) && linked(from: name, to: digestName) {
+      // optimistically check if we need to do anything at all before locking
+      defaultLogger.appendNewLine("\(digestName) image is already cached and linked!")
+      return
+    }
 
     // Ensure that host directory for given RemoteName exists in OCI storage
     let hostDirectoryURL = hostDirectoryURL(digestName)
@@ -222,6 +228,15 @@ class VMStorageOCI: PrunableStorage {
     }
   }
 
+  func linked(from: RemoteName, to: RemoteName) -> Bool {
+    do {
+      let resolvedFrom = try FileManager.default.destinationOfSymbolicLink(atPath: vmURL(from).path)
+      return resolvedFrom == vmURL(to).path
+    } catch {
+      return false
+    }
+  }
+  
   func link(from: RemoteName, to: RemoteName) throws {
     if FileManager.default.fileExists(atPath: vmURL(from).path) {
       try FileManager.default.removeItem(at: vmURL(from))
