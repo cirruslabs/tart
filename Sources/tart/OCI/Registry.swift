@@ -90,7 +90,7 @@ struct TokenResponse: Decodable, Authentication {
   }
 
   func header() -> (String, String) {
-      return ("Authorization", "Bearer \(token ?? accessToken ?? "")")
+    return ("Authorization", "Bearer \(token ?? accessToken ?? "")")
   }
 
   func isValid() -> Bool {
