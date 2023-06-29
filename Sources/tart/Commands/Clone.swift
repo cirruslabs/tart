@@ -31,6 +31,7 @@ struct Clone: AsyncParsableCommand {
     }
 
     let sourceVM = try VMStorageHelper.open(sourceName)
+    try Prune.reclaimIfNeeded(UInt64(sourceVM.sizeBytes()))
 
     let tmpVMDir = try VMDirectory.temporary()
 
