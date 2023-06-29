@@ -77,7 +77,50 @@ struct Prune: AsyncParsableCommand {
     try prunablesToDelete.forEach { try $0.delete() }
   }
 
-  static func pruneReclaim(reclaimBytes: UInt64) throws {
+  static func reclaimIfNeeded(_ requiredBytes: UInt64) throws {
+    SentrySDK.configureScope { scope in
+      scope.setContext(value: ["requiredBytes": requiredBytes], key: "Prune")
+    }
+
+    // Figure out how much disk space is available
+    let attrs = try Config().tartCacheDir.resourceValues(forKeys: [
+      .volumeAvailableCapacityKey,
+      .volumeAvailableCapacityForImportantUsageKey
+    ])
+    let volumeAvailableCapacityCalculated = max(
+      UInt64(attrs.volumeAvailableCapacity!),
+      UInt64(attrs.volumeAvailableCapacityForImportantUsage!)
+    )
+
+    SentrySDK.configureScope { scope in
+      scope.setContext(value: [
+        "volumeAvailableCapacity": attrs.volumeAvailableCapacity!,
+        "volumeAvailableCapacityForImportantUsage": attrs.volumeAvailableCapacityForImportantUsage!,
+        "volumeAvailableCapacityCalculated": volumeAvailableCapacityCalculated
+      ], key: "Prune")
+    }
+
+    if volumeAvailableCapacityCalculated <= 0 {
+      SentrySDK.capture(message: "Zero volume capacity reported") { scope in
+        scope.setLevel(.warning)
+      }
+
+      return
+    }
+
+    // Now that we know how much free space is left,
+    // check if we even need to reclaim anything
+    if requiredBytes < volumeAvailableCapacityCalculated {
+      return
+    }
+
+    try Prune.reclaimIfPossible(requiredBytes - volumeAvailableCapacityCalculated)
+  }
+
+  private static func reclaimIfPossible(_ reclaimBytes: UInt64) throws {
+    let transaction = SentrySDK.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
+    defer { transaction.finish() }
+
     let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
     let prunables: [Prunable] = try prunableStorages
       .flatMap { try $0.prunables() }
@@ -98,7 +141,7 @@ struct Prune: AsyncParsableCommand {
         break
       }
 
-      try SentrySDK.span?.setExtra(value: prunable.sizeBytes(), key: prunable.url.path)
+      try SentrySDK.span?.setData(value: prunable.sizeBytes(), key: prunable.url.path)
 
       cacheReclaimedBytes += try prunable.sizeBytes()
 
