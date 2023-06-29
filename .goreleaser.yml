@@ -4,6 +4,7 @@ before:
   hooks:
     - .ci/set-version.sh
     - swift build -c release --product tart
+    - gon gon.hcl
     - mkdir -p tart.app/Contents/MacOS
     - cp .build/arm64-apple-macosx/release/tart tart.app/Contents/MacOS/
 
@@ -16,9 +17,6 @@ builds:
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
       path: tart.app/Contents/MacOS/tart
-    hooks:
-      post:
-        - gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
