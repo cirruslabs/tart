@@ -100,7 +100,8 @@ struct Darwin: Platform {
 
   func keyboards() -> [VZKeyboardConfiguration] {
     if #available(macOS 14, *) {
-      return [VZMacKeyboardConfiguration()]
+      // Mac keyboard is only supported by guests starting with macOS Ventura
+      return [VZMacKeyboardConfiguration(), VZUSBKeyboardConfiguration()]
     } else {
       return [VZUSBKeyboardConfiguration()]
     }
@@ -108,7 +109,8 @@ struct Darwin: Platform {
 
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
     if #available(macOS 13, *) {
-      return [VZMacTrackpadConfiguration()]
+      // Trackpad is only supported by guests starting with macOS Ventura
+      return [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
     } else {
       return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
     }
