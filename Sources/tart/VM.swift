@@ -45,8 +45,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
-       noAudio: Bool = false,
-       noEntropy: Bool = false
+       suspendable: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -62,8 +61,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 network: network, additionalDiskAttachments: additionalDiskAttachments,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
-                                                noAudio: noAudio,
-                                                noEntropy: noEntropy
+                                                suspendable: suspendable
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -282,8 +280,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
-    noAudio: Bool = false,
-    noEntropy: Bool = false
+    suspendable: Bool = false
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -301,7 +298,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
 
     // Audio
-    if !noAudio {
+    if !suspendable {
       let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
       let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
       inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
@@ -312,8 +309,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Keyboard and mouse
-    configuration.keyboards = vmConfig.platform.keyboards()
-    configuration.pointingDevices = vmConfig.platform.pointingDevices()
+    if suspendable, let platformSuspendable = vmConfig.platform.self as? PlatformSuspendable {
+      configuration.keyboards = platformSuspendable.keyboardsSuspendable()
+      configuration.pointingDevices = platformSuspendable.pointingDevicesSuspendable()
+    } else {
+      configuration.keyboards = vmConfig.platform.keyboards()
+      configuration.pointingDevices = vmConfig.platform.pointingDevices()
+    }
 
     // Networking
     let vio = VZVirtioNetworkDeviceConfiguration()
@@ -327,7 +329,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.storageDevices = attachments.map { VZVirtioBlockDeviceConfiguration(attachment: $0) }
 
     // Entropy
-    if !noEntropy {
+    if !suspendable {
       configuration.entropyDevices = [VZVirtioEntropyDeviceConfiguration()]
     }
 

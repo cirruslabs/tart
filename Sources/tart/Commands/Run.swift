@@ -93,13 +93,7 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
-  @Flag(help: ArgumentHelp("Disable audio devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
-  var noAudio: Bool = false
-
-  @Flag(help: ArgumentHelp("Disable entropy devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
-  var noEntropy: Bool = false
-
-  @Flag(help: ArgumentHelp("An alias for --no-audio and --no-entropy."))
+  @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
   var suspendable: Bool = false
 
   mutating func validate() throws {
@@ -113,11 +107,6 @@ struct Run: AsyncParsableCommand {
 
     if graphics && noGraphics {
       throw ValidationError("--graphics and --no-graphics are mutually exclusive")
-    }
-
-    if suspendable {
-      self.noAudio = true
-      self.noEntropy = true
     }
   }
 
@@ -169,8 +158,7 @@ struct Run: AsyncParsableCommand {
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
-      noAudio: noAudio,
-      noEntropy: noEntropy
+      suspendable: suspendable
     )
 
     let vncImpl: VNC? = try {
