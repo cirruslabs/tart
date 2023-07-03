@@ -70,6 +70,17 @@ The directory we've mounted above will be accessible from the `/Volumes/My Share
 
 Note: to use the directory mounting feature, the guest VM needs to run macOS 13.0 (Ventura) or newer.
 
+??? tip "Changing mount location"
+    It is possible to remount the directories after a virtual machine is started by running the following commands:
+    
+    ```bash
+    sudo umount "/Volumes/My Shared Files"
+    mkdir ~/workspace
+    mount_virtiofs com.apple.virtio-fs.automount ~/workspace
+    ```
+
+    After running the above commands the direcory will be available at `~/workspace/project`
+
 ### Accessing mounted directories in Linux guests
 
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
