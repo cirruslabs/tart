@@ -118,7 +118,7 @@ struct Run: AsyncParsableCommand {
       // check if there is a running VM with the same MAC but different name
       try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
     }
-    
+
     // generate new MAC only after locking to make sure it's not this VM which is running
     if needToGenerateNewMac {
       print("There is already a running VM with the same MAC address!")
