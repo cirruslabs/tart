@@ -6,7 +6,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
   }
 }
 
-struct Darwin: Platform {
+struct Darwin: PlatformSuspendable {
   var ecid: VZMacMachineIdentifier
   var hardwareModel: VZMacHardwareModel
 
@@ -107,7 +107,7 @@ struct Darwin: Platform {
     }
   }
 
-  func keyboardsSuspendable(suspendable: Bool = false) -> [VZKeyboardConfiguration] {
+  func keyboardsSuspendable() -> [VZKeyboardConfiguration] {
     if #available(macOS 14, *) {
       return [VZMacKeyboardConfiguration()]
     } else {
