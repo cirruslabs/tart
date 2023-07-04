@@ -94,7 +94,7 @@ struct Run: AsyncParsableCommand {
   var netSoftnet: Bool = false
 
   @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
-  static var suspendable: Bool = false
+  var suspendable: Bool = false
 
   mutating func validate() throws {
     if vnc && vncExperimental {
@@ -158,7 +158,7 @@ struct Run: AsyncParsableCommand {
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
-      suspendable: Self.suspendable
+      suspendable: suspendable
     )
 
     let vncImpl: VNC? = try {
@@ -239,10 +239,15 @@ struct Run: AsyncParsableCommand {
     }
     sigintSrc.activate()
 
-    // "tart suspend" support
+    // "tart suspend" / UI window closing support
     signal(SIGUSR1, SIG_IGN)
     let sigusr1Src = DispatchSource.makeSignalSource(signal: SIGUSR1)
     sigusr1Src.setEventHandler {
+      if !suspendable {
+        // Closed window of a not-suspendable VM
+        task.cancel()
+        return
+      }
       Task {
         do {
           if #available(macOS 14, *) {
@@ -450,7 +455,7 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              let ret = kill(getpid(), Run.suspendable ? SIGUSR1 : SIGINT)
+              let ret = kill(getpid(), SIGUSR1)
               if ret != 0 {
                 // Fallback to the old termination method that doesn't
                 // propagate the cancellation to Task's in case graceful
