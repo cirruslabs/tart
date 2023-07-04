@@ -88,15 +88,11 @@ struct VMDirectory: Prunable {
     }
   }
 
-  func clone(to: VMDirectory, generateMAC: Bool) throws {
+  func clone(to: VMDirectory) throws {
     try FileManager.default.copyItem(at: configURL, to: to.configURL)
     try FileManager.default.copyItem(at: nvramURL, to: to.nvramURL)
     try FileManager.default.copyItem(at: diskURL, to: to.diskURL)
-
-    // Re-generate MAC address
-    if generateMAC {
-      try to.regenerateMACAddress()
-    }
+    try? FileManager.default.copyItem(at: stateURL, to: to.stateURL)
   }
 
   func macAddress() throws -> String {
@@ -107,6 +103,8 @@ struct VMDirectory: Prunable {
     var vmConfig = try VMConfig(fromURL: configURL)
 
     vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    // cleanup state if any
+    try? FileManager.default.removeItem(at: stateURL)
 
     try vmConfig.save(toURL: configURL)
   }

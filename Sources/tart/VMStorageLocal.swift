@@ -63,7 +63,9 @@ class VMStorageLocal {
     }
   }
 
-  func hasVMsWithMACAddress(macAddress: String) throws -> Bool {
-    try list().contains { try $1.macAddress() == macAddress }
+  func hasRunningVMWithMACAddress(macAddress: String) throws -> Bool {
+    try list().contains { 
+      try $1.running() && $1.macAddress() == macAddress
+    }
   }
 }

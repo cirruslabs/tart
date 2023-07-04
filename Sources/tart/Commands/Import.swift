@@ -36,11 +36,6 @@ struct Import: AsyncParsableCommand {
       let lock = try FileLock(lockURL: Config().tartHomeDir)
       try lock.lock()
 
-      // Re-generate the VM's MAC address importing it will result in address collision
-      if try localStorage.hasVMsWithMACAddress(macAddress: tmpVMDir.macAddress()) {
-        try tmpVMDir.regenerateMACAddress()
-      }
-
       try localStorage.move(name, from: tmpVMDir)
 
       try lock.unlock()

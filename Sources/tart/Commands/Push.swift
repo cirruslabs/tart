@@ -74,7 +74,7 @@ struct Push: AsyncParsableCommand {
         // Populate the local cache (if requested)
         if populateCache {
           let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
-          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
+          try localVMDir.clone(to: expectedPushedVMDir)
         }
       }
 
