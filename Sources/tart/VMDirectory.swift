@@ -27,7 +27,16 @@ struct VMDirectory: Prunable {
   }
 
   func running() throws -> Bool {
-    try PIDLock(lockURL: configURL).pid() != 0
+    // The most common reason why PIDLock() instantiation fails is a race with "tart delete" (ENOENT),
+    // which is fine to report as "not running".
+    //
+    // The other reasons are unlikely and the cost of getting a false positive is way less than
+    // the cost of crashing with an exception when calling "tart list" on a busy machine, for example.
+    guard let lock = try? PIDLock(lockURL: configURL) else {
+      return false
+    }
+
+    return try lock.pid() != 0
   }
 
   static func temporary() throws -> VMDirectory {

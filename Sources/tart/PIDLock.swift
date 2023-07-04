@@ -8,6 +8,11 @@ class PIDLock {
   init(lockURL: URL) throws {
     url = lockURL
     fd = open(lockURL.path, O_RDWR)
+    if fd == -1 {
+      let details = Errno(rawValue: CInt(errno))
+
+      throw RuntimeError.PIDLockFailed("failed to open lock file \(url): \(details)")
+    }
   }
 
   deinit {
