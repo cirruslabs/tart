@@ -114,23 +114,9 @@ struct Run: AsyncParsableCommand {
   func run() async throws {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
-    let needToGenerateNewMac = try localStorage.hasRunningVMWithMACAddress(macAddress: vmDir.macAddress())
-    
-    // Lock the VM
-    //
-    // More specifically, lock the "config.json", because we can't lock
-    // directories with fcntl(2)-based locking and we better not interfere
-    // with the VM's disk and NVRAM, because they are opened (and even seem
-    // to be locked) directly by the Virtualization.Framework's process.
-    //
-    // Note that due to "completely stupid semantics"[1] of the fcntl-based
-    // file locking, we need to acquire the lock after we read the VM's
-    // configuration file, otherwise we will loose the lock.
-    //
-    // [1]: https://man.openbsd.org/fcntl
-    let lock = try PIDLock(lockURL: vmDir.configURL)
-    if try !lock.trylock() {
-      throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
+    let needToGenerateNewMac = try localStorage.list().contains {
+      // check if there is a running VM with the same MAC but different name
+      try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
     }
     
     // generate new MAC only after locking to make sure it's not this VM which is running
@@ -197,6 +183,23 @@ struct Run: AsyncParsableCommand {
         return nil
       }
     }()
+
+    // Lock the VM
+    //
+    // More specifically, lock the "config.json", because we can't lock
+    // directories with fcntl(2)-based locking and we better not interfere
+    // with the VM's disk and NVRAM, because they are opened (and even seem
+    // to be locked) directly by the Virtualization.Framework's process.
+    //
+    // Note that due to "completely stupid semantics"[1] of the fcntl-based
+    // file locking, we need to acquire the lock after we read the VM's
+    // configuration file, otherwise we will loose the lock.
+    //
+    // [1]: https://man.openbsd.org/fcntl
+    let lock = try PIDLock(lockURL: vmDir.configURL)
+    if try !lock.trylock() {
+      throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
+    }
 
     let task = Task {
       do {
