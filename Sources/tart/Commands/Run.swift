@@ -255,11 +255,6 @@ struct Run: AsyncParsableCommand {
     signal(SIGUSR1, SIG_IGN)
     let sigusr1Src = DispatchSource.makeSignalSource(signal: SIGUSR1)
     sigusr1Src.setEventHandler {
-      if !suspendable {
-        // Closed window of a not-suspendable VM
-        task.cancel()
-        return
-      }
       Task {
         do {
           if #available(macOS 14, *) {
@@ -292,7 +287,7 @@ struct Run: AsyncParsableCommand {
     if noGraphics || useVNCWithoutGraphics {
       dispatchMain()
     } else {
-      runUI()
+      runUI(suspendable)
     }
   }
 
@@ -451,7 +446,7 @@ struct Run: AsyncParsableCommand {
     return [device]
   }
 
-  private func runUI() {
+  private func runUI(_ suspendable: Bool) {
     let nsApp = NSApplication.shared
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
@@ -459,6 +454,8 @@ struct Run: AsyncParsableCommand {
     nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
+      static var disappearSignal: Int32 = SIGINT
+      
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
 
       var body: some Scene {
@@ -467,7 +464,7 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              let ret = kill(getpid(), SIGUSR1)
+              let ret = kill(getpid(), MainApp.disappearSignal)
               if ret != 0 {
                 // Fallback to the old termination method that doesn't
                 // propagate the cancellation to Task's in case graceful
@@ -513,6 +510,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
+    MainApp.disappearSignal = suspendable ? SIGUSR1 : SIGINT
     MainApp.main()
   }
 }
