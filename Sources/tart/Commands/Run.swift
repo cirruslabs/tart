@@ -455,7 +455,7 @@ struct Run: AsyncParsableCommand {
 
     struct MainApp: App {
       static var disappearSignal: Int32 = SIGINT
-      
+
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
 
       var body: some Scene {
