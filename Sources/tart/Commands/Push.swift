@@ -74,9 +74,7 @@ struct Push: AsyncParsableCommand {
         // Populate the local cache (if requested)
         if populateCache {
           let expectedPushedVMDir = try ociStorage.create(pushedRemoteName)
-          // there might be a case when two remote VMs have identical MAC addresses
-          let generateMAC = try VMStorageLocal().hasVMsWithMACAddress(macAddress: expectedPushedVMDir.macAddress())
-          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: generateMAC)
+          try localVMDir.clone(to: expectedPushedVMDir, generateMAC: false)
         }
       }
 
