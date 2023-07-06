@@ -23,11 +23,11 @@ struct Stop: AsyncParsableCommand {
       return
     }
   }
-  
+
   func stopSuspended(_ vmDir: VMDirectory) throws {
     try? FileManager.default.removeItem(at: vmDir.stateURL)
   }
-  
+
   func stopRunning(_ vmDir: VMDirectory) async throws {
     let lock = try PIDLock(lockURL: vmDir.configURL)
 
