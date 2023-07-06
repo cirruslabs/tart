@@ -115,7 +115,7 @@ struct Run: AsyncParsableCommand {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
 
-    let storageLock = try FileLock(lockURL: localStorage.baseURL)
+    let storageLock = try FileLock(lockURL: Config().tartHomeDir)
     if try vmDir.state() == "suspended" {
       try storageLock.lock() // lock before checking
       let needToGenerateNewMac = try localStorage.list().contains {
