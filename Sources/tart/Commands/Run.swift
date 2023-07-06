@@ -114,15 +114,20 @@ struct Run: AsyncParsableCommand {
   func run() async throws {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
-    let needToGenerateNewMac = try localStorage.list().contains {
-      // check if there is a running VM with the same MAC but different name
-      try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
-    }
 
-    if needToGenerateNewMac {
-      print("There is already a running VM with the same MAC address!")
-      print("Resetting VM to assign a new MAC address...")
-      try vmDir.regenerateMACAddress()
+    let storageLock = try FileLock(lockURL: localStorage.baseURL)
+    if try vmDir.state() == "suspended" {
+      try storageLock.lock() // lock before checking
+      let needToGenerateNewMac = try localStorage.list().contains {
+        // check if there is a running VM with the same MAC but different name
+        try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
+      }
+
+      if needToGenerateNewMac {
+        print("There is already a running VM with the same MAC address!")
+        print("Resetting VM to assign a new MAC address...")
+        try vmDir.regenerateMACAddress()
+      }
     }
 
     if netSoftnet && isInteractiveSession() {
@@ -199,6 +204,9 @@ struct Run: AsyncParsableCommand {
     if try !lock.trylock() {
       throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
     }
+
+    // now VM state will return "running" so we can unlock
+    try storageLock.unlock()
 
     let task = Task {
       do {
