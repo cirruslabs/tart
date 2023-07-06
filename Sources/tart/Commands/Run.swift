@@ -94,7 +94,7 @@ struct Run: AsyncParsableCommand {
   var netSoftnet: Bool = false
 
   @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
-  static var suspendable: Bool = false
+  var suspendable: Bool = false
 
   mutating func validate() throws {
     if vnc && vncExperimental {
@@ -112,7 +112,23 @@ struct Run: AsyncParsableCommand {
 
   @MainActor
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let localStorage = VMStorageLocal()
+    let vmDir = try localStorage.open(name)
+
+    let storageLock = try FileLock(lockURL: Config().tartHomeDir)
+    if try vmDir.state() == "suspended" {
+      try storageLock.lock() // lock before checking
+      let needToGenerateNewMac = try localStorage.list().contains {
+        // check if there is a running VM with the same MAC but different name
+        try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
+      }
+
+      if needToGenerateNewMac {
+        print("There is already a running VM with the same MAC address!")
+        print("Resetting VM to assign a new MAC address...")
+        try vmDir.regenerateMACAddress()
+      }
+    }
 
     if netSoftnet && isInteractiveSession() {
       try Softnet.configureSUIDBitIfNeeded()
@@ -158,7 +174,7 @@ struct Run: AsyncParsableCommand {
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
-      suspendable: Self.suspendable
+      suspendable: suspendable
     )
 
     let vncImpl: VNC? = try {
@@ -188,6 +204,9 @@ struct Run: AsyncParsableCommand {
     if try !lock.trylock() {
       throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
     }
+
+    // now VM state will return "running" so we can unlock
+    try storageLock.unlock()
 
     let task = Task {
       do {
@@ -239,7 +258,7 @@ struct Run: AsyncParsableCommand {
     }
     sigintSrc.activate()
 
-    // "tart suspend" support
+    // "tart suspend" / UI window closing support
     signal(SIGUSR1, SIG_IGN)
     let sigusr1Src = DispatchSource.makeSignalSource(signal: SIGUSR1)
     sigusr1Src.setEventHandler {
@@ -275,7 +294,7 @@ struct Run: AsyncParsableCommand {
     if noGraphics || useVNCWithoutGraphics {
       dispatchMain()
     } else {
-      runUI()
+      runUI(suspendable)
     }
   }
 
@@ -434,7 +453,7 @@ struct Run: AsyncParsableCommand {
     return [device]
   }
 
-  private func runUI() {
+  private func runUI(_ suspendable: Bool) {
     let nsApp = NSApplication.shared
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
@@ -442,6 +461,8 @@ struct Run: AsyncParsableCommand {
     nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
+      static var disappearSignal: Int32 = SIGINT
+
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
 
       var body: some Scene {
@@ -450,7 +471,7 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              let ret = kill(getpid(), Run.suspendable ? SIGUSR1 : SIGINT)
+              let ret = kill(getpid(), MainApp.disappearSignal)
               if ret != 0 {
                 // Fallback to the old termination method that doesn't
                 // propagate the cancellation to Task's in case graceful
@@ -496,6 +517,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
+    MainApp.disappearSignal = suspendable ? SIGUSR1 : SIGINT
     MainApp.main()
   }
 }
