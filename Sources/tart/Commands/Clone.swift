@@ -44,7 +44,10 @@ struct Clone: AsyncParsableCommand {
       let lock = try FileLock(lockURL: Config().tartHomeDir)
       try lock.lock()
 
-      try sourceVM.clone(to: tmpVMDir)
+      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress()) 
+        && sourceVM.state() != "suspended"
+      try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
+
       try localStorage.move(newName, from: tmpVMDir)
 
       try lock.unlock()
