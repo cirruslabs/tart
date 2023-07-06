@@ -8,3 +8,8 @@ protocol Platform: Codable {
   func keyboards() -> [VZKeyboardConfiguration]
   func pointingDevices() -> [VZPointingDeviceConfiguration]
 }
+
+protocol PlatformSuspendable: Platform {
+  func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration]
+  func keyboardsSuspendable() -> [VZKeyboardConfiguration]
+}

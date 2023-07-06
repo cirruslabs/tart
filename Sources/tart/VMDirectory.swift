@@ -13,6 +13,9 @@ struct VMDirectory: Prunable {
   var nvramURL: URL {
     baseURL.appendingPathComponent("nvram.bin")
   }
+  var stateURL: URL {
+    baseURL.appendingPathComponent("state.vzvmsave")
+  }
 
   var explicitlyPulledMark: URL {
     baseURL.appendingPathComponent(".explicitly-pulled")
@@ -37,6 +40,16 @@ struct VMDirectory: Prunable {
     }
 
     return try lock.pid() != 0
+  }
+
+  func state() throws -> String {
+    if try running() {
+      return "running"
+    } else if FileManager.default.fileExists(atPath: stateURL.path) {
+      return "suspended"
+    } else {
+      return "stopped"
+    }
   }
 
   static func temporary() throws -> VMDirectory {
@@ -79,6 +92,7 @@ struct VMDirectory: Prunable {
     try FileManager.default.copyItem(at: configURL, to: to.configURL)
     try FileManager.default.copyItem(at: nvramURL, to: to.nvramURL)
     try FileManager.default.copyItem(at: diskURL, to: to.diskURL)
+    try? FileManager.default.copyItem(at: stateURL, to: to.stateURL)
 
     // Re-generate MAC address
     if generateMAC {
@@ -94,6 +108,8 @@ struct VMDirectory: Prunable {
     var vmConfig = try VMConfig(fromURL: configURL)
 
     vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    // cleanup state if any
+    try? FileManager.default.removeItem(at: stateURL)
 
     try vmConfig.save(toURL: configURL)
   }

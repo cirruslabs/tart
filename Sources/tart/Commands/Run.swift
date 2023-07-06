@@ -93,10 +93,14 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
-  func validate() throws {
+  @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
+  var suspendable: Bool = false
+
+  mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
+
     if netBridged != nil && netSoftnet {
       throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
     }
@@ -108,7 +112,23 @@ struct Run: AsyncParsableCommand {
 
   @MainActor
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let localStorage = VMStorageLocal()
+    let vmDir = try localStorage.open(name)
+
+    let storageLock = try FileLock(lockURL: Config().tartHomeDir)
+    if try vmDir.state() == "suspended" {
+      try storageLock.lock() // lock before checking
+      let needToGenerateNewMac = try localStorage.list().contains {
+        // check if there is a running VM with the same MAC but different name
+        try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
+      }
+
+      if needToGenerateNewMac {
+        print("There is already a running VM with the same MAC address!")
+        print("Resetting VM to assign a new MAC address...")
+        try vmDir.regenerateMACAddress()
+      }
+    }
 
     if netSoftnet && isInteractiveSession() {
       try Softnet.configureSUIDBitIfNeeded()
@@ -153,7 +173,8 @@ struct Run: AsyncParsableCommand {
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalDiskAttachments: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
-      serialPorts: serialPorts
+      serialPorts: serialPorts,
+      suspendable: suspendable
     )
 
     let vncImpl: VNC? = try {
@@ -184,6 +205,9 @@ struct Run: AsyncParsableCommand {
       throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
     }
 
+    // now VM state will return "running" so we can unlock
+    try storageLock.unlock()
+
     let task = Task {
       do {
         if let vncImpl = vncImpl {
@@ -197,7 +221,19 @@ struct Run: AsyncParsableCommand {
           }
         }
 
-        try await vm!.run(recovery)
+        var resume = false
+
+        if #available(macOS 14, *) {
+          if FileManager.default.fileExists(atPath: vmDir.stateURL.path) {
+            print("restoring VM state from a snapshot...")
+            try await vm!.virtualMachine.restoreMachineStateFrom(url: vmDir.stateURL)
+            try FileManager.default.removeItem(at: vmDir.stateURL)
+            resume = true
+            print("resuming VM...")
+          }
+        }
+
+        try await vm!.run(recovery: recovery, resume: resume)
 
         if let vncImpl = vncImpl {
           try vncImpl.stop()
@@ -215,17 +251,50 @@ struct Run: AsyncParsableCommand {
       }
     }
 
+    // "tart stop" support
     let sigintSrc = DispatchSource.makeSignalSource(signal: SIGINT)
     sigintSrc.setEventHandler {
       task.cancel()
     }
     sigintSrc.activate()
 
+    // "tart suspend" / UI window closing support
+    signal(SIGUSR1, SIG_IGN)
+    let sigusr1Src = DispatchSource.makeSignalSource(signal: SIGUSR1)
+    sigusr1Src.setEventHandler {
+      Task {
+        do {
+          if #available(macOS 14, *) {
+            try vm!.configuration.validateSaveRestoreSupport()
+
+            print("pausing VM to take a snapshot...")
+            try await vm!.virtualMachine.pause()
+
+            print("creating a snapshot...")
+            try await vm!.virtualMachine.saveMachineStateTo(url: vmDir.stateURL)
+
+            print("snapshot created successfully! shutting down the VM...")
+
+            task.cancel()
+          } else {
+            print(RuntimeError.SuspendFailed("this functionality is only supported on macOS 14 (Sonoma) or newer"))
+
+            Foundation.exit(1)
+          }
+        } catch (let e) {
+          print(RuntimeError.SuspendFailed(e.localizedDescription))
+
+          Foundation.exit(1)
+        }
+      }
+    }
+    sigusr1Src.activate()
+
     let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
     if noGraphics || useVNCWithoutGraphics {
       dispatchMain()
     } else {
-      runUI()
+      runUI(suspendable)
     }
   }
 
@@ -384,7 +453,7 @@ struct Run: AsyncParsableCommand {
     return [device]
   }
 
-  private func runUI() {
+  private func runUI(_ suspendable: Bool) {
     let nsApp = NSApplication.shared
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
@@ -392,6 +461,8 @@ struct Run: AsyncParsableCommand {
     nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
+      static var disappearSignal: Int32 = SIGINT
+
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
 
       var body: some Scene {
@@ -400,7 +471,7 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              let ret = kill(getpid(), SIGINT)
+              let ret = kill(getpid(), MainApp.disappearSignal)
               if ret != 0 {
                 // Fallback to the old termination method that doesn't
                 // propagate the cancellation to Task's in case graceful
@@ -436,11 +507,17 @@ struct Run: AsyncParsableCommand {
             Button("Request Stop") {
               Task { try vm!.virtualMachine.requestStop() }
             }
+            if #available(macOS 14, *) {
+              Button("Suspend") {
+                kill(getpid(), SIGUSR1)
+              }
+            }
           }
         }
       }
     }
 
+    MainApp.disappearSignal = suspendable ? SIGUSR1 : SIGINT
     MainApp.main()
   }
 }

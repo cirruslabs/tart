@@ -58,6 +58,7 @@ enum RuntimeError : Error {
   case ImportFailed(_ message: String)
   case SoftnetFailed(_ message: String)
   case OCIStorageError(_ message: String)
+  case SuspendFailed(_ message: String)
 }
 
 protocol HasExitCode {
@@ -101,6 +102,8 @@ extension RuntimeError : CustomStringConvertible {
       return "Softnet failed: \(message)"
     case .OCIStorageError(let message):
       return "OCI storage error: \(message)"
+    case .SuspendFailed(let message):
+      return "Failed to suspend the VM: \(message)"
     }
   }
 }
