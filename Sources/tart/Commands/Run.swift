@@ -108,6 +108,12 @@ struct Run: AsyncParsableCommand {
     if graphics && noGraphics {
       throw ValidationError("--graphics and --no-graphics are mutually exclusive")
     }
+
+    let localStorage = VMStorageLocal()
+    let vmDir = try localStorage.open(name)
+    if try vmDir.state() == "suspended" {
+      suspendable = true
+    }
   }
 
   @MainActor
