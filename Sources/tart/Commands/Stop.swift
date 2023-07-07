@@ -14,6 +14,21 @@ struct Stop: AsyncParsableCommand {
 
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
+    switch try vmDir.state() {
+    case "suspended":
+      try stopSuspended(vmDir)
+    case "running":
+      try await stopRunning(vmDir)
+    default:
+      return
+    }
+  }
+
+  func stopSuspended(_ vmDir: VMDirectory) throws {
+    try? FileManager.default.removeItem(at: vmDir.stateURL)
+  }
+
+  func stopRunning(_ vmDir: VMDirectory) async throws {
     let lock = try PIDLock(lockURL: vmDir.configURL)
 
     // Find the VM's PID
