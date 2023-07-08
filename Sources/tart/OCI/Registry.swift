@@ -99,11 +99,21 @@ struct TokenResponse: Decodable, Authentication {
 }
 
 class Registry {
-  let baseURL: URL
+  private let baseURL: URL
   let namespace: String
   let credentialsProviders: [CredentialsProvider]
 
   var currentAuthToken: Authentication? = nil
+
+  var host: String? {
+    guard let host = baseURL.host else { return nil }
+
+    if let port = baseURL.port {
+      return "\(host):\(port)"
+    }
+
+    return host
+  }
 
   init(urlComponents: URLComponents,
        namespace: String,

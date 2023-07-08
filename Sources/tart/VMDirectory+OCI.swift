@@ -159,7 +159,7 @@ extension VMDirectory {
     }
 
     let pushedReference = Reference(digest: try manifest.digest())
-    return RemoteName(host: registry.baseURL.host!, namespace: registry.namespace, reference: pushedReference)
+    return RemoteName(host: registry.host!, namespace: registry.namespace, reference: pushedReference)
   }
 }
 

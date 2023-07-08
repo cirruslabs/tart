@@ -100,7 +100,7 @@ struct Push: AsyncParsableCommand {
       _ = try await registry.pushManifest(reference: reference, manifest: remoteManifest)
     }
 
-    return RemoteName(host: registry.baseURL.host!, namespace: registry.namespace,
+    return RemoteName(host: registry.host!, namespace: registry.namespace,
                       reference: Reference(digest: digest))
   }
 }
