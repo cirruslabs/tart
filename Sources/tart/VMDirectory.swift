@@ -58,20 +58,20 @@ struct VMDirectory: Prunable {
 
     return VMDirectory(baseURL: tmpDir)
   }
-  
+
   static func temporary_deterministic(fileName: String) throws -> VMDirectory {
     let fileName_noSlash = fileName.replacingOccurrences(of: "/", with: "-")
     let tmpDir = try Config().tartTmpDir.appendingPathComponent(fileName_noSlash)
     do {
-        try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
+      try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
     }
     catch{
-        defaultLogger.appendNewLine("\(fileName_noSlash) exists")
+      defaultLogger.appendNewLine("\(fileName_noSlash) exists")
     }
 
     return VMDirectory(baseURL: tmpDir)
   }
-    
+
   var initialized: Bool {
     FileManager.default.fileExists(atPath: configURL.path) &&
       FileManager.default.fileExists(atPath: diskURL.path) &&
