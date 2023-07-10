@@ -339,6 +339,20 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Serial Port
     configuration.serialPorts = serialPorts
 
+    // Version console device
+    //
+    // A dummy console device useful for implementing
+    // host feature checks in the guest agent software.
+    if #available(macOS 13, *) {
+      let consolePort = VZVirtioConsolePortConfiguration()
+      consolePort.name = "tart-version-\(CI.version)"
+
+      let consoleDevice = VZVirtioConsoleDeviceConfiguration()
+      consoleDevice.ports[0] = consolePort
+
+      configuration.consoleDevices.append(consoleDevice)
+    }
+
     try configuration.validate()
 
     return configuration
