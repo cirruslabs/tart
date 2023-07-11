@@ -31,8 +31,6 @@ struct Clone: AsyncParsableCommand {
     }
 
     let sourceVM = try VMStorageHelper.open(sourceName)
-    try Prune.reclaimIfNeeded(UInt64(sourceVM.sizeBytes()))
-
     let tmpVMDir = try VMDirectory.temporary()
 
     // Lock the temporary VM directory to prevent it's garbage collection
@@ -44,13 +42,18 @@ struct Clone: AsyncParsableCommand {
       let lock = try FileLock(lockURL: Config().tartHomeDir)
       try lock.lock()
 
-      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress()) 
+      let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
         && sourceVM.state() != "suspended"
       try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
 
       try localStorage.move(newName, from: tmpVMDir)
 
       try lock.unlock()
+
+      // APFS is doing copy-on-write so the above cloning operation (just copying files on disk)
+      // is not actually claiming new space until the VM is started and it writes something to disk.
+      // So once we clone the VM let's try to claim a little bit of space for the VM to run.
+      try Prune.reclaimIfNeeded(UInt64(sourceVM.sizeBytes()))
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
     })
