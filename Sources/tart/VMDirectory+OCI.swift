@@ -27,7 +27,6 @@ extension VMDirectory {
   func pullFromRegistry(registry: Registry, manifest: OCIManifest) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     if !FileManager.default.fileExists(atPath:configURL.path){
-      print("Pulling config")
       let configLayers = manifest.layers.filter {
         $0.mediaType == Self.configMediaType
       }
@@ -51,9 +50,14 @@ extension VMDirectory {
     if diskLayers.isEmpty {
       throw OCIError.ShouldBeAtLeastOneLayer
     }
-    if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
-      throw OCIError.FailedToCreateVmFile
+
+    if !FileManager.default.fileExists(atPath: diskURL.path){
+      if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
+        throw OCIError.FailedToCreateVmFile
+      }
+      print("Created diskimg")
     }
+
     let disk = try FileHandle(forWritingTo: diskURL)
     let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
       if let data = data {
