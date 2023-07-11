@@ -98,10 +98,21 @@ struct VMDirectory: Prunable {
     if generateMAC {
       try to.regenerateMACAddress()
     }
+
+    // We're cloning, reset creation date on the destination
+    try to.resetCreationDate()
   }
 
   func macAddress() throws -> String {
     try VMConfig(fromURL: configURL).macAddress.string
+  }
+
+  func resetCreationDate() throws {
+    var vmConfig = try VMConfig(fromURL: configURL)
+
+    vmConfig.resetCreationDate()
+
+    try vmConfig.save(toURL: configURL)
   }
 
   func regenerateMACAddress() throws {
