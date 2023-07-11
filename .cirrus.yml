@@ -127,12 +127,12 @@ task:
     - cd .build/arm64-apple-macosx/release/
     # Generate and upload symbols
     - dsymutil tart
-    - sentry-cli debug-files upload -o cirrus-labs -p tart tart.dSYM/
-    - sentry-cli debug-files upload -o cirrus-labs -p persistent-workers tart.dSYM/
+    - sentry-cli debug-files upload tart.dSYM/
+    - SENTRY_PROJECT=tart sentry-cli debug-files upload tart.dSYM/
     # Bundle and upload sources
     - sentry-cli debug-files bundle-sources tart.dSYM
-    - sentry-cli debug-files upload -o cirrus-labs -p tart tart.src.zip
-    - sentry-cli debug-files upload -o cirrus-labs -p persistent-workers tart.src.zip
+    - sentry-cli debug-files upload tart.src.zip
+    - SENTRY_PROJECT=tart sentry-cli debug-files upload tart.src.zip
   create_sentry_release_script:
     - export SENTRY_RELEASE="tart@$CIRRUS_TAG"
     - sentry-cli releases new $SENTRY_RELEASE
