@@ -55,7 +55,6 @@ extension VMDirectory {
       if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
         throw OCIError.FailedToCreateVmFile
       }
-      print("Created diskimg")
     }
 
     let disk = try FileHandle(forWritingTo: diskURL)
