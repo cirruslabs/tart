@@ -148,7 +148,8 @@ extension VMDirectory {
     let manifest = OCIManifest(
       config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
       layers: layers,
-      uncompressedDiskSize: UInt64(mappedDiskReadOffset)
+      uncompressedDiskSize: UInt64(mappedDiskReadOffset),
+      uploadDate: Date()
     )
 
     // Manifest

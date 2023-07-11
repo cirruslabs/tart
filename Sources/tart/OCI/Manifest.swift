@@ -5,6 +5,7 @@ let ociConfigMediaType = "application/vnd.oci.image.config.v1+json"
 
 // Annotations
 let uncompressedDiskSizeAnnotation = "org.cirruslabs.tart.uncompressed-disk-size"
+let uploadTimeAnnotation = "org.cirruslabs.tart.upload-time"
 
 struct OCIManifest: Codable, Equatable {
   var schemaVersion: Int = 2
@@ -13,15 +14,21 @@ struct OCIManifest: Codable, Equatable {
   var layers: [OCIManifestLayer] = Array()
   var annotations: Dictionary<String, String>?
 
-  init(config: OCIManifestConfig, layers: [OCIManifestLayer], uncompressedDiskSize: UInt64? = nil) {
+  init(config: OCIManifestConfig, layers: [OCIManifestLayer], uncompressedDiskSize: UInt64? = nil, uploadDate: Date? = nil) {
     self.config = config
     self.layers = layers
 
+    var annotations: [String: String] = [:]
+
     if let uncompressedDiskSize = uncompressedDiskSize {
-      annotations = [
-        uncompressedDiskSizeAnnotation: String(uncompressedDiskSize)
-      ]
+      annotations[uncompressedDiskSizeAnnotation] = String(uncompressedDiskSize)
     }
+
+    if let uploadDate = uploadDate {
+      annotations[uploadTimeAnnotation] = uploadDate.toISO()
+    }
+
+    self.annotations = annotations
   }
 
   init(fromJSON: Data) throws {
