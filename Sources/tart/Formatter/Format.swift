@@ -28,9 +28,14 @@ enum Format: String, ExpressibleByArgument, CaseIterable {
         let mirroredObject = Mirror(reflecting: item)
         return mirroredObject.children.enumerated()
           .filter {(_, element) in
-            // Deprecate the "Running" field: only make it available
-            // from JSON for backwards-compatibility
-            element.label! != "Running"
+            (
+              // Deprecate the "Running" field: only make it available
+              // from JSON for backwards-compatibility
+              element.label! != "Running"
+            ) && (
+              // Access date should only be accessible in JSON render format
+              element.label != "AccessDate"
+            )
           }
           .map { (_, element) in
             let fieldName = element.label!
@@ -41,6 +46,7 @@ enum Format: String, ExpressibleByArgument, CaseIterable {
     case .json:
       let encoder = JSONEncoder()
       encoder.outputFormatting = .prettyPrinted
+      encoder.dateEncodingStrategy = .iso8601
       return try! encoder.encode(data).asText()
     }
   }

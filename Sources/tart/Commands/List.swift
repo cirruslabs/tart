@@ -8,6 +8,7 @@ fileprivate struct VMInfo: Encodable {
   let Size: Int
   let Running: Bool
   let State: String
+  let AccessDate: Date?
 }
 
 struct List: AsyncParsableCommand {
@@ -37,13 +38,14 @@ struct List: AsyncParsableCommand {
 
     if source == nil || source == "local" {
       infos += sortedInfos(try VMStorageLocal().list().map { (name, vmDir) in
-        try VMInfo(Source: "local", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running(), State: vmDir.state())
+        // AccessDate is nil because local VMs don't get access date updated
+        try VMInfo(Source: "local", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running(), State: vmDir.state(), AccessDate: nil)
       })
     }
 
     if source == nil || source == "oci" {
       infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
-        try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running(), State: vmDir.state())
+        try VMInfo(Source: "oci", Name: name, Size: vmDir.sizeGB(), Running: vmDir.running(), State: vmDir.state(), AccessDate: vmDir.accessDate())
       })
     }
 
