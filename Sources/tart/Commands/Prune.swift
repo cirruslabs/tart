@@ -34,7 +34,7 @@ struct Prune: AsyncParsableCommand {
     // Clean up cache entries based on last accessed date
     if let olderThan = olderThan {
       let olderThanInterval = Int(exactly: olderThan)!.days.timeInterval
-      let olderThanDate = Date().addingTimeInterval(olderThanInterval)
+      let olderThanDate = Date() - olderThanInterval
 
       try Prune.pruneOlderThan(olderThanDate: olderThanDate)
     }
