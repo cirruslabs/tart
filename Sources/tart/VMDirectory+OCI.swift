@@ -26,20 +26,23 @@ extension VMDirectory {
 
   func pullFromRegistry(registry: Registry, manifest: OCIManifest) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
-    let configLayers = manifest.layers.filter {
-      $0.mediaType == Self.configMediaType
+    if !FileManager.default.fileExists(atPath:configURL.path){
+      print("Pulling config")
+      let configLayers = manifest.layers.filter {
+        $0.mediaType == Self.configMediaType
+      }
+      if configLayers.count != 1 {
+        throw OCIError.ShouldBeExactlyOneLayer
+      }
+      if !FileManager.default.createFile(atPath: configURL.path, contents: nil) {
+        throw OCIError.FailedToCreateVmFile
+      }
+      let configFile = try FileHandle(forWritingTo: configURL)
+      try await registry.pullBlob(configLayers.first!.digest) { data in
+        configFile.write(data)
+      }
+      try configFile.close()
     }
-    if configLayers.count != 1 {
-      throw OCIError.ShouldBeExactlyOneLayer
-    }
-    if !FileManager.default.createFile(atPath: configURL.path, contents: nil) {
-      throw OCIError.FailedToCreateVmFile
-    }
-    let configFile = try FileHandle(forWritingTo: configURL)
-    try await registry.pullBlob(configLayers.first!.digest) { data in
-      configFile.write(data)
-    }
-    try configFile.close()
 
     // Pull VM's disk layers and decompress them sequentially into a disk file
     let diskLayers = manifest.layers.filter {
@@ -80,23 +83,25 @@ extension VMDirectory {
     try disk.close()
     SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte);
 
-    // Pull VM's NVRAM file layer and store it in an NVRAM file
-    defaultLogger.appendNewLine("pulling NVRAM...")
 
-    let nvramLayers = manifest.layers.filter {
-      $0.mediaType == Self.nvramMediaType
+    // Pull VM's NVRAM file layer and store it in an NVRAM file
+    if FileManager.default.fileExists(atPath: nvramURL.path){
+      defaultLogger.appendNewLine("pulling NVRAM...")
+      let nvramLayers = manifest.layers.filter {
+        $0.mediaType == Self.nvramMediaType
+      }
+      if nvramLayers.count != 1 {
+        throw OCIError.ShouldBeExactlyOneLayer
+      }
+      if !FileManager.default.createFile(atPath: nvramURL.path, contents: nil) {
+        throw OCIError.FailedToCreateVmFile
+      }
+      let nvram = try FileHandle(forWritingTo: nvramURL)
+      try await registry.pullBlob(nvramLayers.first!.digest) { data in
+        nvram.write(data)
+      }
+      try nvram.close()
     }
-    if nvramLayers.count != 1 {
-      throw OCIError.ShouldBeExactlyOneLayer
-    }
-    if !FileManager.default.createFile(atPath: nvramURL.path, contents: nil) {
-      throw OCIError.FailedToCreateVmFile
-    }
-    let nvram = try FileHandle(forWritingTo: nvramURL)
-    try await registry.pullBlob(nvramLayers.first!.digest) { data in
-      nvram.write(data)
-    }
-    try nvram.close()
   }
 
   func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int) async throws -> RemoteName {
