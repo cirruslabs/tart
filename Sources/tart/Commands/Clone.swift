@@ -18,7 +18,7 @@ struct Clone: AsyncParsableCommand {
     "Amount of disk space in GB to try to remain available after cloning for future runs of virtual machines.",
     discussion: """
     Apple File System is using copy-on-write so a cloned VM is not claiming disk until it gets executed and starts actually writing to the disk.
-    This argument allows to automatically make sure that there is some space left for successful VMs execution in the future.
+    This argument allows to automatically make sure that there is some space left for successful execution of virtual machines in the future.
     """,
     visibility: .hidden))
   var diskSizeToMakeAvailable: UInt64 = 50
