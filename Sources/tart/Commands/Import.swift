@@ -41,8 +41,6 @@ struct Import: AsyncParsableCommand {
         try tmpVMDir.regenerateMACAddress()
       }
 
-      try tmpVMDir.resetCreationDate()
-
       try localStorage.move(name, from: tmpVMDir)
 
       try lock.unlock()

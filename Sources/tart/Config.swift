@@ -42,7 +42,6 @@ struct Config {
     let encoder = JSONEncoder()
 
     encoder.outputFormatting = [.sortedKeys]
-    encoder.dateEncodingStrategy = .iso8601
 
     return encoder
   }

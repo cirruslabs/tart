@@ -24,7 +24,6 @@ enum CodingKeys: String, CodingKey {
   case memorySize
   case macAddress
   case display
-  case creationDate
 
   // macOS-specific keys
   case ecid
@@ -53,7 +52,6 @@ struct VMConfig: Codable {
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
   var display: VMDisplayConfig = VMDisplayConfig()
-  var creationDate: Date?
 
   init(
     platform: Platform,
@@ -69,7 +67,6 @@ struct VMConfig: Codable {
     self.memorySizeMin = memorySizeMin
     cpuCount = cpuCountMin
     memorySize = memorySizeMin
-    creationDate = Date()
   }
 
   init(fromJSON: Data) throws {
@@ -110,7 +107,6 @@ struct VMConfig: Codable {
     cpuCount = try container.decode(Int.self, forKey: .cpuCount)
     memorySizeMin = try container.decode(UInt64.self, forKey: .memorySizeMin)
     memorySize = try container.decode(UInt64.self, forKey: .memorySize)
-    creationDate = try container.decodeIfPresent(Date.self, forKey: .creationDate)
 
     let encodedMacAddress = try container.decode(String.self, forKey: .macAddress)
     guard let macAddress = VZMACAddress.init(string: encodedMacAddress) else {
@@ -137,7 +133,6 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
-    try container.encode(creationDate, forKey: .creationDate)
   }
 
   mutating func setCPU(cpuCount: Int) throws {
@@ -156,9 +151,5 @@ struct VMConfig: Codable {
     }
 
     self.memorySize = memorySize
-  }
-
-  mutating func resetCreationDate() {
-    self.creationDate = Date()
   }
 }
