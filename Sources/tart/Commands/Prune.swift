@@ -77,7 +77,7 @@ struct Prune: AsyncParsableCommand {
     try prunablesToDelete.forEach { try $0.delete() }
   }
 
-  static func reclaimIfNeeded(_ requiredBytes: UInt64) throws {
+  static func reclaimIfNeeded(_ requiredBytes: UInt64, _ initiator: Prunable? = nil) throws {
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["requiredBytes": requiredBytes], key: "Prune")
     }
@@ -114,10 +114,10 @@ struct Prune: AsyncParsableCommand {
       return
     }
 
-    try Prune.reclaimIfPossible(requiredBytes - volumeAvailableCapacityCalculated)
+    try Prune.reclaimIfPossible(requiredBytes - volumeAvailableCapacityCalculated, initiator)
   }
 
-  private static func reclaimIfPossible(_ reclaimBytes: UInt64) throws {
+  private static func reclaimIfPossible(_ reclaimBytes: UInt64, _ initiator: Prunable? = nil) throws {
     let transaction = SentrySDK.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
     defer { transaction.finish() }
 
@@ -139,6 +139,11 @@ struct Prune: AsyncParsableCommand {
     while cacheReclaimedBytes <= reclaimBytes {
       guard let prunable = it.next() else {
         break
+      }
+
+      if prunable.url == initiator?.url {
+        // do not prune the initiator
+        continue
       }
 
       try SentrySDK.span?.setData(value: prunable.sizeBytes(), key: prunable.url.path)
