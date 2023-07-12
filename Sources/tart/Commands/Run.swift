@@ -76,7 +76,7 @@ struct Run: AsyncParsableCommand {
   Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")
   """, discussion: """
   Requires host to be macOS 13.0 (Ventura) or newer.
-  A shared directories is automatically mounted to "/Volumes/My Shared Files" directory on macOS,
+  A shared directory is automatically mounted to "/Volumes/My Shared Files" directory on macOS,
   while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
   For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
 
