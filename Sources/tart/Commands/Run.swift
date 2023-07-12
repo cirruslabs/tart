@@ -73,13 +73,17 @@ struct Run: AsyncParsableCommand {
   var rosettaTag: String?
 
   @Option(help: ArgumentHelp("""
-  Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\")
+  Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")
   """, discussion: """
   Requires host to be macOS 13.0 (Ventura) or newer.
-  All shared directories are automatically mounted to "/Volumes/My Shared Files" directory on macOS,
+  A shared directory is automatically mounted to "/Volumes/My Shared Files" directory on macOS,
   while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
   For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
-  """, valueName: "name:path[:ro]"))
+
+  In case of passing multiple directories it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\"
+  These names will be used as directory names under the mounting point inside guests. For the example above it will be
+  "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
+  """, valueName: "[name:]path[:ro]"))
   var dir: [String] = []
 
   @Option(help: ArgumentHelp("""
@@ -390,46 +394,31 @@ struct Run: AsyncParsableCommand {
       throw UnsupportedOSError("directory sharing", "is")
     }
 
-    struct DirectoryShare {
-      let name: String
-      let path: URL
-      let readOnly: Bool
-    }
-
     var directoryShares: [DirectoryShare] = []
 
+    var allNamedShares = true
     for rawDir in dir {
-      let splits = rawDir.split(maxSplits: 2) { $0 == ":" }
-
-      if splits.count < 2 {
-        throw ValidationError("invalid --dir syntax: should at least include name and path, colon-separated")
+      let directoryShare = try DirectoryShare(parseFrom: rawDir)
+      if (directoryShare.name == nil) {
+        allNamedShares = false
       }
-
-      var readOnly: Bool = false
-
-      if splits.count == 3 {
-        if splits[2] == "ro" {
-          readOnly = true
-        } else {
-          throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
-        }
-      }
-
-      let (name, path) = (String(splits[0]), String(splits[1]))
-
-      directoryShares.append(DirectoryShare(
-        name: name,
-        path: URL(fileURLWithPath: NSString(string: path).expandingTildeInPath),
-        readOnly: readOnly)
-      )
+      directoryShares.append(directoryShare)
     }
 
-    var directories: [String : VZSharedDirectory] = Dictionary()
-    directoryShares.forEach { directories[$0.name] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
 
     let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
     let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
-    sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
+    if allNamedShares {
+      var directories: [String : VZSharedDirectory] = Dictionary()
+      directoryShares.forEach { directories[$0.name!] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
+      sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
+    } else if dir.count > 1 {
+      throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
+    } else if dir.count == 1 {
+      let directoryShare = directoryShares.first!
+      let singleDirectoryShare = VZSingleDirectoryShare(directory: VZSharedDirectory(url: directoryShare.path, readOnly: directoryShare.readOnly))
+      sharingDevice.share = singleDirectoryShare
+    }
 
     return [sharingDevice]
   }
@@ -593,5 +582,45 @@ struct VMView: NSViewRepresentable {
 
   func updateNSView(_ nsView: NSViewType, context: Context) {
     nsView.virtualMachine = vm.virtualMachine
+  }
+}
+
+struct DirectoryShare {
+  let name: String?
+  let path: URL
+  let readOnly: Bool
+
+  init(parseFrom: String) throws {
+    let splits = parseFrom.split(maxSplits: 2) { $0 == ":" }
+
+    if splits.count == 3 {
+      if splits[2] == "ro" {
+        readOnly = true
+      } else {
+        throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
+      }
+      name = String(splits[0])
+      path = String(splits[1]).toFilePathURL()
+    } else if splits.count == 2 {
+      if splits[1] == "ro" {
+        name = nil
+        path = String(splits[0]).toFilePathURL()
+        readOnly = true
+      } else {
+        name = String(splits[0])
+        path = String(splits[1]).toFilePathURL()
+        readOnly = false
+      }
+    } else {
+      name = nil
+      path = String(splits[0]).toFilePathURL()
+      readOnly = false
+    }
+  }
+}
+
+extension String {
+  func toFilePathURL() -> URL {
+    URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
   }
 }
