@@ -79,7 +79,7 @@ struct Run: AsyncParsableCommand {
   All shared directories are automatically mounted to "/Volumes/My Shared Files" directory on macOS,
   while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
   For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
-  
+
   In case of passing multiple directories it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\"
   These names will be used as directory names under the mounting point inside guests. For the example above it will be
   "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
@@ -395,7 +395,7 @@ struct Run: AsyncParsableCommand {
     }
 
     var directoryShares: [DirectoryShare] = []
-    
+
     var allNamedShares = true
     for rawDir in dir {
       let directoryShare = try DirectoryShare(parseFrom: rawDir)
@@ -589,7 +589,7 @@ struct DirectoryShare {
   let name: String?
   let path: URL
   let readOnly: Bool
-  
+
   init(parseFrom: String) throws {
     let splits = parseFrom.split(maxSplits: 2) { $0 == ":" }
 
