@@ -141,7 +141,7 @@ struct Prune: AsyncParsableCommand {
         break
       }
 
-      if prunable.url == initiator?.url {
+      if prunable.url == initiator?.url.resolvingSymlinksInPath() {
         // do not prune the initiator
         continue
       }
