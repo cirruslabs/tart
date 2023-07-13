@@ -9,7 +9,7 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 * Easily integrates with any CI system.
 
 Tart powers [Cirrus Runners](https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral)
-service -- a drop-in replacement for the standard GitHub-hosted runners. 2-3 times better performance for a fraction of the price.
+service — a drop-in replacement for the standard GitHub-hosted runners, offering 2-3 times better performance for a fraction of the price.
 
 <p align="center">
   <a href="https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral" target=_blank>
