@@ -5,23 +5,40 @@ import SwiftUI
 import SwiftDate
 
 struct Prune: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Prune OCI and IPSW caches")
+  static var configuration = CommandConfiguration(abstract: "Prune OCI and IPSW caches or local VMs")
 
-  @Option(help: ArgumentHelp("Remove cache entries last accessed more than n days ago",
+  @Option(help: ArgumentHelp("Entries to remove: \"caches\" targets OCI and IPSW caches and \"vms\" targets local VMs."))
+  var entries: String = "caches"
+
+  @Option(help: ArgumentHelp("Remove entries that were last accessed more than n days ago",
                              discussion: "For example, --older-than=7 will remove entries that weren't accessed by Tart in the last 7 days.",
                              valueName: "n"))
   var olderThan: UInt?
 
-  @Option(help: ArgumentHelp("Remove least recently used cache entries that do not fit the specified cache size budget n, expressed in gigabytes",
-                             discussion: "For example, --cache-budget=50 will effectively shrink all caches to a total size of 50 gigabytes.",
-                             valueName: "n"))
+  @Option(help: .hidden)
   var cacheBudget: UInt?
+
+  @Option(help: ArgumentHelp("Remove the least recently used entries that do not fit the specified space size budget n, expressed in gigabytes",
+                             discussion: "For example, --space-budget=50 will effectively shrink all entries to a total size of 50 gigabytes.",
+                             valueName: "n"))
+  var spaceBudget: UInt?
 
   @Flag(help: .hidden)
   var gc: Bool = false
 
-  func validate() throws {
-    if olderThan == nil && cacheBudget == nil && !gc {
+  mutating func validate() throws {
+    // --cache-budget deprecation logic
+    if let cacheBudget = cacheBudget {
+      fputs("--cache-budget is deprecated, please use --space-budget\n", stderr)
+
+      if spaceBudget != nil {
+        throw ValidationError("--cache-budget is deprecated, please use --space-budget")
+      }
+
+      spaceBudget = cacheBudget
+    }
+
+    if olderThan == nil && spaceBudget == nil && !gc {
       throw ValidationError("at least one pruning criteria must be specified")
     }
   }
@@ -31,43 +48,53 @@ struct Prune: AsyncParsableCommand {
       try VMStorageOCI().gc()
     }
 
+    // Build a list of prunable storages that we're going to prune based on user's request
+    let prunableStorages: [PrunableStorage]
+
+    switch entries {
+    case "caches":
+      prunableStorages = [VMStorageOCI(), try IPSWCache()]
+    case "vms":
+      prunableStorages = [VMStorageLocal()]
+    default:
+      throw ValidationError("unsupported --entries value, please specify either \"caches\" or \"vms\"")
+    }
+
     // Clean up cache entries based on last accessed date
     if let olderThan = olderThan {
       let olderThanInterval = Int(exactly: olderThan)!.days.timeInterval
       let olderThanDate = Date() - olderThanInterval
 
-      try Prune.pruneOlderThan(olderThanDate: olderThanDate)
+      try Prune.pruneOlderThan(prunableStorages: prunableStorages, olderThanDate: olderThanDate)
     }
 
     // Clean up cache entries based on imposed cache size limit and entry's last accessed date
-    if let cacheBudget = cacheBudget {
-      try Prune.pruneCacheBudget(cacheBudgetBytes: UInt64(cacheBudget) * 1024 * 1024 * 1024)
+    if let spaceBudget = spaceBudget {
+      try Prune.pruneSpaceBudget(prunableStorages: prunableStorages, spaceBudgetBytes: UInt64(spaceBudget) * 1024 * 1024 * 1024)
     }
   }
 
-  static func pruneOlderThan(olderThanDate: Date) throws {
-    let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
+  static func pruneOlderThan(prunableStorages: [PrunableStorage], olderThanDate: Date) throws {
     let prunables: [Prunable] = try prunableStorages.flatMap { try $0.prunables() }
 
     try prunables.filter { try $0.accessDate() <= olderThanDate }.forEach { try $0.delete() }
   }
 
-  static func pruneCacheBudget(cacheBudgetBytes: UInt64) throws {
-    let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
+  static func pruneSpaceBudget(prunableStorages: [PrunableStorage], spaceBudgetBytes: UInt64) throws {
     let prunables: [Prunable] = try prunableStorages
       .flatMap { try $0.prunables() }
       .sorted { try $0.accessDate() > $1.accessDate() }
 
-    var cacheBudgetBytes = cacheBudgetBytes
+    var spaceBudgetBytes = spaceBudgetBytes
     var prunablesToDelete: [Prunable] = []
 
     for prunable in prunables {
       let prunableSizeBytes = UInt64(try prunable.sizeBytes())
 
-      if prunableSizeBytes <= cacheBudgetBytes {
+      if prunableSizeBytes <= spaceBudgetBytes {
         // Don't mark for deletion as
         // there's a budget available
-        cacheBudgetBytes -= prunableSizeBytes
+        spaceBudgetBytes -= prunableSizeBytes
       } else {
         // Mark for deletion
         prunablesToDelete.append(prunable)
