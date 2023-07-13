@@ -51,11 +51,10 @@ extension VMDirectory {
       throw OCIError.ShouldBeAtLeastOneLayer
     }
 
-    if !FileManager.default.fileExists(atPath: diskURL.path){
-      if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
-        throw OCIError.FailedToCreateVmFile
-      }
+    if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
+      throw OCIError.FailedToCreateVmFile
     }
+    
 
     let disk = try FileHandle(forWritingTo: diskURL)
     let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
