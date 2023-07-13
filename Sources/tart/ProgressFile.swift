@@ -9,7 +9,6 @@ enum ProgressError: Error {
 
 //values of each key in progressDict
 struct myValues: Codable {
-  var channelCount: Int
   var isDownloaded: Bool
 }
 
@@ -18,7 +17,7 @@ class ProgressFile{
   let progressURL: URL
   //progressDict stores [diskLayer : (channelCount, isDownloaded)], where channelCount is the parts of the channel from registry.pullBlob()
   var progressDict: [String: myValues] = [
-    "" : myValues(channelCount: -1, isDownloaded: false)]
+    "" : myValues(isDownloaded: false)]
 
   //Create progress.json if it doesn't exist yet, else extract the dict
   init(baseURL: URL) throws{
@@ -55,32 +54,27 @@ class ProgressFile{
       throw ProgressError.FailedtoExtractProgressFile
     }
   }
-
-  //update given diskLayer with given channelLayerCount
-  func updateProgress(diskLayerCount: Int, channelLayerCount: Int) throws {
-    self.progressDict[String(diskLayerCount)] = myValues(channelCount: channelLayerCount, isDownloaded: false)
-    try writeProgress()
+  
+  //return if a diskLayer exists
+  private func layerExists(diskLayer: Int) -> Bool {
+    return progressDict.keys.contains(String(diskLayer))
   }
 
   //returns if the given diskLayer is downloaded
   func isDiskLayerDownloaded(diskLayer: Int) -> Bool{
-    if progressDict.keys.contains(String(diskLayer)) {
+    if layerExists(diskLayer: diskLayer) {
       return progressDict[String(diskLayer)]!.isDownloaded
     }
     return false
   }
 
-  //returns if given channel-part is written
-  func isChannelWritten(diskLayer: Int, channelLayerCount: Int) -> Bool{
-    guard let channelsDownloadedUpTo = progressDict[String(diskLayer)]?.channelCount else {
-      return false
-    }
-    return channelsDownloadedUpTo >= channelLayerCount
-  }
-
   //marks the given diskLayer as downloaded
   func markLayerDownloaded(diskLayer: Int) throws {
-    progressDict[String(diskLayer)]!.isDownloaded = true
+    if layerExists(diskLayer: diskLayer){
+      self.progressDict[String(diskLayer)]!.isDownloaded = true
+    } else {
+      self.progressDict[String(diskLayer)] = myValues(isDownloaded: true)
+    }
     try writeProgress()
   }
 }
