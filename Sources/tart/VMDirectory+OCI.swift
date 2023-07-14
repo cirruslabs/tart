@@ -86,9 +86,9 @@ extension VMDirectory {
         let blobName = "blob-\(diskCount)"
         try await blobsDir.set(contents: blob, name: blobName)
         try progFile.markLayerDownloaded(diskLayer: diskCount)
-        defaultLogger.appendNewLine("disk \(diskCount) downloaded into tmp")
+        defaultLogger.appendNewLine("diskLayer \(diskCount) downloaded into tmp")
       } else {
-        defaultLogger.appendNewLine("disk \(diskCount) exists, moving on")
+        defaultLogger.appendNewLine("diskLayer \(diskCount) exists, moving on")
       }
     }
 
