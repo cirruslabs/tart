@@ -259,13 +259,12 @@ class Registry {
 
   public func pullBlobTmpHelper(_ digest: String) async throws -> AsyncThrowingChannel<Data, Error> {
     let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), viaFile: true)
-      if response.statusCode != HTTPCode.Ok.rawValue {
-        let body = try await channel.asData().asText()
-        throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
-                                                     details: body)
-      }
-    return channel
+    if response.statusCode != HTTPCode.Ok.rawValue {
+      let body = try await channel.asData().asText()
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode, details: body)
     }
+    return channel
+  }
 
   private func endpointURL(_ endpoint: String) -> URLComponents {
     let url = URL(string: endpoint, relativeTo: baseURL)!

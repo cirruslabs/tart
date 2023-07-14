@@ -54,7 +54,7 @@ class ProgressFile{
       throw ProgressError.FailedtoExtractProgressFile
     }
   }
-  
+
   //return if a diskLayer exists
   private func layerExists(diskLayer: Int) -> Bool {
     return progressDict.keys.contains(String(diskLayer))

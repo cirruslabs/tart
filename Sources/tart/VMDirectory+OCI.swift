@@ -95,7 +95,7 @@ extension VMDirectory {
 
     print("All layers downloaded")
     print("Starting to uncompress...")
-
+    //Write to filter
     let blobs = try blobsDir.getAllBlobs()
     for blob in blobs {
       try filter.write(blob)
