@@ -15,7 +15,7 @@ struct myValues: Codable {
 class ProgressFile{
   let baseURL: URL
   let progressURL: URL
-  //progressDict stores [diskLayer : (channelCount, isDownloaded)], where channelCount is the parts of the channel from registry.pullBlob()
+  //progressDict stores [diskLayer : (isDownloaded)]
   var progressDict: [String: myValues] = [
     "" : myValues(isDownloaded: false)]
 

@@ -102,12 +102,6 @@ extension VMDirectory {
       progress.completedUnitCount += Int64(blob.count)
     }
 
-//    for diskLayer in diskLayers {
-//      try await registry.pullBlob(diskLayer.digest) { data in
-//        try filter.write(data)
-//        progress.completedUnitCount += Int64(data.count)
-//      }
-//    }
     try filter.finalize()
     try disk.close()
     SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte);

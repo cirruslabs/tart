@@ -9,10 +9,12 @@ enum BlobsTmpDirError: Error {
   case FailedToGetAllBlobs
 }
 
+//class the manages blobs in tmp/blobs
 class BlobTmpDir {
   let baseURL : URL
   let blobsURL : URL
 
+  //Create blobs directory
   init(baseURL: URL) throws {
     do {
       self.baseURL = baseURL
@@ -33,6 +35,7 @@ class BlobTmpDir {
     }
   }
 
+  //extract data from blob
   func get(name: String) throws -> Data? {
     do {
       let blobURL = blobsURL.appendingPathComponent(name)
@@ -48,6 +51,7 @@ class BlobTmpDir {
     }
   }
 
+  //creates a blob file in blobs folder
   func set(contents: AsyncThrowingChannel<Data, Error>, name: String) async throws {
     do {
       let blobURL = blobsURL.appendingPathComponent(name)
@@ -58,6 +62,7 @@ class BlobTmpDir {
     }
   }
 
+  //Reads data from all blobs in blob folder, places it into array in ascending-order
   func getAllBlobs() throws -> [Data] {
     do {
       var blobs: [Data] = []
