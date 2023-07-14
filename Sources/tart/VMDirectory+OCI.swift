@@ -51,10 +51,8 @@ extension VMDirectory {
       throw OCIError.ShouldBeAtLeastOneLayer
     }
 
-    if !FileManager.default.fileExists(atPath: diskURL.path){
-      if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
-        throw OCIError.FailedToCreateVmFile
-      }
+    if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
+      throw OCIError.FailedToCreateVmFile
     }
 
     let disk = try FileHandle(forWritingTo: diskURL)
@@ -76,19 +74,40 @@ extension VMDirectory {
     let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
+
+    let blobsDir = try BlobTmpDir(baseURL: baseURL)
+    let progFile = try ProgressFile(baseURL: baseURL)
+
+    var diskCount = 0
     for diskLayer in diskLayers {
-      try await registry.pullBlob(diskLayer.digest) { data in
-        try filter.write(data)
-        progress.completedUnitCount += Int64(data.count)
+      diskCount += 1
+      if !progFile.isDiskLayerDownloaded(diskLayer: diskCount){
+        let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
+        let blobName = "blob-\(diskCount)"
+        try await blobsDir.set(contents: blob, name: blobName)
+        try progFile.markLayerDownloaded(diskLayer: diskCount)
+        defaultLogger.appendNewLine("disk \(diskCount) downloaded into tmp")
+      } else {
+        defaultLogger.appendNewLine("disk \(diskCount) exists, moving on")
       }
     }
+
+    defaultLogger.appendNewLine("All layers downloaded")
+    defaultLogger.appendNewLine("Starting to uncompress")
+    //Write to filter
+    let blobs = try blobsDir.getAllBlobs()
+    for blob in blobs {
+      try filter.write(blob)
+      progress.completedUnitCount += Int64(blob.count)
+    }
+
     try filter.finalize()
     try disk.close()
     SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte);
 
 
     // Pull VM's NVRAM file layer and store it in an NVRAM file
-    if FileManager.default.fileExists(atPath: nvramURL.path){
+    if !FileManager.default.fileExists(atPath: nvramURL.path){
       defaultLogger.appendNewLine("pulling NVRAM...")
       let nvramLayers = manifest.layers.filter {
         $0.mediaType == Self.nvramMediaType

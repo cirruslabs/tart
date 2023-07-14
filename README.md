@@ -6,9 +6,18 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 * Tart uses Apple's own `Virtualization.Framework` for [near-native performance](https://browser.geekbench.com/v5/cpu/compare/20382844?baseline=20382722).
 * Push/Pull virtual machines from any OCI-compatible container registry.
 * Use Tart Packer Plugin to automate VM creation.
-* Built-in CI integration.
+* Easily integrates with any CI system.
 
-*Tart* is already adopted by several automation services:
+Tart powers [Cirrus Runners](https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral)
+service — a drop-in replacement for the standard GitHub-hosted runners, offering 2-3 times better performance for a fraction of the price.
+
+<p align="center">
+  <a href="https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/CirrusRunnersForGHA.png" height="65"/>
+  </a>
+</p>
+
+Tart is also adopted by several other automation services:
 
 <p align="center">
   <a href="https://cirrus-ci.org/guide/macOS/" target=_blank>
