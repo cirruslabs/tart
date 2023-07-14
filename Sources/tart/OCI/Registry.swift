@@ -257,6 +257,7 @@ class Registry {
     }
   }
 
+  //Returns data from blob
   public func pullBlobTmpHelper(_ digest: String) async throws -> AsyncThrowingChannel<Data, Error> {
     let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), viaFile: true)
     if response.statusCode != HTTPCode.Ok.rawValue {

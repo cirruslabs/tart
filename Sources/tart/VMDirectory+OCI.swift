@@ -25,7 +25,7 @@ extension VMDirectory {
   }
 
   func pullFromRegistry(registry: Registry, manifest: OCIManifest) async throws {
-    // Pull VM's config file layer and re-serialize it into a config file
+    // Pull VM's config file layer and re-serialize it into a config file (if it doesn't already exist)
     if !FileManager.default.fileExists(atPath:configURL.path){
       let configLayers = manifest.layers.filter {
         $0.mediaType == Self.configMediaType
@@ -74,11 +74,14 @@ extension VMDirectory {
     let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
-
+    //Create blobTmpDir and ProgressFile objects
     let blobsDir = try BlobTmpDir(baseURL: baseURL)
     let progFile = try ProgressFile(baseURL: baseURL)
 
+    //diskCount keeps track of diskLayer
     var diskCount = 0
+
+    //loop pulls one blob at a time
     for diskLayer in diskLayers {
       diskCount += 1
       if !progFile.isDiskLayerDownloaded(diskLayer: diskCount){
@@ -94,7 +97,8 @@ extension VMDirectory {
 
     defaultLogger.appendNewLine("All layers downloaded")
     defaultLogger.appendNewLine("Starting to uncompress")
-    //Write to filter
+
+    //Write to filter  (Takes a lot of memory)
     let blobs = try blobsDir.getAllBlobs()
     for blob in blobs {
       try filter.write(blob)
@@ -106,7 +110,7 @@ extension VMDirectory {
     SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte);
 
 
-    // Pull VM's NVRAM file layer and store it in an NVRAM file
+    // Pull VM's NVRAM file layer and store it in an NVRAM file (if it doesn't already exist)
     if !FileManager.default.fileExists(atPath: nvramURL.path){
       defaultLogger.appendNewLine("pulling NVRAM...")
       let nvramLayers = manifest.layers.filter {
