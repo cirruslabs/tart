@@ -22,12 +22,11 @@ class BlobTmpDir {
       if !FileManager.default.fileExists(atPath: blobsURL.path){
         do {
           try FileManager.default.createDirectory(at: blobsURL, withIntermediateDirectories: false)
-          print("Initialized BlobTmpDir")
         } catch {
           throw BlobsTmpDirError.FailedToCreateBlobsDir
         }
       } else {
-        print("BlobTmpDir exists, extracting")
+        defaultLogger.appendNewLine("Blobs found, resuming download")
       }
 
     } catch {

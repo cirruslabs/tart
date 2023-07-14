@@ -27,10 +27,8 @@ class ProgressFile{
       if !FileManager.default.createFile(atPath: progressURL.path, contents: nil){
         throw ProgressError.FailedToCreateProgressFile
       }
-      print("Initialized progressFile")
       try writeProgress()
     } else {
-      print("progressFile exists already, extracting")
       try getProgress()
     }
   }

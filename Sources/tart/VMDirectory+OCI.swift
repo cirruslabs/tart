@@ -81,20 +81,19 @@ extension VMDirectory {
     var diskCount = 0
     for diskLayer in diskLayers {
       diskCount += 1
-      print("On disk \(diskCount)")
       if !progFile.isDiskLayerDownloaded(diskLayer: diskCount){
         let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
         let blobName = "blob-\(diskCount)"
         try await blobsDir.set(contents: blob, name: blobName)
         try progFile.markLayerDownloaded(diskLayer: diskCount)
-        print("disk \(diskCount) downloaded into tmp")
+        defaultLogger.appendNewLine("disk \(diskCount) downloaded into tmp")
       } else {
-        print("disk \(diskCount) exists")
+        defaultLogger.appendNewLine("disk \(diskCount) exists, moving on")
       }
     }
 
-    print("All layers downloaded")
-    print("Starting to uncompress...")
+    defaultLogger.appendNewLine("All layers downloaded")
+    defaultLogger.appendNewLine("Starting to uncompress")
     //Write to filter
     let blobs = try blobsDir.getAllBlobs()
     for blob in blobs {
