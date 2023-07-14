@@ -85,8 +85,9 @@ extension VMDirectory {
     for diskLayer in diskLayers {
       diskCount += 1
       if !progFile.isDiskLayerDownloaded(diskLayer: diskCount){
-        let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
         let blobName = "blob-\(diskCount)"
+        defaultLogger.appendNewLine("Downloading diskLayer \(diskCount)")
+        let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
         try await blobsDir.set(contents: blob, name: blobName)
         try progFile.markLayerDownloaded(diskLayer: diskCount)
         defaultLogger.appendNewLine("diskLayer \(diskCount) downloaded into tmp")
