@@ -225,13 +225,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return try VM(vmDir: vmDir)
   }
 
-  func run(recovery: Bool, resume shouldResume: Bool) async throws {
+  func run(recovery: Bool, resume shouldResume: Bool, vncImpl: VNC?) async throws {
     try network.run(sema)
 
     if shouldResume {
       try await resume()
     } else {
       try await start(recovery)
+    }
+
+    if let vncImpl = vncImpl {
+      let vncURL = try await vncImpl.waitForURL()
+      vncImpl.notifyUser(vncURL: vncURL)
     }
 
     await withTaskCancellationHandler(operation: {
@@ -244,6 +249,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     if Task.isCancelled {
       try await stop()
+    }
+
+    if let vncImpl = vncImpl {
+      try vncImpl.stop()
     }
 
     try await network.stop()

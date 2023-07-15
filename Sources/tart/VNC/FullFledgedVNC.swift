@@ -2,7 +2,7 @@ import Foundation
 import Dynamic
 import Virtualization
 
-class FullFledgedVNC: VNC {
+class FullFledgedVNC: VNCNotifier, VNC {
   let password: String
   private let vnc: Dynamic
 

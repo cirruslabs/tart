@@ -2,7 +2,7 @@ import Foundation
 import Dynamic
 import Virtualization
 
-class ScreenSharingVNC: VNC {
+class ScreenSharingVNC: VNCNotifier, VNC {
   let vmConfig: VMConfig
 
   init(vmConfig: VMConfig) {
