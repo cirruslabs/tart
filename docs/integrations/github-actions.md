@@ -28,5 +28,6 @@ jobs:
 ```
 
 When workflows are executing you'll see Cirrus on-demand runners on your organization's settings page at `https://github.com/organizations/<ORGANIZATION>/settings/actions/runners`.
+Note that Cirrus Runners will get added to the default runner group. By default, only private repositories can access runners in a default runner group, but you can override this in your organization's settings.
 
 ![](/assets/images/TartGHARunners.png)
