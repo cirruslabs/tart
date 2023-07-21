@@ -225,7 +225,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return try VM(vmDir: vmDir)
   }
 
-  func run(recovery: Bool, resume shouldResume: Bool) async throws {
+  func start(recovery: Bool, resume shouldResume: Bool) async throws {
     try network.run(sema)
 
     if shouldResume {
@@ -233,7 +233,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     } else {
       try await start(recovery)
     }
+  }
 
+  func run() async throws {
     await withTaskCancellationHandler(operation: {
       // Wait for the VM to finish running
       // or for the exit condition
