@@ -87,12 +87,12 @@ extension VMDirectory {
       diskCount += 1
       let blobName = "blob-\(diskCount)"
       if !blobsDir.exists(name: blobName){
-        defaultLogger.appendNewLine("Downloading diskLayer \(diskCount)")
+        defaultLogger.appendNewLine("Downloading disk-layer \(diskCount)")
         let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
         try await blobsDir.set(contents: blob, name: blobName)
-        defaultLogger.appendNewLine("diskLayer \(diskCount) downloaded into tmp")
+        defaultLogger.appendNewLine("disk-layer \(diskCount) downloaded")
       } else {
-        defaultLogger.appendNewLine("diskLayer \(diskCount) exists, moving on")
+        defaultLogger.appendNewLine("disk-layer \(diskCount) exists")
       }
       progressDownload.completedUnitCount += 1
     }
