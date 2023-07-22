@@ -71,12 +71,13 @@ extension VMDirectory {
     })
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
     defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")
-    let progress = Progress(totalUnitCount: diskCompressedSize)
-    ProgressObserver(progress).log(defaultLogger)
+    let progressExtract = Progress(totalUnitCount: diskCompressedSize)
+    let progressDownload = Progress(totalUnitCount: Int64(manifest.layers.count))
 
-    //Create blobTmpDir and ProgressFile objects
+    ProgressObserver(progressDownload).log(defaultLogger)
+
+    //Create blobTmpDir object
     let blobsDir = try BlobTmpDir(baseURL: baseURL)
-    let progFile = try ProgressFile(baseURL: baseURL)
 
     //diskCount keeps track of diskLayer
     var diskCount = 0
@@ -84,26 +85,28 @@ extension VMDirectory {
     //loop pulls one blob at a time
     for diskLayer in diskLayers {
       diskCount += 1
-      if !progFile.isDiskLayerDownloaded(diskLayer: diskCount){
-        let blobName = "blob-\(diskCount)"
+      let blobName = "blob-\(diskCount)"
+      if !blobsDir.exists(name: blobName){
         defaultLogger.appendNewLine("Downloading diskLayer \(diskCount)")
         let blob = try await registry.pullBlobTmpHelper(diskLayer.digest)
         try await blobsDir.set(contents: blob, name: blobName)
-        try progFile.markLayerDownloaded(diskLayer: diskCount)
         defaultLogger.appendNewLine("diskLayer \(diskCount) downloaded into tmp")
       } else {
         defaultLogger.appendNewLine("diskLayer \(diskCount) exists, moving on")
       }
+      progressDownload.completedUnitCount += 1
     }
 
     defaultLogger.appendNewLine("All layers downloaded")
     defaultLogger.appendNewLine("Starting to uncompress")
 
+    ProgressObserver(progressExtract).log(defaultLogger)
+
     //Write to filter  (Takes a lot of memory)
     let blobs = try blobsDir.getAllBlobs()
     for blob in blobs {
       try filter.write(blob)
-      progress.completedUnitCount += Int64(blob.count)
+      progressExtract.completedUnitCount += Int64(blob.count)
     }
 
     try filter.finalize()

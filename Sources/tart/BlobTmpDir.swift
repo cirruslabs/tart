@@ -34,13 +34,21 @@ class BlobTmpDir {
     }
   }
 
+  func exists(name: String) -> Bool {
+    let blobURL = blobsURL.appendingPathComponent(name)
+    if FileManager.default.fileExists(atPath: blobURL.path){
+      return true
+    }
+    return false
+  }
+
   //extract data from blob
   func get(name: String) throws -> Data? {
     do {
-      let blobURL = blobsURL.appendingPathComponent(name)
-      if !FileManager.default.fileExists(atPath: blobURL.path){
+      if !exists(name: name){
         return nil
       }
+      let blobURL = blobsURL.appendingPathComponent(name)
       let blob = try FileHandle(forReadingFrom: blobURL)
       let data = blob.readDataToEndOfFile()
       return data
