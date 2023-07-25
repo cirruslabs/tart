@@ -6,7 +6,7 @@ struct Pull: AsyncParsableCommand {
   static var configuration = CommandConfiguration(
     abstract: "Pull a VM from a registry",
     discussion: """
-    Pulls a virtual machines from a remote OCI-compatible registry. Supports authorization via Keychain (see "tart login --help"),
+    Pulls a virtual machine from a remote OCI-compatible registry. Supports authorization via Keychain (see "tart login --help"),
     Docker credential helpers defined in ~/.docker/config.json or via TART_REGISTRY_USERNAME/TART_REGISTRY_PASSWORD environment variables.
 
     By default, Tart checks available capacity in Tart's home directory and tried to reclaim minimum possible storage for the remote image to fit via "tart prune".
