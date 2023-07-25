@@ -105,6 +105,10 @@ struct Prune: AsyncParsableCommand {
   }
 
   static func reclaimIfNeeded(_ requiredBytes: UInt64, _ initiator: Prunable? = nil) throws {
+    if ProcessInfo.processInfo.environment.keys.contains("TART_NO_AUTO_PRUNE") {
+      return
+    }
+
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["requiredBytes": requiredBytes], key: "Prune")
     }
