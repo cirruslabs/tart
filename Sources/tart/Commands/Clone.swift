@@ -3,7 +3,20 @@ import Foundation
 import SystemConfiguration
 
 struct Clone: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Clone a VM")
+  static var configuration = CommandConfiguration(
+    abstract: "Clone a VM",
+    discussion: """
+    Creates a local virtual machines by cloning either a remote or a local virtual machine.
+
+    Due to copy-on-write magic in Apple File System a cloned VM won't actually claim all the space right away.
+    Only changes to a cloned disk will be written and claim new space. By default, Tart checks available capacity
+    in Tart's home directory and checks if there is enough space for the worst possible scenario: when whole disk
+    will be modified.
+
+    This behaviour can be disabled by setting TART_NO_AUTO_PRUNE environment variable. This might be helpful
+    for use cases when original images is very big and a workload is known only to modify a fraction of the cloned disk.
+    """
+  )
 
   @Argument(help: "source VM name")
   var sourceName: String
