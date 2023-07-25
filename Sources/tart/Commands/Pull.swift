@@ -9,7 +9,7 @@ struct Pull: AsyncParsableCommand {
     Pulls a virtual machines from a remote OCI-compatible registry. Supports authorization via Keychain (see "tart login --help"),
     Docker credential helpers defined in ~/.docker/config.json or via TART_REGISTRY_USERNAME/TART_REGISTRY_PASSWORD environment variables.
 
-    By default, Tart checks available capacity in Tart's home directory and tried to reclaim minimum possible storage to remote image with "tart prune".
+    By default, Tart checks available capacity in Tart's home directory and tried to reclaim minimum possible storage for the remote image to fit via "tart prune".
     This behaviour can be disabled by setting TART_NO_AUTO_PRUNE environment variable.
     """
   )
