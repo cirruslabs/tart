@@ -6,7 +6,7 @@ struct Clone: AsyncParsableCommand {
   static var configuration = CommandConfiguration(
     abstract: "Clone a VM",
     discussion: """
-    Creates a local virtual machines by cloning either a remote or a local virtual machine.
+    Creates a local virtual machine by cloning either a remote or another local virtual machine.
 
     Due to copy-on-write magic in Apple File System a cloned VM won't actually claim all the space right away.
     Only changes to a cloned disk will be written and claim new space. By default, Tart checks available capacity
