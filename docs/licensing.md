@@ -16,25 +16,34 @@ will be required to obtain a paid license.
 
 # License Tiers
 
-## Tart
+## Free Tier
 
-When an organization surpasses the 100 CPU cores limit, it is required to obtain a Gold Tier License, which costs \$1000 per month.
+By default, when no [license is purchased](#get-the-license), it is assumed that an organization is using a Free Tier license.
 
-Upon reaching a limit of 500 CPU cores, a Platinum Tier License (\$5000 per month) will be required.
+You can find the Free Tier license text in [Tart](https://github.com/cirruslabs/tart/blob/main/LICENSE) and [Orchard](https://github.com/cirruslabs/orchard/blob/main/LICENSE) repositories.
 
-For organizations that exceed 5000 CPU cores, a custom Diamond Tier License (\$1 per core per month) will be necessary.
+Free Tier license has a 100 CPU core limit for Tart and 4 Orchard Workers limit for Orchard.
 
-## Orchard
+## Gold Tier
 
-When an organization surpasses the 4 Orchard Workers limit, it is required to obtain a Gold Tier License, which costs \$1000 per month.
+If an organization wishes to exceed the limits of the Free Tier license, a purchase of the [Gold Tier License](#get-the-license) is required, which costs \$1000 per month.
 
-Upon reaching a limit of 20 Orchard Workers, a Platinum Tier License (\$5000 per month) will be required.
+Gold Tier license has a 500 CPU core limit for Tart and 20 Orchard Workers limit for Orchard.
 
-For organizations that exceed 200 Orchard Workers, a custom Diamond Tier License (\$1 per core per month) will be necessary.
+## Platinum Tier
+
+If an organization wishes to exceed the limits of the Gold Tier license, a purchase of the [Platinum Tier License](#get-the-license) is required, which costs \$5000 per month.
+
+Platinum Tier license has a 5,000 CPU core limit for Tart and 200 Orchard Workers limit for Orchard.
+
+## Diamond Tier
+
+For organizations that wish to exceed the limits of the Platinum Tier license, a purchase of a [custom Diamond Tier License](#get-the-license) is required, which costs \$1 per CPU core per month and gives the ability to run unlimited Orchard Workers.
 
 # Get the license
 
 If your organization is interested in purchasing one of the license tiers, please email [licensing@cirruslabs.org](mailto:licensing@cirruslabs.org).
+
 You can see a template of a license subscription agreement [here](assets/TartLicenseSubscription.pdf).
 
 # General Support
