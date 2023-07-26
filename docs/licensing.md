@@ -16,9 +16,23 @@ will be required to obtain a paid license.
 
 # License Tiers
 
+## Tart
+
 When an organization surpasses the 100 CPU cores limit, it is required to obtain a Gold Tier License, which costs \$1000 per month.
-Upon reaching a limit of 500 CPU cores, a Platinum Tier License (\$5000 per month) will be required, and for organizations
-that exceed 5000 CPU cores, a custom Diamond Tier License (\$1 per core per month) will be necessary.
+
+Upon reaching a limit of 500 CPU cores, a Platinum Tier License (\$5000 per month) will be required.
+
+For organizations that exceed 5000 CPU cores, a custom Diamond Tier License (\$1 per core per month) will be necessary.
+
+## Orchard
+
+When an organization surpasses the 4 Orchard Workers limit, it is required to obtain a Gold Tier License, which costs \$1000 per month.
+
+Upon reaching a limit of 20 Orchard Workers, a Platinum Tier License (\$5000 per month) will be required.
+
+For organizations that exceed 200 Orchard Workers, a custom Diamond Tier License (\$1 per core per month) will be necessary.
+
+# Get the license
 
 If your organization is interested in purchasing one of the license tiers, please email [licensing@cirruslabs.org](mailto:licensing@cirruslabs.org).
 You can see a template of a license subscription agreement [here](assets/TartLicenseSubscription.pdf).
