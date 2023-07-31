@@ -320,10 +320,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Networking
-    let vio = VZVirtioNetworkDeviceConfiguration()
-    vio.attachment = network.attachment()
-    vio.macAddress = vmConfig.macAddress
-    configuration.networkDevices = [vio]
+    configuration.networkDevices = network.attachments().map {
+      let vio = VZVirtioNetworkDeviceConfiguration()
+      vio.attachment = $0
+      vio.macAddress = vmConfig.macAddress
+      return vio  
+    }
 
     // Storage
     var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)]

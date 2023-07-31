@@ -92,9 +92,9 @@ class Softnet: Network {
     }
   }
 
-  func attachment() -> VZNetworkDeviceAttachment {
+  func attachments() -> [VZNetworkDeviceAttachment] {
     let fh = FileHandle.init(fileDescriptor: vmFD)
-    return VZFileHandleNetworkDeviceAttachment(fileHandle: fh)
+    return [VZFileHandleNetworkDeviceAttachment(fileHandle: fh)]
   }
 
   static func configureSUIDBitIfNeeded() throws {

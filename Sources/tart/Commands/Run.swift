@@ -91,7 +91,7 @@ struct Run: AsyncParsableCommand {
   """, discussion: """
   Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
   """, valueName: "interface name"))
-  var netBridged: String?
+  var netBridged: [String]
 
   @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
@@ -105,7 +105,7 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
 
-    if netBridged != nil && netSoftnet {
+    if netBridged.count > 0 && netSoftnet {
       throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
     }
 
@@ -331,9 +331,9 @@ struct Run: AsyncParsableCommand {
       return try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    if let netBridged = netBridged {
+    if netBridged.count > 0 {
       let matchingInterfaces = VZBridgedNetworkInterface.networkInterfaces.filter { interface in
-        interface.identifier == netBridged || interface.localizedDisplayName == netBridged
+        netBridged.contains(interface.identifier) || netBridged.contains(interface.localizedDisplayName ?? "")
       }
 
       if matchingInterfaces.isEmpty {
@@ -342,12 +342,7 @@ struct Run: AsyncParsableCommand {
           + "available interfaces: \(available)")
       }
 
-      if matchingInterfaces.count > 1 {
-        throw ValidationError("more than one bridge interface matched \"\(netBridged)\", "
-          + "consider refining the search criteria")
-      }
-
-      return NetworkBridged(interface: matchingInterfaces.first!)
+      return NetworkBridged(interfaces: matchingInterfaces)
     }
 
     return nil
