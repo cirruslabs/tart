@@ -1,5 +1,6 @@
 import Foundation
 import Virtualization
+import CryptoKit
 
 struct VMDirectory: Prunable {
   var baseURL: URL
@@ -56,6 +57,17 @@ struct VMDirectory: Prunable {
     let tmpDir = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
 
+    return VMDirectory(baseURL: tmpDir)
+  }
+
+  //Create tmp directory with hashing
+  static func temporaryDeterministic(key: String) throws -> VMDirectory {
+    let keyData = Data(key.utf8)
+    let hash = Insecure.MD5.hash(data: keyData)
+    // Convert hash to string
+    let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
+    let tmpDir = try Config().tartTmpDir.appendingPathComponent(hashString)
+    try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
     return VMDirectory(baseURL: tmpDir)
   }
 
