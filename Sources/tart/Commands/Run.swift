@@ -331,18 +331,19 @@ struct Run: AsyncParsableCommand {
       return try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    if netBridged.count > 0 {
-      let matchingInterfaces = VZBridgedNetworkInterface.networkInterfaces.filter { interface in
-        netBridged.contains(interface.identifier) || netBridged.contains(interface.localizedDisplayName ?? "")
+    if netBridged.count > 0 {      
+      func findBridgedInterface(_ name: String) throws -> VZBridgedNetworkInterface {
+        let interface = VZBridgedNetworkInterface.networkInterfaces.first { interface in
+          interface.identifier == name || interface.localizedDisplayName == name
+        }
+        if (interface == nil) {
+          throw ValidationError("no bridge interfaces matched \"\(netBridged)\", "
+            + "available interfaces: \(bridgeInterfaces())")
+        }
+        return interface!
       }
 
-      if matchingInterfaces.isEmpty {
-        let available = bridgeInterfaces().joined(separator: ", ")
-        throw ValidationError("no bridge interfaces matched \"\(netBridged)\", "
-          + "available interfaces: \(available)")
-      }
-
-      return NetworkBridged(interfaces: matchingInterfaces)
+      return NetworkBridged(interfaces: try netBridged.map { try findBridgedInterface($0) })
     }
 
     return nil

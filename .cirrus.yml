@@ -1,7 +1,7 @@
 use_compute_credits: true
 
 env: 
-  XCODE_TAG: 15-beta-2
+  XCODE_TAG: 15-beta-5
 
 task:
   name: Test on Ventura
