@@ -17,6 +17,7 @@ Table of Contents
 
 ```bash
 ./scripts/run-signed.sh list
+```
 ## How to Create an Issue/Enhancement
 
 1. Go to the [Issue page](https://github.com/cirruslabs/tart/issues) of the repository
