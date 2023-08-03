@@ -14,9 +14,9 @@ Table of Contents
 2. Clone the forked repository to your local machine
 3. If using Xcode, use from Xcode 15 or newer
 4. Run ./scripts/run-signed.sh from the root of your repository
+
 ```bash
-# usage: ./scripts/run-signed.sh run ventura-base
-```
+./scripts/run-signed.sh list
 ## How to Create an Issue/Enhancement
 
 1. Go to the [Issue page](https://github.com/cirruslabs/tart/issues) of the repository
