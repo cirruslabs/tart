@@ -2,14 +2,14 @@ import Foundation
 import Virtualization
 
 class NetworkBridged: Network {
-  let interface: VZBridgedNetworkInterface
+  let interfaces: [VZBridgedNetworkInterface]
 
-  init(interface: VZBridgedNetworkInterface) {
-    self.interface = interface
+  init(interfaces: [VZBridgedNetworkInterface]) {
+    self.interfaces = interfaces
   }
 
-  func attachment() -> VZNetworkDeviceAttachment {
-    VZBridgedNetworkDeviceAttachment(interface: interface)
+  func attachments() -> [VZNetworkDeviceAttachment] {
+    interfaces.map { VZBridgedNetworkDeviceAttachment(interface: $0) }
   }
 
   func run(_ sema: DispatchSemaphore) throws {

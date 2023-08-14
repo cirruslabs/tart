@@ -2,8 +2,8 @@ import Foundation
 import Virtualization
 
 class NetworkShared: Network {
-  func attachment() -> VZNetworkDeviceAttachment {
-    VZNATNetworkDeviceAttachment()
+  func attachments() -> [VZNetworkDeviceAttachment] {
+    [VZNATNetworkDeviceAttachment()]
   }
 
   func run(_ sema: DispatchSemaphore) throws {

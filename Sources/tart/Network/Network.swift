@@ -1,7 +1,7 @@
 import Virtualization
 
 protocol Network {
-  func attachment() -> VZNetworkDeviceAttachment
+  func attachments() -> [VZNetworkDeviceAttachment]
   func run(_ sema: DispatchSemaphore) throws
   func stop() async throws
 }

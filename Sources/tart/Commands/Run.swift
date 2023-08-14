@@ -91,7 +91,7 @@ struct Run: AsyncParsableCommand {
   """, discussion: """
   Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
   """, valueName: "interface name"))
-  var netBridged: String?
+  var netBridged: [String]
 
   @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
@@ -105,7 +105,7 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
 
-    if netBridged != nil && netSoftnet {
+    if netBridged.count > 0 && netSoftnet {
       throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
     }
 
@@ -331,23 +331,19 @@ struct Run: AsyncParsableCommand {
       return try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    if let netBridged = netBridged {
-      let matchingInterfaces = VZBridgedNetworkInterface.networkInterfaces.filter { interface in
-        interface.identifier == netBridged || interface.localizedDisplayName == netBridged
+    if netBridged.count > 0 {      
+      func findBridgedInterface(_ name: String) throws -> VZBridgedNetworkInterface {
+        let interface = VZBridgedNetworkInterface.networkInterfaces.first { interface in
+          interface.identifier == name || interface.localizedDisplayName == name
+        }
+        if (interface == nil) {
+          throw ValidationError("no bridge interfaces matched \"\(netBridged)\", "
+            + "available interfaces: \(bridgeInterfaces())")
+        }
+        return interface!
       }
 
-      if matchingInterfaces.isEmpty {
-        let available = bridgeInterfaces().joined(separator: ", ")
-        throw ValidationError("no bridge interfaces matched \"\(netBridged)\", "
-          + "available interfaces: \(available)")
-      }
-
-      if matchingInterfaces.count > 1 {
-        throw ValidationError("more than one bridge interface matched \"\(netBridged)\", "
-          + "consider refining the search criteria")
-      }
-
-      return NetworkBridged(interface: matchingInterfaces.first!)
+      return NetworkBridged(interfaces: try netBridged.map { try findBridgedInterface($0) })
     }
 
     return nil
