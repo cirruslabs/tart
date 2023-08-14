@@ -33,8 +33,18 @@ tart run ventura-base
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip macos-ventura-base)
+ssh admin@$(tart ip ventura-base)
 ```
+
+!!! tip "Running scripts inside Tart virtual machines"
+    We recommend using [Cirrus CLI](integrations/cirrus-cli.md) to run scripts and/or retrieve artifacts
+    from within Tart virtual machines. Alternatively, you can use plain ssh connection and `tart ip` command:
+
+    ```bash
+    brew install sshpass
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip ventura-base) "uname -a"
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip ventura-base) < script.sh
+    ```
 
 ## Mounting directories
 
