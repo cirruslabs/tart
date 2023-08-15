@@ -3,12 +3,12 @@ def test_delete(tart):
     tart.run(["create", "--linux", "debian"])
 
     # Ensure that the VM exists
-    stdout, _, = tart.run(["list", "--quiet"])
+    stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == "debian\n"
 
     # Delete the VM
     tart.run(["delete", "debian"])
 
     # Ensure that the VM was removed
-    stdout, _, = tart.run(["list", "--quiet"])
+    stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == ""
