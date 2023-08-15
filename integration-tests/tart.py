@@ -7,10 +7,9 @@ class Tart:
     def __init__(self):
         self.tmp_dir = tempfile.TemporaryDirectory(dir=os.environ.get("CIRRUS_WORKING_DIR"))
 
-        # Link to the users IPSW cache to make things faster
-        src = os.path.join(os.path.expanduser("~"), ".tart", "cache", "IPSWs")
-        dst = os.path.join(self.tmp_dir.name, "cache", "IPSWs")
-        os.makedirs(os.path.join(self.tmp_dir.name, "cache"))
+        # Link to the users cache to make things faster
+        src = os.path.join(os.path.expanduser("~"), ".tart", "cache")
+        dst = os.path.join(self.tmp_dir.name, "cache")
         os.symlink(src, dst)
 
     def __enter__(self):
@@ -31,3 +30,9 @@ class Tart:
         completed_process.check_returncode()
 
         return completed_process.stdout.decode("utf-8"), completed_process.stderr.decode("utf-8")
+
+    def run_async(self, args) -> subprocess.Popen:
+        env = os.environ.copy()
+        env.update({"TART_HOME": self.tmp_dir.name})
+
+        return subprocess.Popen(["tart"] + args, env=env)
