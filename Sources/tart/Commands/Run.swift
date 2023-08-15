@@ -91,7 +91,7 @@ struct Run: AsyncParsableCommand {
   """, discussion: """
   Specify "list" as an interface name (--net-bridged=list) to list the available bridged interfaces.
   """, valueName: "interface name"))
-  var netBridged: [String]
+  var netBridged: [String] = []
 
   @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
