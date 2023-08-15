@@ -8,11 +8,11 @@ are licensed under [Fair Source License](https://fair.io/). Usage on personal co
 but organizations that exceed a certain number of server installations (100 CPU cores for Tart and/or 4 hosts for Orchard)
 will be required to obtain a paid license.
 
-??? note "Performance and Efficiency Cores"
-    The virtual CPU cores in Tart VMs do not differentiate between the high-performance and high-efficient cores
-    of the host CPU. Instead, Tart VMs automatically alternate between these types of cores depending on the workload
-    being executed within the virtual machines. As a result, both performance and energy-efficient cores of the host CPU
-    are treated equally in terms of licensing.
+??? note "Host CPU Core usage"
+    The virtual CPU cores of Tart VMs are not tied to specific physical cores of the host CPU. Instead, for optimal performance
+    Tart VMs will automatically try to balance compute between all available cores of the host CPU. As a result,
+    all performance and energy-efficient cores of the host CPU are always counted towards the license usage.
+    
 
 # License Tiers
 
