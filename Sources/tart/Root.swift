@@ -16,6 +16,7 @@ struct Root: AsyncParsableCommand {
       Get.self,
       List.self,
       Login.self,
+      Logout.self,
       IP.self,
       Pull.self,
       Push.self,
