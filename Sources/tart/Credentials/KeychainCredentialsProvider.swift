@@ -61,6 +61,24 @@ class KeychainCredentialsProvider: CredentialsProvider {
       throw CredentialsProviderError.Failed(message: "Keychain failed to find item: \(status.explanation())")
     }
   }
+
+  func remove(host: String) throws {
+    let query: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
+                                kSecAttrServer as String: host,
+                                kSecAttrLabel as String: "Tart Credentials",
+    ]
+
+    let status = SecItemDelete(query as CFDictionary)
+
+    switch status {
+    case errSecSuccess:
+      return
+    case errSecItemNotFound:
+      return
+    default:
+      throw CredentialsProviderError.Failed(message: "Failed to remove Keychain item(s): \(status.explanation())")
+    }
+  }
 }
 
 extension OSStatus {

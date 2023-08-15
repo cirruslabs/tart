@@ -17,6 +17,9 @@ struct Login: AsyncParsableCommand {
   @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
   var insecure: Bool = false
 
+  @Flag(help: "skip validation of the registry's credentials before logging-in")
+  var noValidate: Bool = false
+
   func validate() throws {
     let usernameProvided = username != nil
     let passwordProvided = passwordStdin
@@ -45,12 +48,14 @@ struct Login: AsyncParsableCommand {
       host: (user, password)
     ])
 
-    do {
-      let registry = try Registry(host: host, namespace: "", insecure: insecure,
-                                  credentialsProviders: [credentialsProvider])
-      try await registry.ping()
-    } catch {
-      throw RuntimeError.InvalidCredentials("invalid credentials: \(error)")
+    if !noValidate {
+      do {
+        let registry = try Registry(host: host, namespace: "", insecure: insecure,
+                                    credentialsProviders: [credentialsProvider])
+        try await registry.ping()
+      } catch {
+        throw RuntimeError.InvalidCredentials("invalid credentials: \(error)")
+      }
     }
 
     try KeychainCredentialsProvider().store(host: host, user: user, password: password)
