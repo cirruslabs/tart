@@ -3,7 +3,7 @@ def test_create_macos(tart):
     tart.run(["create", "--from-ipsw", "latest", "macos-vm"])
 
     # Ensure that the VM was created
-    stdout, _ = tart.run(["list", "--quiet"])
+    stdout, _ = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == "macos-vm\n"
 
 
@@ -12,5 +12,5 @@ def test_create_linux(tart):
     tart.run(["create", "--linux", "linux-vm"])
 
     # Ensure that the VM was created
-    stdout, _ = tart.run(["list", "--quiet"])
+    stdout, _ = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == "linux-vm\n"

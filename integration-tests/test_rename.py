@@ -6,5 +6,5 @@ def test_rename(tart):
     tart.run(["rename", "debian", "ubuntu"])
 
     # Ensure that the VM is now named "ubuntu"
-    stdout, _, = tart.run(["list", "--quiet"])
+    stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == "ubuntu\n"
