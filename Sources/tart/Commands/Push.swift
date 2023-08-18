@@ -23,6 +23,10 @@ struct Push: AsyncParsableCommand {
                              """))
   var chunkSize: Int = 0
 
+  @Flag(help: ArgumentHelp("use the new V2 disk compression format when pushing this VM",
+                           discussion: "Pushing a VM with this flag enabled allows for additional concurrency when pulling this VM, see https://github.com/cirruslabs/tart/issues/569 for more details."))
+  var v2DiskFormat: Bool = false
+
   @Flag(help: ArgumentHelp("cache pushed images locally",
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
   var populateCache: Bool = false
@@ -69,7 +73,8 @@ struct Push: AsyncParsableCommand {
         pushedRemoteName = try await localVMDir.pushToRegistry(
           registry: registry,
           references: references,
-          chunkSizeMb: chunkSize
+          chunkSizeMb: chunkSize,
+          v2DiskFormat: v2DiskFormat
         )
         // Populate the local cache (if requested)
         if populateCache {

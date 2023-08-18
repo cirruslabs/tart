@@ -242,7 +242,7 @@ class Registry {
     return digest
   }
 
-  public func pullBlob(_ digest: String, handler: (Data) throws -> Void) async throws {
+  public func pullBlob(_ digest: String, handler: (Data) async throws -> Void) async throws {
     let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), viaFile: true)
     if response.statusCode != HTTPCode.Ok.rawValue {
       let body = try await channel.asData().asText()
@@ -253,7 +253,7 @@ class Registry {
     for try await part in channel {
       try Task.checkCancellation()
 
-      try handler(Data(part))
+      try await handler(Data(part))
     }
   }
 

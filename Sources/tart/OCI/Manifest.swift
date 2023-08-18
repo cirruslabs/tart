@@ -1,11 +1,22 @@
 import Foundation
 
+// OCI manifest and OCI config media types
 let ociManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
 let ociConfigMediaType = "application/vnd.oci.image.config.v1+json"
 
-// Annotations
+// Layer media types
+let configMediaType = "application/vnd.cirruslabs.tart.config.v1"
+let diskV1MediaType = "application/vnd.cirruslabs.tart.disk.v1"
+let diskV2MediaType = "application/vnd.cirruslabs.tart.disk.v2"
+let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
+
+// Manifest annotations
 let uncompressedDiskSizeAnnotation = "org.cirruslabs.tart.uncompressed-disk-size"
 let uploadTimeAnnotation = "org.cirruslabs.tart.upload-time"
+
+// Layer annotations
+let uncompressedSizeAnnotation = "org.cirruslabs.tart.uncompressed-size"
+let uncompressedContentDigestAnnotation = "org.cirruslabs.tart.uncompressed-content-digest"
 
 struct OCIManifest: Codable, Equatable {
   var schemaVersion: Int = 2
@@ -71,6 +82,37 @@ struct OCIManifestLayer: Codable, Equatable {
   var mediaType: String
   var size: Int
   var digest: String
+  var annotations: Dictionary<String, String>?
+
+  init(mediaType: String, size: Int, digest: String, uncompressedSize: UInt64? = nil, uncompressedContentDigest: String? = nil) {
+    self.mediaType = mediaType
+    self.size = size
+    self.digest = digest
+
+    var annotations: [String: String] = [:]
+
+    if let uncompressedSize = uncompressedSize {
+      annotations[uncompressedSizeAnnotation] = String(uncompressedSize)
+    }
+
+    if let uncompressedContentDigest = uncompressedContentDigest {
+      annotations[uncompressedContentDigestAnnotation] = uncompressedContentDigest
+    }
+
+    self.annotations = annotations
+  }
+
+  func uncompressedSize() -> UInt64? {
+    guard let value = annotations?[uncompressedSizeAnnotation] else {
+      return nil
+    }
+
+    return UInt64(value)
+  }
+
+  func uncompressedContentDigest() -> String? {
+    annotations?[uncompressedContentDigestAnnotation]
+  }
 }
 
 struct Descriptor: Equatable {

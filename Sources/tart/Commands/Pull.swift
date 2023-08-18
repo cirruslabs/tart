@@ -20,6 +20,15 @@ struct Pull: AsyncParsableCommand {
   @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
   var insecure: Bool = false
 
+  @Argument(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
+  var concurrency: UInt = 4
+
+  func validate() throws {
+    if concurrency < 1 {
+      throw ValidationError("network concurrency cannot be less than 1")
+    }
+  }
+
   func run() async throws {
     // Be more liberal when accepting local image as argument,
     // see https://github.com/cirruslabs/tart/issues/36
@@ -34,6 +43,6 @@ struct Pull: AsyncParsableCommand {
 
     defaultLogger.appendNewLine("pulling \(remoteName)...")
 
-    try await VMStorageOCI().pull(remoteName, registry: registry)
+    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency)
   }
 }
