@@ -26,57 +26,65 @@ final class LayerizerTests: XCTestCase {
 
   func testDiskV1() async throws {
     // Original disk file to be pushed to the registry
-    let devUrandom = try FileHandle(forReadingFrom: URL(filePath: "/dev/urandom"))
-    defer { try! devUrandom.close() }
-
-    let temporaryFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    FileManager.default.createFile(atPath: temporaryFileURL.path, contents: nil)
-    let temporaryFile = try FileHandle(forWritingTo: temporaryFileURL)
-    for _ in 0..<5 {
-      let randomData = try devUrandom.read(upToCount: 1 * 1024 * 1024 * 1024)!
-      try temporaryFile.write(contentsOf: randomData)
+    let originalDiskFileURL = try fileWithRandomData(sizeBytes: 5 * 1024 * 1024 * 1024)
+    addTeardownBlock {
+      try FileManager.default.removeItem(at: originalDiskFileURL)
     }
-    try temporaryFile.close()
 
     // Disk file to be pulled from the registry
     // and compared against the original disk file
-    let canaryFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let pulledDiskFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
     print("pushing disk...")
-    let diskLayers = try await DiskV1.push(diskURL: temporaryFileURL, registry: registry, chunkSizeMb: 0, progress: Progress())
+    let diskLayers = try await DiskV1.push(diskURL: originalDiskFileURL, registry: registry, chunkSizeMb: 0, progress: Progress())
 
     print("pulling disk...")
-    try await DiskV1.pull(registry: registry, diskLayers: diskLayers, diskURL: canaryFileURL, concurrency: 16, progress: Progress())
+    try await DiskV1.pull(registry: registry, diskLayers: diskLayers, diskURL: pulledDiskFileURL, concurrency: 16, progress: Progress())
 
     print("comparing disks...")
-    try XCTAssertEqual(Digest.hash(temporaryFileURL), Digest.hash(canaryFileURL))
+    try XCTAssertEqual(Digest.hash(originalDiskFileURL), Digest.hash(pulledDiskFileURL))
   }
 
   func testDiskV2() async throws {
     // Original disk file to be pushed to the registry
+    let originalDiskFileURL = try fileWithRandomData(sizeBytes: 5 * 1024 * 1024 * 1024)
+    addTeardownBlock {
+      try FileManager.default.removeItem(at: originalDiskFileURL)
+    }
+
+    // Disk file to be pulled from the registry
+    // and compared against the original disk file
+    let pulledDiskFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+
+    print("pushing disk...")
+    let diskLayers = try await DiskV2.push(diskURL: originalDiskFileURL, registry: registry, chunkSizeMb: 0, progress: Progress())
+
+    print("pulling disk...")
+    try await DiskV2.pull(registry: registry, diskLayers: diskLayers, diskURL: pulledDiskFileURL, concurrency: 16, progress: Progress())
+
+    print("comparing disks...")
+    try XCTAssertEqual(Digest.hash(originalDiskFileURL), Digest.hash(pulledDiskFileURL))
+  }
+
+  private func fileWithRandomData(sizeBytes: Int) throws -> URL {
     let devUrandom = try FileHandle(forReadingFrom: URL(filePath: "/dev/urandom"))
-    defer { try! devUrandom.close() }
 
     let temporaryFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     FileManager.default.createFile(atPath: temporaryFileURL.path, contents: nil)
     let temporaryFile = try FileHandle(forWritingTo: temporaryFileURL)
-    for _ in 0..<5 {
-      let randomData = try devUrandom.read(upToCount: 1 * 1024 * 1024 * 1024)!
+
+    var remainingBytes = sizeBytes
+
+    while remainingBytes > 0 {
+      let randomData = try devUrandom.read(upToCount: min(64 * 1024 * 1024, remainingBytes))!
+      remainingBytes -= randomData.count
       try temporaryFile.write(contentsOf: randomData)
     }
+
+    try devUrandom.close()
+
     try temporaryFile.close()
 
-    // Disk file to be pulled from the registry
-    // and compared against the original disk file
-    let canaryFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-
-    print("pushing disk...")
-    let diskLayers = try await DiskV2.push(diskURL: temporaryFileURL, registry: registry, chunkSizeMb: 0, progress: Progress())
-
-    print("pulling disk...")
-    try await DiskV2.pull(registry: registry, diskLayers: diskLayers, diskURL: canaryFileURL, concurrency: 16, progress: Progress())
-
-    print("comparing disks...")
-    try XCTAssertEqual(Digest.hash(temporaryFileURL), Digest.hash(canaryFileURL))
+    return temporaryFileURL
   }
 }
