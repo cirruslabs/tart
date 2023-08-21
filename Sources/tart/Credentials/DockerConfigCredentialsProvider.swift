@@ -14,6 +14,10 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     if let helperProgram = config.credHelpers?[host] {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
     }
+    
+    if let defaultCredsStore = config.credsStore {
+      return try executeHelper(binaryName: "docker-credential-\(defaultCredsStore)", host: host)
+    }
 
     return nil
   }
@@ -59,6 +63,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 struct DockerConfig: Codable {
   var auths: Dictionary<String, DockerAuthConfig>? = Dictionary()
   var credHelpers: Dictionary<String, String>? = Dictionary()
+  var credsStore: String? = nil
 }
 
 struct DockerAuthConfig: Codable {
