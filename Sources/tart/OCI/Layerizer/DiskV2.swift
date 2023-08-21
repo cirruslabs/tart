@@ -100,18 +100,10 @@ class DiskV2: Disk {
           }
 
           try await registry.pullBlob(diskLayer.digest) { data in
-            try await withCheckedThrowingContinuation { continuation in
-              do {
-                try filter.write(data)
+            try filter.write(data)
 
-                // Update the progress
-                progress.completedUnitCount += Int64(data.count)
-
-                continuation.resume()
-              } catch {
-                continuation.resume(throwing: error)
-              }
-            }
+            // Update the progress
+            progress.completedUnitCount += Int64(data.count)
           }
 
           try disk.close()
