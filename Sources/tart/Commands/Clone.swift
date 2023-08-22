@@ -27,7 +27,7 @@ struct Clone: AsyncParsableCommand {
   @Flag(help: "connect to the OCI registry via insecure HTTP protocol")
   var insecure: Bool = false
 
-  @Argument(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
+  @Option(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
   var concurrency: UInt = 4
 
   func validate() throws {
