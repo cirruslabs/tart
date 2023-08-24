@@ -82,7 +82,7 @@ extension VMDirectory {
     try nvram.close()
   }
 
-  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, v2DiskFormat: Bool) async throws -> RemoteName {
+  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, oldDiskFormat: Bool) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -99,10 +99,10 @@ extension VMDirectory {
     let progress = Progress(totalUnitCount: diskSize)
     ProgressObserver(progress).log(defaultLogger)
 
-    if v2DiskFormat {
-      layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, progress: progress))
-    } else {
+    if oldDiskFormat {
       layers.append(contentsOf: try await DiskV1.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, progress: progress))
+    } else {
+      layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, progress: progress))
     }
 
     // Read VM's NVRAM and push it as blob
