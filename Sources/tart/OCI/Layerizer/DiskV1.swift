@@ -2,7 +2,7 @@ import Foundation
 import Compression
 
 class DiskV1: Disk {
-  private static let bufferSizeBytes = 64 * 1024 * 1024
+  private static let bufferSizeBytes = 4 * 1024 * 1024
   private static let layerLimitBytes = 500 * 1000 * 1000
 
   static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, progress: Progress) async throws -> [OCIManifestLayer] {
