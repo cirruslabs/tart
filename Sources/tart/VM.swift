@@ -328,7 +328,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)]
+    var diskSyncMode: VZDiskImageSynchronizationMode = ProcessInfo.processInfo.environment["CI"] != nil ? .none : .full
+    if let userDefinedSyncMode = ProcessInfo.processInfo.environment["TART_DISK_SYNC_MODE"] {
+      diskSyncMode = VZDiskImageSynchronizationMode(rawValue: Int(userDefinedSyncMode) ?? 1) ?? diskSyncMode
+    }
+    var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .automatic, synchronizationMode: diskSyncMode)]
     attachments.append(contentsOf: additionalDiskAttachments)
     configuration.storageDevices = attachments.map { VZVirtioBlockDeviceConfiguration(attachment: $0) }
 
