@@ -11,12 +11,8 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     if let credentialsFromAuth = config.auths?[host]?.decodeCredentials() {
       return credentialsFromAuth
     }
-    if let helperProgram = config.credHelpers?[host] {
+    if let helperProgram = try config.findCredHelper(host: host) {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
-    }
-
-    if let defaultCredsStore = config.credsStore {
-      return try executeHelper(binaryName: "docker-credential-\(defaultCredsStore)", host: host)
     }
 
     return nil
@@ -63,7 +59,26 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 struct DockerConfig: Codable {
   var auths: Dictionary<String, DockerAuthConfig>? = Dictionary()
   var credHelpers: Dictionary<String, String>? = Dictionary()
-  var credsStore: String? = nil
+
+  func findCredHelper(host: String) throws -> String? {
+    // Tart supports wildcards in credHelpers
+    // Similar to what is requested from Docker: https://github.com/docker/cli/issues/2928
+
+    guard let credHelpers else {
+      return nil
+    }
+
+    for (hostPattern, helperProgram) in credHelpers {
+      if (hostPattern == host) {
+        return helperProgram
+      }
+      let compiledPattern = try? Regex(hostPattern)
+      if (try compiledPattern?.wholeMatch(in: host) != nil) {
+        return helperProgram
+      }
+    }
+    return nil
+  }
 }
 
 struct DockerAuthConfig: Codable {

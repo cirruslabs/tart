@@ -97,11 +97,7 @@ struct VMConfig: Codable {
     case .darwin:
       platform = try Darwin(from: decoder)
     case .linux:
-      if #available(macOS 13, *) {
-        platform = try Linux(from: decoder)
-      } else {
-        throw UnsupportedOSError("Linux VMs", "are")
-      }
+      platform = try Linux(from: decoder)
     }
     cpuCountMin = try container.decode(Int.self, forKey: .cpuCountMin)
     cpuCount = try container.decode(Int.self, forKey: .cpuCount)
