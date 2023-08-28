@@ -253,15 +253,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   @MainActor
   private func start(_ recovery: Bool) async throws {
-    if #available(macOS 13, *) {
-      // new API introduced in Ventura
-      let startOptions = VZMacOSVirtualMachineStartOptions()
-      startOptions.startUpFromMacOSRecovery = recovery
-      try await virtualMachine.start(options: startOptions)
-    } else {
-      // use method that also available on Monterey
-      try await virtualMachine.start(recovery)
-    }
+    let startOptions = VZMacOSVirtualMachineStartOptions()
+    startOptions.startUpFromMacOSRecovery = recovery
+    try await virtualMachine.start(options: startOptions)
   }
 
   @MainActor
@@ -324,13 +318,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       let vio = VZVirtioNetworkDeviceConfiguration()
       vio.attachment = $0
       vio.macAddress = vmConfig.macAddress
-      return vio  
+      return vio
     }
 
     // Storage
     var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)]
     attachments.append(contentsOf: additionalDiskAttachments)
-    configuration.storageDevices = attachments.map { VZVirtioBlockDeviceConfiguration(attachment: $0) }
+    configuration.storageDevices = attachments.map {
+      VZVirtioBlockDeviceConfiguration(attachment: $0)
+    }
 
     // Entropy
     if !suspendable {
@@ -347,15 +343,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     //
     // A dummy console device useful for implementing
     // host feature checks in the guest agent software.
-    if #available(macOS 13, *) {
-      let consolePort = VZVirtioConsolePortConfiguration()
-      consolePort.name = "tart-version-\(CI.version)"
+    let consolePort = VZVirtioConsolePortConfiguration()
+    consolePort.name = "tart-version-\(CI.version)"
 
-      let consoleDevice = VZVirtioConsoleDeviceConfiguration()
-      consoleDevice.ports[0] = consolePort
+    let consoleDevice = VZVirtioConsoleDeviceConfiguration()
+    consoleDevice.ports[0] = consolePort
 
-      configuration.consoleDevices.append(consoleDevice)
-    }
+    configuration.consoleDevices.append(consoleDevice)
 
     try configuration.validate()
 

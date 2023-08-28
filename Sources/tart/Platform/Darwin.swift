@@ -116,19 +116,11 @@ struct Darwin: PlatformSuspendable {
   }
 
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
-    if #available(macOS 13, *) {
-      // Trackpad is only supported by guests starting with macOS Ventura
-      return [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
-    } else {
-      return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
-    }
+    // Trackpad is only supported by guests starting with macOS Ventura
+    [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
   }
 
   func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration] {
-    if #available(macOS 13, *) {
-      return [VZMacTrackpadConfiguration()]
-    } else {
-      return []
-    }
+    [VZMacTrackpadConfiguration()]
   }
 }

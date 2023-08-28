@@ -61,7 +61,7 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 ## Usage
 
-Try running a Tart VM on your Apple Silicon device running macOS 12.0 (Monterey) or later (will download a 25 GB image):
+Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) or later (will download a 25 GB image):
 
 ```bash
 brew install cirruslabs/cli/tart

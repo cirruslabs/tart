@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
   name: "Tart",
   platforms: [
-    .macOS(.v12)
+    .macOS(.v13)
   ],
   products: [
     .executable(name: "tart", targets: ["tart"])

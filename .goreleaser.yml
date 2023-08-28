@@ -45,7 +45,7 @@ brews:
       libexec.install Dir["*"]
       bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
     custom_block: |
-      depends_on :macos => :monterey
+      depends_on :macos => :ventura
       
       on_macos do
         unless Hardware::CPU.arm?
