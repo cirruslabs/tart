@@ -111,6 +111,8 @@ extension RuntimeError : CustomStringConvertible {
 extension RuntimeError : HasExitCode {
   var exitCode: Int32 {
     switch self {
+    case .VMDoesNotExist:
+      return 2
     case .VMNotRunning:
       return 2
     case .VMAlreadyRunning:
