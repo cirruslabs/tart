@@ -58,6 +58,7 @@ enum RuntimeError : Error {
   case ImportFailed(_ message: String)
   case SoftnetFailed(_ message: String)
   case OCIStorageError(_ message: String)
+  case OCIUnsupportedDiskFormat(_ format: String)
   case SuspendFailed(_ message: String)
 }
 
@@ -102,6 +103,8 @@ extension RuntimeError : CustomStringConvertible {
       return "Softnet failed: \(message)"
     case .OCIStorageError(let message):
       return "OCI storage error: \(message)"
+    case .OCIUnsupportedDiskFormat(let format):
+      return "OCI disk format \(format) is not supported by this version of Tart"
     case .SuspendFailed(let message):
       return "Failed to suspend the VM: \(message)"
     }

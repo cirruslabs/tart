@@ -23,8 +23,8 @@ struct Push: AsyncParsableCommand {
                              """))
   var chunkSize: Int = 0
 
-  @Flag(help: .hidden)
-  var oldDiskFormat: Bool = false
+  @Option(help: .hidden)
+  var diskFormat: String = "v2"
 
   @Flag(help: ArgumentHelp("cache pushed images locally",
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
@@ -73,7 +73,7 @@ struct Push: AsyncParsableCommand {
           registry: registry,
           references: references,
           chunkSizeMb: chunkSize,
-          oldDiskFormat: oldDiskFormat
+          diskFormat: diskFormat
         )
         // Populate the local cache (if requested)
         if populateCache {
