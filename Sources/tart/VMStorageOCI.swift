@@ -132,7 +132,7 @@ class VMStorageOCI: PrunableStorage {
     try list().filter { (_, _, isSymlink) in !isSymlink }.map { (_, vmDir, _) in vmDir }
   }
 
-  func pull(_ name: RemoteName, registry: Registry) async throws {
+  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt) async throws {
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["imageName": name], key: "OCI")
     }
@@ -188,7 +188,7 @@ class VMStorageOCI: PrunableStorage {
       }
 
       try await withTaskCancellationHandler(operation: {
-        try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest)
+        try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency)
         try move(digestName, from: tmpVMDir)
         transaction.finish()
       }, onCancel: {

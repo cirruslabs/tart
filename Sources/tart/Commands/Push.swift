@@ -23,6 +23,9 @@ struct Push: AsyncParsableCommand {
                              """))
   var chunkSize: Int = 0
 
+  @Option(help: .hidden)
+  var diskFormat: String = "v2"
+
   @Flag(help: ArgumentHelp("cache pushed images locally",
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
   var populateCache: Bool = false
@@ -69,7 +72,8 @@ struct Push: AsyncParsableCommand {
         pushedRemoteName = try await localVMDir.pushToRegistry(
           registry: registry,
           references: references,
-          chunkSizeMb: chunkSize
+          chunkSizeMb: chunkSize,
+          diskFormat: diskFormat
         )
         // Populate the local cache (if requested)
         if populateCache {
