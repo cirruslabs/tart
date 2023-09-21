@@ -111,7 +111,8 @@ struct Darwin: PlatformSuspendable {
     if #available(macOS 14, *) {
       return [VZMacKeyboardConfiguration()]
     } else {
-      return []
+      // fallback to the regular configuration
+      return keyboards()
     }
   }
 
@@ -121,6 +122,11 @@ struct Darwin: PlatformSuspendable {
   }
 
   func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration] {
-    [VZMacTrackpadConfiguration()]
+    if #available(macOS 14, *) {
+      return [VZMacTrackpadConfiguration()]
+    } else {
+      // fallback to the regular configuration
+      return pointingDevices()
+    }
   }
 }
