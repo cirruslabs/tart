@@ -52,6 +52,9 @@ Many more companies are using Tart in their internal setups. Here are a few of t
   <a href="https://transloadit.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Transloadit.png" height="65"/>
   </a>
+  <a href="https://uphold.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Uphold.png" height="65"/>
+  </a>
   <a href="https://www.pitsdatarecovery.net/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/PITSGlobalDataRecoveryServices.png" height="65"/>
   </a>
