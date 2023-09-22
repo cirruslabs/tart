@@ -4,13 +4,14 @@ env:
   XCODE_TAG: 15
 
 task:
-  execution_lock: "integration-tests"
   name: Test on Ventura
   alias: test
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   persistent_worker:
     labels:
       name: dev-mini
+    resources:
+      tart-vms: 1
   test_script:
     - swift test
   integration_test_script:
