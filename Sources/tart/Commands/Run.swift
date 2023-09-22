@@ -52,12 +52,17 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
+  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\")
   """, discussion: """
-  Can be either a disk image file or a block device like local SSD on AWS EC2 Mac instances.
+  Can be either a disk image file or a block device like a local SSD on AWS EC2 Mac instances.
 
   Learn how to create a disk image using Disk Utility here:
   https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+
+  To work with block devices 'tart' binary must be executed as root which affects locating Tart VMs.
+  To workaround this issue pass TART_HOME explicitly:
+
+  sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
   """, valueName: "path[:ro]"))
   var disk: [String] = []
 
@@ -366,8 +371,14 @@ struct Run: AsyncParsableCommand {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching block devices", "are")
         }
-        let fileHandle = try FileHandle(forUpdating: diskURL)
-        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: fileHandle, readOnly: diskReadOnly, synchronizationMode: .full)
+        let fileHandle = FileHandle(forUpdatingAtPath: diskPath)
+        guard fileHandle != nil else {
+          if ProcessInfo.processInfo.userName != "root" {
+            throw RuntimeError.VMConfigurationError("need to run as root to work with block devices")
+          }
+          throw RuntimeError.VMConfigurationError("block device \(diskURL.url.path) seems to be already in use, unmount it first via 'diskutil unmount'")
+        }
+        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: fileHandle!, readOnly: diskReadOnly, synchronizationMode: .full)
         result.append(VZVirtioBlockDeviceConfiguration(attachment: attachment))
       } else {
         // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
