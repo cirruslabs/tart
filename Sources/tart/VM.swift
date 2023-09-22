@@ -11,9 +11,6 @@ struct NoMainScreenFoundError: Error {
 struct DownloadFailed: Error {
 }
 
-struct CanNotAccessBlockDevice: Error {
-}
-
 struct UnsupportedOSError: Error, CustomStringConvertible {
   let description: String
 
