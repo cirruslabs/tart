@@ -42,7 +42,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   init(vmDir: VMDirectory,
        network: Network = NetworkShared(),
-       additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
+       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
        suspendable: Bool = false
@@ -58,7 +58,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     self.network = network
     configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
                                                 nvramURL: vmDir.nvramURL, vmConfig: config,
-                                                network: network, additionalDiskAttachments: additionalDiskAttachments,
+                                                network: network, additionalStorageDevices: additionalStorageDevices,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
                                                 suspendable: suspendable
@@ -142,7 +142,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     ipswURL: URL,
     diskSizeGB: UInt16,
     network: Network = NetworkShared(),
-    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment] = [],
+    additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
     serialPorts: [VZSerialPortConfiguration] = []
   ) async throws {
@@ -190,7 +190,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     self.network = network
     configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
                                                 vmConfig: config, network: network,
-                                                additionalDiskAttachments: additionalDiskAttachments,
+                                                additionalStorageDevices: additionalStorageDevices,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts
     )
@@ -277,7 +277,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     nvramURL: URL,
     vmConfig: VMConfig,
     network: Network = NetworkShared(),
-    additionalDiskAttachments: [VZDiskImageStorageDeviceAttachment],
+    additionalStorageDevices: [VZStorageDeviceConfiguration],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
     suspendable: Bool = false
@@ -326,11 +326,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    var attachments = [try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)]
-    attachments.append(contentsOf: additionalDiskAttachments)
-    configuration.storageDevices = attachments.map {
-      VZVirtioBlockDeviceConfiguration(attachment: $0)
-    }
+    var devices: [VZStorageDeviceConfiguration] = [
+      VZVirtioBlockDeviceConfiguration(attachment: try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false))
+    ]
+    devices.append(contentsOf: additionalStorageDevices)
+    configuration.storageDevices = devices
 
     // Entropy
     if !suspendable {

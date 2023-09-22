@@ -1,5 +1,6 @@
 import ArgumentParser
 import Cocoa
+import Darwin
 import Dispatch
 import SwiftUI
 import Virtualization
@@ -51,10 +52,17 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\")
+  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\")
   """, discussion: """
+  Can be either a disk image file or a block device like a local SSD on AWS EC2 Mac instances.
+
   Learn how to create a disk image using Disk Utility here:
   https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+
+  To work with block devices 'tart' binary must be executed as root which affects locating Tart VMs.
+  To workaround this issue pass TART_HOME explicitly:
+
+  sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
   """, valueName: "path[:ro]"))
   var disk: [String] = []
 
@@ -146,20 +154,6 @@ struct Run: AsyncParsableCommand {
 
     let additionalDiskAttachments = try additionalDiskAttachments()
 
-    // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
-    // see https://github.com/cirruslabs/tart/issues/323 for more details.
-    for additionalDiskAttachment in additionalDiskAttachments {
-      // Read-only attachments do not seem to acquire the lock
-      if additionalDiskAttachment.isReadOnly {
-        continue
-      }
-
-      if try !FileLock(lockURL: additionalDiskAttachment.url).trylock() {
-        throw RuntimeError.DiskAlreadyInUse("disk \(additionalDiskAttachment.url.path) seems to be already in use, "
-          + "unmount it first in Finder")
-      }
-    }
-
     var serialPorts: [VZSerialPortConfiguration] = []
     if serial {
       let tty_fd = createPTY()
@@ -181,7 +175,7 @@ struct Run: AsyncParsableCommand {
     vm = try VM(
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
-      additionalDiskAttachments: additionalDiskAttachments,
+      additionalStorageDevices: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
       suspendable: suspendable
@@ -361,22 +355,43 @@ struct Run: AsyncParsableCommand {
     }
   }
 
-  func additionalDiskAttachments() throws -> [VZDiskImageStorageDeviceAttachment] {
-    var result: [VZDiskImageStorageDeviceAttachment] = []
+  func additionalDiskAttachments() throws -> [VZStorageDeviceConfiguration] {
+    var result: [VZStorageDeviceConfiguration] = []
     let readOnlySuffix = ":ro"
     let expandedDiskPaths = disk.map { NSString(string:$0).expandingTildeInPath }
 
     for rawDisk in expandedDiskPaths {
-      if rawDisk.hasSuffix(readOnlySuffix) {
-        result.append(try VZDiskImageStorageDeviceAttachment(
-          url: URL(fileURLWithPath: String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count))),
-          readOnly: true
-        ))
+      let diskReadOnly = rawDisk.hasSuffix(readOnlySuffix)
+      let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
+      let diskURL = URL(fileURLWithPath: diskPath)
+
+      // check if `diskPath` is a block device or a directory
+      if pathHasMode(diskPath, mode: S_IFBLK) || pathHasMode(diskPath, mode: S_IFDIR) {
+        print("Using block device\n")
+        guard #available(macOS 14, *) else {
+          throw UnsupportedOSError("attaching block devices", "are")
+        }
+        let fileHandle = FileHandle(forUpdatingAtPath: diskPath)
+        guard fileHandle != nil else {
+          if ProcessInfo.processInfo.userName != "root" {
+            throw RuntimeError.VMConfigurationError("need to run as root to work with block devices")
+          }
+          throw RuntimeError.VMConfigurationError("block device \(diskURL.url.path) seems to be already in use, unmount it first via 'diskutil unmount'")
+        }
+        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: fileHandle!, readOnly: diskReadOnly, synchronizationMode: .full)
+        result.append(VZVirtioBlockDeviceConfiguration(attachment: attachment))
       } else {
-        result.append(try VZDiskImageStorageDeviceAttachment(
-          url: URL(fileURLWithPath: rawDisk),
-          readOnly: false
-        ))
+        // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
+        // see https://github.com/cirruslabs/tart/issues/323 for more details.
+        if try !diskReadOnly && !FileLock(lockURL: diskURL).trylock() {
+          throw RuntimeError.DiskAlreadyInUse("disk \(diskURL.url.path) seems to be already in use, unmount it first in Finder")
+        }
+
+        let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
+          url: diskURL,
+          readOnly: diskReadOnly
+        )
+        result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
       }
     }
 
@@ -621,4 +636,13 @@ extension String {
   func toFilePathURL() -> URL {
     URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
   }
+}
+
+func pathHasMode(_ path: String, mode: mode_t) -> Bool {
+  var st = stat()
+  let statRes = stat(path, &st)
+  guard statRes != -1 else {
+    return false
+  }
+  return (Int32(st.st_mode) & Int32(mode)) == Int32(mode)
 }
