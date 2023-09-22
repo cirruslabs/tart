@@ -10,6 +10,8 @@ task:
   persistent_worker:
     labels:
       name: dev-mini
+    resources:
+      tart-vms: 1
   test_script:
     - swift test
   integration_test_script:
