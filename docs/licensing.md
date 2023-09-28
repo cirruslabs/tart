@@ -12,7 +12,6 @@ will be required to obtain a paid license.
     The virtual CPU cores of Tart VMs are not tied to specific physical cores of the host CPU. Instead, for optimal performance
     Tart VMs will automatically try to balance compute between all available cores of the host CPU. As a result,
     all performance and energy-efficient cores of the host CPU are always counted towards the license usage.
-    
 
 # License Tiers
 
