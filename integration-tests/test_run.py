@@ -7,7 +7,7 @@ def test_run(tart):
     vm_name = f"integration-test-run-{uuid.uuid4()}"
 
     # Instantiate a VM with admin:admin SSH access
-    tart.run(["clone", "ghcr.io/cirruslabs/macos-ventura-base:latest", vm_name])
+    tart.run(["clone", "ghcr.io/cirruslabs/macos-sonoma-base:latest", vm_name])
 
     # Run the VM asynchronously
     tart_run_process = tart.run_async(["run", vm_name])
