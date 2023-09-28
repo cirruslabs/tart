@@ -11,8 +11,8 @@ Tart can create VMs from `*.ipsw` files. You can download a specific `*.ipsw` fi
 use `latest` instead of a path to `*.ipsw` to download the latest available version:
 
 ```bash
-tart create --from-ipsw=latest ventura-vanilla
-tart run ventura-vanilla
+tart create --from-ipsw=latest sonoma-vanilla
+tart run sonoma-vanilla
 ```
 
 After the initial booting of the VM you'll need to manually go through the macOS installation process. As a convention we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
@@ -67,8 +67,8 @@ packer {
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "ghcr.io/cirruslabs/macos-ventura-base:latest"
-  vm_name      = "my-custom-ventura"
+  vm_base_name = "ghcr.io/cirruslabs/macos-sonoma-base:latest"
+  vm_name      = "my-custom-sonoma"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 70

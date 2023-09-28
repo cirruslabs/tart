@@ -7,8 +7,8 @@ Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) 
 
 ```bash
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
-tart run ventura-base
+tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
+tart run sonoma-base
 ```
 
 ??? info "Manual installation from a release archive"
@@ -17,8 +17,8 @@ tart run ventura-base
     ```bash
     curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
     tar -xzvf tart.tar.gz
-    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-ventura-base:latest ventura-base
-    ./tart.app/Contents/MacOS/tart run ventura-base
+    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
+    ./tart.app/Contents/MacOS/tart run sonoma-base
     ```
 
     Please note that `./tart.app/Contents/MacOS/tart` binary is required to be used in order to trick macOS
@@ -33,7 +33,7 @@ tart run ventura-base
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip ventura-base)
+ssh admin@$(tart ip sonoma-base)
 ```
 
 !!! tip "Running scripts inside Tart virtual machines"
@@ -42,8 +42,8 @@ ssh admin@$(tart ip ventura-base)
 
     ```bash
     brew install sshpass
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip ventura-base) "uname -a"
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip ventura-base) < script.sh
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) "uname -a"
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) < script.sh
     ```
 
 ## Mounting directories

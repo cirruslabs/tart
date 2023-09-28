@@ -4,7 +4,7 @@ env:
   XCODE_TAG: 15
 
 task:
-  name: Test on Ventura
+  name: Test on Sonoma
   alias: test
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   persistent_worker:
@@ -35,7 +35,7 @@ task:
   alias: lint
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   lint_script:
     - swift package plugin --allow-writing-to-package-directory swiftformat --cache ignore --lint --report swiftformat.json .
   always:
@@ -49,7 +49,7 @@ task:
   alias: build
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   build_script: swift build --product tart
   sign_script: codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart
   binary_artifacts:
@@ -63,7 +63,7 @@ task:
     - build
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   env:
     MACOS_CERTIFICATE: ENCRYPTED[552b9d275d1c2bdbc1bff778b104a8f9a53cbd0d59344d4b7f6d0ca3c811a5cefb97bef9ba0ef31c219cb07bdacdd2c2]
     AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
@@ -99,7 +99,7 @@ task:
     - build
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   env:
     MACOS_CERTIFICATE: ENCRYPTED[552b9d275d1c2bdbc1bff778b104a8f9a53cbd0d59344d4b7f6d0ca3c811a5cefb97bef9ba0ef31c219cb07bdacdd2c2]
     AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
