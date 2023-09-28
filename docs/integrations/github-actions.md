@@ -1,19 +1,19 @@
 # Cirrus Runners for GitHub Actions
 
 *Cirrus Runners* is the fastest way to get your current CI workflows to benefit from Apple Silicon hardware. No need to manage infrastructure or migrate to another CI provider.
-Your actions will be executed in clean virtual machines with 4 M2 cores comparing to GitHub's own macOS Intel runners with just 3 cores.
+Your actions will be executed in clean macOS virtual machines with 4 Apple M2 cores, compared to GitHub's own macOS runners with just 3 cores and only supporting the outdated Apple–Intel architecture.
 
 ## Testimonials from customers
 
-Max Lapides, Senior Mobile Engineer at [Tonal](https://www.tonal.com/).
+Max Lapides, Senior Mobile Engineer at [Tonal](https://www.tonal.com/):
 
 > Previously, we were using the GitHub‑hosted macOS runners and our iOS build took ~30 minutes. Now with Cirrus Runners, the iOS build only takes ~12 minutes. That’s a huge boost to our productivity, and for only $150/month per runner it is much less expensive too.
 
-John A., Software Engineer at [GitKraken](https://www.gitkraken.com/).
+John A., Software Engineer at [GitKraken](https://www.gitkraken.com/):
 
 > GitHub Actions MacOS-x86 runners have become increasingly unreliable, so we're moving our Mac builds over to arm64 because Cirrus Labs' M1 runners are not only ~3 times faster, they've also been far more stable.
 
-Sebastian Jachec, Mobile Engineer at [Daybridge](https://www.daybridge.com/).
+Sebastian Jachec, Mobile Engineer at [Daybridge](https://www.daybridge.com/):
 
 > It’s been plain-sailing with the Cirrus Runners — they’ve been great! They’re consistently 60+% faster on workflows that we previously used Github Actions’ macOS runners for.
 
