@@ -94,11 +94,11 @@ Here is a high-level overview of how Cirrus Runners service manages runners for 
 - Cirrus Runner GitHub App is subscribed to [`workflow_job`](https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_job).
 - Upon receiving a new event targeting Cirrus Runners via `runs-on` property the following steps take place:
 
-    * Non-personal information about your job is saved to perform health checking of Cirrus Runners execution.
-    * Cirrus Runners GitHub App has only one permission that allows generating temporary registration tokens for
+    - Non-personal information about your job is saved to perform health checking of Cirrus Runners execution.
+    - Cirrus Runners GitHub App has only one permission that allows generating temporary registration tokens for
       self-hosted GitHub Actions Runners. Note that Cirrus Runners GitHub App itself doesn't have access to contents of
       repositories in your organization.
-    * Cirrus Runners Service creates a new single use Tart VM, generates a temporary registration tokens for self-hosted runners
+    - Cirrus Runners Service creates a new single use Tart VM, generates a temporary registration tokens for self-hosted runners
       and passes it without storing inside the VM for the GitHub Actions Runner service to [start a ephemeral runner](https://github.blog/changelog/2021-09-20-github-actions-ephemeral-self-hosted-runners-new-webhooks-for-auto-scaling/).
 
 - Cirrus Runners service continuously monitors health of the Tart VM executing your job to make sure it runs to completion.

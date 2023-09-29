@@ -6,7 +6,6 @@ env:
 task:
   name: Test on Sonoma
   alias: test
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   persistent_worker:
     labels:
       name: dev-mini
@@ -31,9 +30,16 @@ task:
     format: junit
 
 task:
+  name: Markdown Lint
+  only_if: $CIRRUS_BRANCH != 'gh-pages' && changesInclude('**.md')
+  container:
+    image: node:latest
+  install_script: npm install -g markdownlint-cli
+  lint_script: markdownlint --config=docs/.markdownlint.yml docs/
+
+task:
   name: Lint
   alias: lint
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   lint_script:
@@ -47,7 +53,6 @@ task:
   only_if: $CIRRUS_TAG == ''
   name: Build
   alias: build
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   build_script: swift build --product tart
@@ -61,7 +66,6 @@ task:
   depends_on:
     - lint
     - build
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   env:
@@ -97,7 +101,6 @@ task:
     - lint
     - test
     - build
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   macos_instance:
     image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
   env:
@@ -144,7 +147,6 @@ task:
 task:
   name: Deploy Documentation
   only_if: $CIRRUS_BRANCH == 'main'
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   container:
     image: ghcr.io/cirruslabs/mkdocs-material-insiders:latest
     registry_config: ENCRYPTED[!cf1a0f25325aa75bad3ce6ebc890bc53eb0044c02efa70d8cefb83ba9766275a994b4831706c52630a0692b2fa9cfb9e!]

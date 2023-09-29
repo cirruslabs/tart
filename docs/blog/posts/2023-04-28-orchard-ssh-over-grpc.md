@@ -56,7 +56,7 @@ On bootstrap, each Orchard worker establishes a `Watch()` RPC stream and waits f
 
 Once `PortForward` instruction is received, the worker connects to the specified VM and port locally and opens a new `PortForward()` RPC stream with the controller, carrying the unique `session` identifier in the gRPC metadata to help distinguish several port forwarding requests.
 
-We’re using a pretty ingenious Golang package that turns any gRPC stream into a `net.Conn`: https://github.com/mitchellh/go-grpc-net-conn. This allows us to abstract from the gRPC details and simply proxy two `net.Conns`, thus providing the port forwarding functionality.
+We’re using a pretty ingenious [Golang package that turns any gRPC stream into a `net.Conn`](https://github.com/mitchellh/go-grpc-net-conn). This allows us to abstract from the gRPC details and simply proxy two `net.Conns`, thus providing the port forwarding functionality.
 
 We’ve also initially considered using [Yamux](https://github.com/hashicorp/yamux) to only keep a single connection with each worker, however, that involves the burden of dealing with flow control and potential implementation bugs associated with it, so we’ve decided to simply open an additional connection for each port forwarding session and let the OS deal with it.
 

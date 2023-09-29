@@ -1,0 +1,12 @@
+"default": true
+"MD002": false # First heading should be a top level heading
+"MD007": # Unordered list indentation
+  indent: 4
+"MD009": false # Trailing spaces
+"MD013": false # Line length
+"MD025": false # Multiple top level headings in the same document
+"MD026": false # Trailing punctuation in heading
+"MD033": false # Inline HTML
+"MD041": false # First line in file should be a top level heading
+"MD045": false # OK not to have a description for an image
+"MD046": false #  Code block style [Expected: fenced; Actual: indented]

@@ -92,7 +92,9 @@ Here is a [repository with Packer templates](https://github.com/cirruslabs/macos
 
 ## Working with a Remote OCI Container Registry
 
+<!-- markdownlint-disable MD034 -->
 For example, let's say you want to push/pull images to a registry hosted at https://acme.io/.
+<!-- markdownlint-enable MD034 -->
 
 ### Registry Authorization
 

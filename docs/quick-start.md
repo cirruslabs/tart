@@ -100,4 +100,3 @@ mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 
 The directory we've mounted above will be accessible from the `/mnt/shared/project` path inside a guest VM.
-
