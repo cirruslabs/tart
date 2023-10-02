@@ -411,8 +411,6 @@ struct Run: AsyncParsableCommand {
 
     var allNamedShares = true
     for rawDir in dir {
-      // download and unarchive remote directories if needed here
-      // instead of via MainActor in run method to prevent from deadlocks
       let sanitizedSpec = try sanitizeDirectoryShareConfiguration(createFrom: rawDir)
       let directoryShare = try DirectoryShare(parseFrom: sanitizedSpec)
       if (directoryShare.name == nil) {
@@ -613,6 +611,8 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
   var response: CachedURLResponse? = URLCache.shared.cachedResponse(for: archiveRequest)
   if (response == nil) {
     print("Downloading \(archiveUrl)...")
+    // download and unarchive remote directories if needed here
+    // use old school API to prevent deadlocks since we are running via MainActor
     let downloadSemaphore = DispatchSemaphore(value: 0)
     Task {
       let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
