@@ -8,7 +8,7 @@ enum StdinCredentialsError: Error {
 class StdinCredentials {
   static func retrieve() throws -> (String, String) {
     let user = try readStdinCredential(name: "username", prompt: "User: ", isSensitive: false)
-    let password = try readStdinCredential(name: "password", prompt: "Password: ", isSensitive: true)
+    let password = try readStdinCredential(name: "password", prompt: "Password: ", maxCharacters: 1024, isSensitive: true)
 
     return (user, password)
   }
