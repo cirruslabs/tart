@@ -176,7 +176,7 @@ struct Run: AsyncParsableCommand {
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
       additionalStorageDevices: additionalDiskAttachments,
-      directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
+      directorySharingDevices: await directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
       suspendable: suspendable
     )
@@ -398,7 +398,7 @@ struct Run: AsyncParsableCommand {
     return result
   }
 
-  func directoryShares() throws -> [VZDirectorySharingDeviceConfiguration] {
+  func directoryShares() async throws -> [VZDirectorySharingDeviceConfiguration] {
     if dir.isEmpty {
       return []
     }
@@ -411,7 +411,7 @@ struct Run: AsyncParsableCommand {
 
     var allNamedShares = true
     for rawDir in dir {
-      let directoryShare = try DirectoryShare(parseFrom: rawDir)
+      let directoryShare = try await DirectoryShare(createFrom: rawDir)
       if (directoryShare.name == nil) {
         allNamedShares = false
       }
@@ -603,8 +603,10 @@ struct DirectoryShare {
   let path: URL
   let readOnly: Bool
 
-  init(parseFrom: String) throws {
-    let splits = parseFrom.split(maxSplits: 2) { $0 == ":" }
+  init(createFrom: String) async throws {
+    let pathIsRemoteURL = createFrom.contains("https://")
+    let splits = createFrom.replacingOccurrences(of: "https://", with: "").split(separator: ":")
+    var parsedPath = ""
 
     if splits.count == 3 {
       if splits[2] == "ro" {
@@ -613,22 +615,69 @@ struct DirectoryShare {
         throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
       }
       name = String(splits[0])
-      path = String(splits[1]).toFilePathURL()
+      parsedPath = String(splits[1])
     } else if splits.count == 2 {
       if splits[1] == "ro" {
         name = nil
-        path = String(splits[0]).toFilePathURL()
+        parsedPath = String(splits[0])
         readOnly = true
       } else {
         name = String(splits[0])
-        path = String(splits[1]).toFilePathURL()
+        parsedPath = String(splits[1])
         readOnly = false
       }
     } else {
       name = nil
-      path = String(splits[0]).toFilePathURL()
+      parsedPath = String(splits[0])
       readOnly = false
     }
+
+    if (!pathIsRemoteURL) {
+      path = parsedPath.toFilePathURL()
+      return
+    }
+
+    let archiveRequest = URLRequest(url: URL(string: "https://" + parsedPath)!)
+    var response: CachedURLResponse? = URLCache.shared.cachedResponse(for: archiveRequest)
+    if (response != nil) {
+      print("Using cached archive for \(parsedPath)...")
+    } else {
+      print("Downloading \(parsedPath)...")
+      let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
+      response = CachedURLResponse(response: archiveResponse, data: archiveData)
+      URLCache.shared.storeCachedResponse(response!, for: archiveRequest)
+      print("Cached for future invocations!")
+    }
+
+    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
+    try FileManager.default.createDirectory(atPath: temporaryLocation.path, withIntermediateDirectories: true)
+    let lock = try FileLock(lockURL: temporaryLocation)
+    try lock.lock()
+
+    guard let executableURL = resolveBinaryPath("tar") else {
+      throw ValidationError("tar not found in PATH")
+    }
+
+    let process = Process.init()
+    process.executableURL = executableURL
+    process.currentDirectoryURL = temporaryLocation
+    process.arguments = ["-xz"]
+
+    let inPipe = Pipe()
+    process.standardInput = inPipe
+
+    print("Unarchiving into a temporary directory...")
+    process.launch()
+
+    inPipe.fileHandleForWriting.write(response!.data)
+    try inPipe.fileHandleForWriting.close()
+    process.waitUntilExit()
+
+    if !(process.terminationReason == .exit && process.terminationStatus == 0) {
+      throw ValidationError("Unarchiving failed!")
+    }
+
+    path = temporaryLocation
   }
 }
 
