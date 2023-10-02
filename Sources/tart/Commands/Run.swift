@@ -609,14 +609,14 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
   let namePart = createFrom.prefix(upTo: urlStartIndex!)
   let archiveUrl: String = createFrom.suffix(from: urlStartIndex!).replacingOccurrences(of: ":ro", with: "")
 
-  let archiveRequest = URLRequest(url: URL(string: archiveUrl)!)
+  let archiveRequest = URLRequest(url: URL(string: archiveUrl)!, cachePolicy: .returnCacheDataElseLoad)
   var response: CachedURLResponse? = URLCache.shared.cachedResponse(for: archiveRequest)
   if (response == nil) {
     print("Downloading \(archiveUrl)...")
     let downloadSemaphore = DispatchSemaphore(value: 0)
     Task {
       let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
-      URLCache.shared.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData), for: archiveRequest)
+      URLCache.shared.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
       print("Cached for future invocations!")
       downloadSemaphore.signal()
     }
