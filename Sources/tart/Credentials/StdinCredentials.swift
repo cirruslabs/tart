@@ -13,7 +13,7 @@ class StdinCredentials {
     return (user, password)
   }
 
-  private static func readStdinCredential(name: String, prompt: String, maxCharacters: Int = 255, isSensitive: Bool) throws -> String {
+  private static func readStdinCredential(name: String, prompt: String, maxCharacters: Int = 1024, isSensitive: Bool) throws -> String {
     var buf = [CChar](repeating: 0, count: maxCharacters + 1 /* sentinel */ + 1 /* NUL */)
     guard let rawCredential = readpassphrase(prompt, &buf, buf.count, isSensitive ? RPP_ECHO_OFF : RPP_ECHO_ON) else {
       throw StdinCredentialsError.CredentialRequired(which: name)
