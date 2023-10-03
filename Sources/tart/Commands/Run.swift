@@ -607,8 +607,10 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
   let namePart = createFrom.prefix(upTo: urlStartIndex!)
   let archiveUrl: String = createFrom.suffix(from: urlStartIndex!).replacingOccurrences(of: ":ro", with: "")
 
+  let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024 * 1024)
+
   let archiveRequest = URLRequest(url: URL(string: archiveUrl)!, cachePolicy: .returnCacheDataElseLoad)
-  var response: CachedURLResponse? = URLCache.shared.cachedResponse(for: archiveRequest)
+  var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
   if (response == nil) {
     print("Downloading \(archiveUrl)...")
     // download and unarchive remote directories if needed here
@@ -616,12 +618,12 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
     let downloadSemaphore = DispatchSemaphore(value: 0)
     Task {
       let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
-      URLCache.shared.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
+      urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
       print("Cached for future invocations!")
       downloadSemaphore.signal()
     }
     downloadSemaphore.wait()
-    response = URLCache.shared.cachedResponse(for: archiveRequest)
+    response = urlCache.cachedResponse(for: archiveRequest)
   } else {
     print("Using cached archive for \(archiveUrl)...")
   }
