@@ -69,53 +69,6 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     virtualMachine.delegate = self
   }
 
-  static func retrieveIPSW(remoteURL: URL) async throws -> URL {
-    // Check if we already have this IPSW in cache
-    var headRequest = URLRequest(url: remoteURL)
-    headRequest.httpMethod = "HEAD"
-    let (_, headResponse) = try await Fetcher.fetch(headRequest, viaFile: false)
-
-    if let hash = headResponse.value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
-      let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
-
-      if FileManager.default.fileExists(atPath: ipswLocation.path) {
-        defaultLogger.appendNewLine("Using cached *.ipsw file...")
-        try ipswLocation.updateAccessDate()
-
-        return ipswLocation
-      }
-    }
-
-    // Download the IPSW
-    defaultLogger.appendNewLine("Fetching \(remoteURL.lastPathComponent)...")
-
-    let (channel, response) = try await Fetcher.fetch(URLRequest(url: remoteURL), viaFile: true)
-
-    let progress = Progress(totalUnitCount: response.expectedContentLength)
-    ProgressObserver(progress).log(defaultLogger)
-
-    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
-    FileManager.default.createFile(atPath: temporaryLocation.path, contents: nil)
-    let lock = try FileLock(lockURL: temporaryLocation)
-    try lock.lock()
-
-    let fileHandle = try FileHandle(forWritingTo: temporaryLocation)
-    let digest = Digest()
-
-    for try await chunk in channel {
-      let chunkAsData = Data(chunk)
-      fileHandle.write(chunkAsData)
-      digest.update(chunkAsData)
-      progress.completedUnitCount += Int64(chunk.count)
-    }
-
-    try fileHandle.close()
-
-    let finalLocation = try IPSWCache().locationFor(fileName: digest.finalize() + ".ipsw")
-
-    return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
-  }
-
   static func latestIPSWURL() async throws -> URL {
     defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
 
@@ -149,7 +102,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     var ipswURL = ipswURL
 
     if !ipswURL.isFileURL {
-      ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
+      ipswURL = try await DownloadsCache().retrieveFile(remoteURL: ipswURL)
     }
 
     // We create a temporary TART_HOME directory in tests, which has its "cache" folder symlinked

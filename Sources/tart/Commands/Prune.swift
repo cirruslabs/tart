@@ -53,7 +53,7 @@ struct Prune: AsyncParsableCommand {
 
     switch entries {
     case "caches":
-      prunableStorages = [VMStorageOCI(), try IPSWCache()]
+      prunableStorages = [VMStorageOCI(), try DownloadsCache()]
     case "vms":
       prunableStorages = [VMStorageLocal()]
     default:
@@ -152,7 +152,7 @@ struct Prune: AsyncParsableCommand {
     let transaction = SentrySDK.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
     defer { transaction.finish() }
 
-    let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
+    let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try DownloadsCache()]
     let prunables: [Prunable] = try prunableStorages
       .flatMap { try $0.prunables() }
       .sorted { try $0.accessDate() < $1.accessDate() }
