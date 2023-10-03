@@ -644,8 +644,6 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
 
   let inPipe = Pipe()
   process.standardInput = inPipe
-
-  print("Unarchiving into a temporary directory...")
   process.launch()
 
   inPipe.fileHandleForWriting.write(response!.data)
@@ -655,6 +653,8 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
   if !(process.terminationReason == .exit && process.terminationStatus == 0) {
     throw ValidationError("Unarchiving failed!")
   }
+
+  print("Unarchived into a temporary directory!")
 
   return namePart + temporaryLocation.path
 }
