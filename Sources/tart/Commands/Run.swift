@@ -619,10 +619,10 @@ struct DirectoryShare {
 
     if splits.count == 2 {
       name = String(splits[0])
-      path = URL(string: String(splits[1])) ?? String(splits[1]).toFilePathURL()
+      path = String(splits[1]).toRemoteOrLocalURL()
     } else {
       name = nil
-      path = URL(string: String(splits[0])) ?? String(splits[0]).toFilePathURL()
+      path = String(splits[0]).toRemoteOrLocalURL()
     }
   }
 
@@ -693,8 +693,12 @@ struct DirectoryShare {
 }
 
 extension String {
-  func toFilePathURL() -> URL {
-    URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
+  func toRemoteOrLocalURL() -> URL {
+    if (starts(with: "https://") || starts(with: "https://")) {
+      URL(string: self)!
+    } else {
+      URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
+    }
   }
 }
 
