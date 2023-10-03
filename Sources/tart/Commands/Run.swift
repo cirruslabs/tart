@@ -411,8 +411,7 @@ struct Run: AsyncParsableCommand {
 
     var allNamedShares = true
     for rawDir in dir {
-      let sanitizedSpec = try sanitizeDirectoryShareConfiguration(createFrom: rawDir)
-      let directoryShare = try DirectoryShare(parseFrom: sanitizedSpec)
+      let directoryShare = try DirectoryShare(parseFrom: rawDir)
       if (directoryShare.name == nil) {
         allNamedShares = false
       }
@@ -424,13 +423,13 @@ struct Run: AsyncParsableCommand {
     let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
     if allNamedShares {
       var directories: [String : VZSharedDirectory] = Dictionary()
-      directoryShares.forEach { directories[$0.name!] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
+      try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
       sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
     } else if dir.count > 1 {
       throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
     } else if dir.count == 1 {
       let directoryShare = directoryShares.first!
-      let singleDirectoryShare = VZSingleDirectoryShare(directory: VZSharedDirectory(url: directoryShare.path, readOnly: directoryShare.readOnly))
+      let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
       sharingDevice.share = singleDirectoryShare
     }
 
@@ -599,97 +598,97 @@ struct VMView: NSViewRepresentable {
   }
 }
 
-func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
-  let urlStartIndex = createFrom.range(of: "https://")?.lowerBound ?? createFrom.range(of: "http://")?.lowerBound
-  if (urlStartIndex == nil) {
-    return createFrom
-  }
-  let namePart = createFrom.prefix(upTo: urlStartIndex!)
-  let archiveUrl: String = createFrom.suffix(from: urlStartIndex!).replacingOccurrences(of: ":ro", with: "")
-
-  let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024 * 1024)
-
-  let archiveRequest = URLRequest(url: URL(string: archiveUrl)!, cachePolicy: .returnCacheDataElseLoad)
-  var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
-  if (response == nil) {
-    print("Downloading \(archiveUrl)...")
-    // download and unarchive remote directories if needed here
-    // use old school API to prevent deadlocks since we are running via MainActor
-    let downloadSemaphore = DispatchSemaphore(value: 0)
-    Task {
-      let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
-      urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
-      print("Cached for future invocations!")
-      downloadSemaphore.signal()
-    }
-    downloadSemaphore.wait()
-    response = urlCache.cachedResponse(for: archiveRequest)
-  } else {
-    print("Using cached archive for \(archiveUrl)...")
-  }
-
-  let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
-  try FileManager.default.createDirectory(atPath: temporaryLocation.path, withIntermediateDirectories: true)
-  let lock = try FileLock(lockURL: temporaryLocation)
-  try lock.lock()
-
-  guard let executableURL = resolveBinaryPath("tar") else {
-    throw ValidationError("tar not found in PATH")
-  }
-
-  let process = Process.init()
-  process.executableURL = executableURL
-  process.currentDirectoryURL = temporaryLocation
-  process.arguments = ["-xz"]
-
-  let inPipe = Pipe()
-  process.standardInput = inPipe
-  process.launch()
-
-  inPipe.fileHandleForWriting.write(response!.data)
-  try inPipe.fileHandleForWriting.close()
-  process.waitUntilExit()
-
-  if !(process.terminationReason == .exit && process.terminationStatus == 0) {
-    throw ValidationError("Unarchiving failed!")
-  }
-
-  print("Unarchived into a temporary directory!")
-
-  return namePart + temporaryLocation.path
-}
-
 struct DirectoryShare {
   let name: String?
   let path: URL
   let readOnly: Bool
 
   init(parseFrom: String) throws {
-    let splits = parseFrom.split(separator: ":")
+    let readOnlySuffix = ":ro"
+    readOnly = parseFrom.hasSuffix(readOnlySuffix)
+    let maybeNameAndURL = readOnly ? String(parseFrom.dropLast(readOnlySuffix.count)) : parseFrom
 
-    if splits.count == 3 {
-      if splits[2] == "ro" {
-        readOnly = true
-      } else {
-        throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
-      }
+    if maybeNameAndURL.starts(with: "https://") || maybeNameAndURL.starts(with: "http://") {
+      // just a URL
+      name = nil
+      path = URL(string: maybeNameAndURL)!
+      return
+    }
+
+    let splits = maybeNameAndURL.split(separator: ":", maxSplits: 1)
+
+    if splits.count == 2 {
       name = String(splits[0])
-      path = String(splits[1]).toFilePathURL()
-    } else if splits.count == 2 {
-      if splits[1] == "ro" {
-        name = nil
-        path = String(splits[0]).toFilePathURL()
-        readOnly = true
-      } else {
-        name = String(splits[0])
-        path = String(splits[1]).toFilePathURL()
-        readOnly = false
-      }
+      path = URL(string: String(splits[1])) ?? String(splits[1]).toFilePathURL()
     } else {
       name = nil
-      path = String(splits[0]).toFilePathURL()
-      readOnly = false
+      path = URL(string: String(splits[0])) ?? String(splits[0]).toFilePathURL()
     }
+  }
+
+  func createConfiguration() throws -> VZSharedDirectory {
+    if (path.isFileURL) {
+      return VZSharedDirectory(url: path, readOnly: readOnly)
+    }
+
+    let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024 * 1024)
+
+    let archiveRequest = URLRequest(url: path, cachePolicy: .returnCacheDataElseLoad)
+    var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
+    if (response == nil) {
+      print("Downloading \(path)...")
+      // download and unarchive remote directories if needed here
+      // use old school API to prevent deadlocks since we are running via MainActor
+      let downloadSemaphore = DispatchSemaphore(value: 0)
+      Task {
+        do {
+          let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
+          urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
+          print("Cached for future invocations!")
+        } catch {
+          print("Download failed: \(error)")
+        }
+        downloadSemaphore.signal()
+      }
+      downloadSemaphore.wait()
+      response = urlCache.cachedResponse(for: archiveRequest)
+    } else {
+      print("Using cached archive for \(path)...")
+    }
+
+    if (response == nil) {
+      throw ValidationError("Failed to fetch a remote archive!")
+    }
+
+    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
+    try FileManager.default.createDirectory(atPath: temporaryLocation.path, withIntermediateDirectories: true)
+    let lock = try FileLock(lockURL: temporaryLocation)
+    try lock.lock()
+
+    guard let executableURL = resolveBinaryPath("tar") else {
+      throw ValidationError("tar not found in PATH")
+    }
+
+    let process = Process.init()
+    process.executableURL = executableURL
+    process.currentDirectoryURL = temporaryLocation
+    process.arguments = ["-xz"]
+
+    let inPipe = Pipe()
+    process.standardInput = inPipe
+    process.launch()
+
+    inPipe.fileHandleForWriting.write(response!.data)
+    try inPipe.fileHandleForWriting.close()
+    process.waitUntilExit()
+
+    if !(process.terminationReason == .exit && process.terminationStatus == 0) {
+      throw ValidationError("Unarchiving failed!")
+    }
+
+    print("Unarchived into a temporary directory!")
+
+    return VZSharedDirectory(url: temporaryLocation, readOnly: readOnly)
   }
 }
 
