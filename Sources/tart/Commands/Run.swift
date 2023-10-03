@@ -607,7 +607,7 @@ func sanitizeDirectoryShareConfiguration(createFrom: String) throws -> String {
   let namePart = createFrom.prefix(upTo: urlStartIndex!)
   let archiveUrl: String = createFrom.suffix(from: urlStartIndex!).replacingOccurrences(of: ":ro", with: "")
 
-  let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024)
+  let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024 * 1024)
 
   let archiveRequest = URLRequest(url: URL(string: archiveUrl)!, cachePolicy: .returnCacheDataElseLoad)
   var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
