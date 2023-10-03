@@ -325,7 +325,7 @@ struct Run: AsyncParsableCommand {
       return try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    if netBridged.count > 0 {      
+    if netBridged.count > 0 {
       func findBridgedInterface(_ name: String) throws -> VZBridgedNetworkInterface {
         let interface = VZBridgedNetworkInterface.networkInterfaces.first { interface in
           interface.identifier == name || interface.localizedDisplayName == name
@@ -423,13 +423,13 @@ struct Run: AsyncParsableCommand {
     let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
     if allNamedShares {
       var directories: [String : VZSharedDirectory] = Dictionary()
-      directoryShares.forEach { directories[$0.name!] = VZSharedDirectory(url: $0.path, readOnly: $0.readOnly) }
+      try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
       sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
     } else if dir.count > 1 {
       throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
     } else if dir.count == 1 {
       let directoryShare = directoryShares.first!
-      let singleDirectoryShare = VZSingleDirectoryShare(directory: VZSharedDirectory(url: directoryShare.path, readOnly: directoryShare.readOnly))
+      let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
       sharingDevice.share = singleDirectoryShare
     }
 
@@ -604,37 +604,101 @@ struct DirectoryShare {
   let readOnly: Bool
 
   init(parseFrom: String) throws {
-    let splits = parseFrom.split(maxSplits: 2) { $0 == ":" }
+    let readOnlySuffix = ":ro"
+    readOnly = parseFrom.hasSuffix(readOnlySuffix)
+    let maybeNameAndURL = readOnly ? String(parseFrom.dropLast(readOnlySuffix.count)) : parseFrom
 
-    if splits.count == 3 {
-      if splits[2] == "ro" {
-        readOnly = true
-      } else {
-        throw ValidationError("invalid --dir syntax: optional read-only specifier can only be \"ro\"")
-      }
+    if maybeNameAndURL.starts(with: "https://") || maybeNameAndURL.starts(with: "http://") {
+      // just a URL
+      name = nil
+      path = URL(string: maybeNameAndURL)!
+      return
+    }
+
+    let splits = maybeNameAndURL.split(separator: ":", maxSplits: 1)
+
+    if splits.count == 2 {
       name = String(splits[0])
-      path = String(splits[1]).toFilePathURL()
-    } else if splits.count == 2 {
-      if splits[1] == "ro" {
-        name = nil
-        path = String(splits[0]).toFilePathURL()
-        readOnly = true
-      } else {
-        name = String(splits[0])
-        path = String(splits[1]).toFilePathURL()
-        readOnly = false
-      }
+      path = String(splits[1]).toRemoteOrLocalURL()
     } else {
       name = nil
-      path = String(splits[0]).toFilePathURL()
-      readOnly = false
+      path = String(splits[0]).toRemoteOrLocalURL()
     }
+  }
+
+  func createConfiguration() throws -> VZSharedDirectory {
+    if (path.isFileURL) {
+      return VZSharedDirectory(url: path, readOnly: readOnly)
+    }
+
+    let urlCache = URLCache(memoryCapacity: 0, diskCapacity: 1 * 1024 * 1024 * 1024)
+
+    let archiveRequest = URLRequest(url: path, cachePolicy: .returnCacheDataElseLoad)
+    var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
+    if (response == nil) {
+      print("Downloading \(path)...")
+      // download and unarchive remote directories if needed here
+      // use old school API to prevent deadlocks since we are running via MainActor
+      let downloadSemaphore = DispatchSemaphore(value: 0)
+      Task {
+        do {
+          let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
+          urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
+          print("Cached for future invocations!")
+        } catch {
+          print("Download failed: \(error)")
+        }
+        downloadSemaphore.signal()
+      }
+      downloadSemaphore.wait()
+      response = urlCache.cachedResponse(for: archiveRequest)
+    } else {
+      print("Using cached archive for \(path)...")
+    }
+
+    if (response == nil) {
+      throw ValidationError("Failed to fetch a remote archive!")
+    }
+
+    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
+    try FileManager.default.createDirectory(atPath: temporaryLocation.path, withIntermediateDirectories: true)
+    let lock = try FileLock(lockURL: temporaryLocation)
+    try lock.lock()
+
+    guard let executableURL = resolveBinaryPath("tar") else {
+      throw ValidationError("tar not found in PATH")
+    }
+
+    let process = Process.init()
+    process.executableURL = executableURL
+    process.currentDirectoryURL = temporaryLocation
+    process.arguments = ["-xz"]
+
+    let inPipe = Pipe()
+    process.standardInput = inPipe
+    process.launch()
+
+    inPipe.fileHandleForWriting.write(response!.data)
+    try inPipe.fileHandleForWriting.close()
+    process.waitUntilExit()
+
+    if !(process.terminationReason == .exit && process.terminationStatus == 0) {
+      throw ValidationError("Unarchiving failed!")
+    }
+
+    print("Unarchived into a temporary directory!")
+
+    return VZSharedDirectory(url: temporaryLocation, readOnly: readOnly)
   }
 }
 
 extension String {
-  func toFilePathURL() -> URL {
-    URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
+  func toRemoteOrLocalURL() -> URL {
+    if (starts(with: "https://") || starts(with: "https://")) {
+      URL(string: self)!
+    } else {
+      URL(fileURLWithPath: NSString(string: self).expandingTildeInPath)
+    }
   }
 }
 
