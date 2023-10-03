@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Virtualization
 
@@ -19,6 +20,9 @@ class DownloadsCache: PrunableStorage {
 
   // fetches remote file and caches it by `etag` header
   func retrieveFile(remoteURL: URL) async throws -> URL {
+    // use a URL hash in cache keys to prevent `etag` collision
+    let urlHash = Insecure.MD5.hash(data: remoteURL.path.data(using: .utf8)!)
+      .compactMap { String(format: "%02x", $0) }.joined()
     let fileExtension = remoteURL.pathExtension
     // Check if we already have this file in cache
     var headRequest = URLRequest(url: remoteURL)
@@ -26,7 +30,7 @@ class DownloadsCache: PrunableStorage {
     let (_, headResponse) = try await Fetcher.fetch(headRequest, viaFile: false)
 
     if let etag = headResponse.value(forHTTPHeaderField: "etag") {
-      let expectedLocation = locationFor(fileName: "etag:\(etag).\(fileExtension)")
+      let expectedLocation = locationFor(fileName: "\(urlHash):etag:\(etag).\(fileExtension)")
 
       if FileManager.default.fileExists(atPath: expectedLocation.path) {
         defaultLogger.appendNewLine("Using cached file for \(remoteURL)...")
@@ -59,7 +63,7 @@ class DownloadsCache: PrunableStorage {
     try fileHandle.close()
 
     if let etag = response.value(forHTTPHeaderField: "etag") {
-      let finalLocation = locationFor(fileName: "etag:\(etag).\(fileExtension)")
+      let finalLocation = locationFor(fileName: "\(urlHash):etag:\(etag).\(fileExtension)")
       return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
     }
 
