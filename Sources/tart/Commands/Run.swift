@@ -126,6 +126,12 @@ struct Run: AsyncParsableCommand {
     if try vmDir.state() == "suspended" {
       suspendable = true
     }
+
+    if suspendable {
+      if dir.count > 0 {
+        throw ValidationError("Suspending VMs with shared directories is not supported")
+      }
+    }
   }
 
   @MainActor
