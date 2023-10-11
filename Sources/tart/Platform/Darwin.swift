@@ -60,7 +60,7 @@ struct Darwin: PlatformSuspendable {
     let result = VZMacPlatformConfiguration()
 
     result.machineIdentifier = ecid
-    result.auxiliaryStorage = VZMacAuxiliaryStorage(contentsOf: nvramURL)
+    result.auxiliaryStorage = VZMacAuxiliaryStorage(url: nvramURL)
 
     if !hardwareModel.isSupported {
       // At the moment support of M1 chip is not yet dropped in any macOS version
