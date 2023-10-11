@@ -242,12 +242,15 @@
             }
             let counterElement = document.getElementById('installation-counter');
             if (counterElement) {
-              counterElement.textContent = Math.round(allDownloads / 1000) + ",000"
+              // Live installation count is available starting version 1.0.0
+              // Prior Tart was installed a little over 14,000 times, let's count them too
+              let installationPriorV1 = 14
+              counterElement.textContent = (installationPriorV1 + Math.round(allDownloads / 1000)) + ",000"
             }
           })
       </script>
       <h2>
-        With more than <strong id="installation-counter">10,000</strong> installations to date, Tart has been adopted for various scenarios.
+        With more than <strong id="installation-counter">25,000</strong> installations to date, Tart has been adopted for various scenarios.
         Its applications range from powering CI/CD pipelines and reproducible local development environments,
         to helping in the testing of device management systems without actual physical devices.
       </h2>
