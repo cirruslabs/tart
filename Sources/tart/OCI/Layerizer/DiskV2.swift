@@ -106,6 +106,8 @@ class DiskV2: Disk {
             progress.completedUnitCount += Int64(data.count)
           }
 
+          try filter.finalize()
+
           try disk.close()
         }
 
