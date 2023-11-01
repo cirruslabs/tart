@@ -253,7 +253,7 @@ class Registry {
     for try await part in channel {
       try Task.checkCancellation()
 
-      try await handler(Data(part))
+      try await handler(part)
     }
   }
 
