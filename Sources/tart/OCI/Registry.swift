@@ -106,7 +106,9 @@ class Registry {
   var currentAuthToken: Authentication? = nil
 
   var host: String? {
-    guard let host = baseURL.host else { return nil }
+    guard let host = baseURL.host else {
+      return nil
+    }
 
     if let port = baseURL.port {
       return "\(host):\(port)"
@@ -220,7 +222,7 @@ class Registry {
     for (index, chunk) in chunks.enumerated() {
       let lastChunk = index == (chunks.count - 1)
       let (data, response) = try await dataRequest(
-        lastChunk ? .PUT : .PATCH, 
+        lastChunk ? .PUT : .PATCH,
         uploadLocation,
         headers: [
           "Content-Type": "application/octet-stream",
@@ -370,6 +372,9 @@ class Registry {
     if let (user, password) = try lookupCredentials() {
       let encodedCredentials = "\(user):\(password)".data(using: .utf8)?.base64EncodedString()
       headers["Authorization"] = "Basic \(encodedCredentials!)"
+    } else {
+      throw RegistryError.AuthFailed(why: "was challenged to acquire an authentication token "
+        + "but failing to locate any credentials for the registry")
     }
 
     let (data, response) = try await dataRequest(.GET, authenticateURL, headers: headers, doAuth: false)
@@ -382,14 +387,8 @@ class Registry {
   }
 
   private func lookupCredentials() throws -> (String, String)? {
-    var host = baseURL.host!
-
-    if let port = baseURL.port {
-      host += ":\(port)"
-    }
-
     for provider in credentialsProviders {
-      if let (user, password) = try provider.retrieve(host: host) {
+      if let (user, password) = try provider.retrieve(host: host!) {
         return (user, password)
       }
     }
