@@ -35,12 +35,12 @@ class Fetcher {
     //
     // This keeps a working reference to that file, yet we don't
     // have to deal with the cleanup any more.
-    let fh = try FileHandle(forReadingFrom: fileURL)
+    let mappedFile = try Data(contentsOf: fileURL, options: [.alwaysMapped])
     try FileManager.default.removeItem(at: fileURL)
 
     Task {
-      while let data = try fh.read(upToCount: 64 * 1024 * 1024) {
-        await dataCh.send(data)
+      for chunk in (0 ..< mappedFile.count).chunks(ofCount: 64 * 1024 * 1024) {
+        await dataCh.send(mappedFile.subdata(in: chunk))
       }
 
       dataCh.finish()
