@@ -1,7 +1,7 @@
 # Cirrus Runners for GitHub Actions
 
-*Cirrus Runners* is the fastest way to get your current CI workflows to benefit from Apple Silicon hardware. No need to manage infrastructure or migrate to another CI provider.
-Your actions will be executed in clean macOS virtual machines with 4 Apple M2 cores, compared to GitHub's own macOS runners with just 3 cores and only supporting the outdated Apple–Intel architecture.
+*Cirrus Runners* is the fastest and most cost-efficient way to get your current CI workflows to benefit from Apple Silicon hardware. No need to manage infrastructure or migrate to another CI provider.
+Your actions will be executed in clean macOS virtual machines with 4 Apple M2 cores.
 
 ## Testimonials from customers
 
@@ -83,6 +83,14 @@ Note that Cirrus Runners will get added to the default runner group.
     ```https://github.com/organizations/<YOUR ORGANIZATION NAME>/settings/actions/runner-groups/1```
 
 ![](/assets/images/TartGHARunners.png)
+
+### Dashboard
+
+You can also see the status of your runners on the [Cirrus Runners Dashboard](https://cirrus-runners.app/). This dashboard
+also provides insights into price performance of your Cirrus Runners. Please check out [this blog post](/blog/2023/11/03/new-dashboard-with-insights-into-performance-of-cirrus-runners/)
+to learn more about what this dashboard can do for you.
+
+![](/assets/images/RunnersDashboard.png)
 
 ## Data handling flow
 
