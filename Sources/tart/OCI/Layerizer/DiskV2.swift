@@ -9,12 +9,16 @@ class DiskV2: Disk {
     var pushedLayers: [OCIManifestLayer] = []
 
     // Open the disk file
-    let disk = try FileHandle(forReadingFrom: diskURL)
+    var mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
 
     // Compress the disk file as multiple individually decompressible streams,
     // each equal ``Self.layerLimitBytes`` bytes or slightly larger due to the
     // internal compressor's buffer
-    while let (compressedData, uncompressedSize, uncompressedDigest) = try compressNextLayerOfLimitBytesOrMore(disk: disk) {
+    var offset: UInt64 = 0
+
+    while let (compressedData, uncompressedSize, uncompressedDigest) = try compressNextLayerOfLimitBytesOrMore(mappedDisk: mappedDisk, offset: offset) {
+      offset += uncompressedSize
+
       let layerDigest = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb)
 
       pushedLayers.append(OCIManifestLayer(
@@ -116,7 +120,7 @@ class DiskV2: Disk {
     }
   }
 
-  private static func compressNextLayerOfLimitBytesOrMore(disk: FileHandle) throws -> (Data, UInt64, String)? {
+  private static func compressNextLayerOfLimitBytesOrMore(mappedDisk: Data, offset: UInt64) throws -> (Data, UInt64, String)? {
     var compressedData = Data()
     var bytesRead: UInt64 = 0
     let digest = Digest()
@@ -128,9 +132,14 @@ class DiskV2: Disk {
         return nil
       }
 
-      guard let uncompressedChunk = try disk.read(upToCount: bufferSizeBytes) else {
+      let readFromByte = Int(offset + bytesRead)
+
+      let numBytesToRead = min(mappedDisk.count - readFromByte, bufferSizeBytes)
+      if numBytesToRead == 0 {
         return nil
       }
+
+      let uncompressedChunk = mappedDisk.subdata(in: readFromByte ..< (readFromByte + numBytesToRead))
 
       bytesRead += UInt64(uncompressedChunk.count)
       digest.update(uncompressedChunk)
