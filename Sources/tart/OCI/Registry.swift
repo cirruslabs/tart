@@ -102,8 +102,7 @@ class Registry {
   private let baseURL: URL
   let namespace: String
   let credentialsProviders: [CredentialsProvider]
-
-  var currentAuthToken: Authentication? = nil
+  let authenticationKeeper = AuthenticationKeeper()
 
   var host: String? {
     guard let host = baseURL.host else { return nil }
@@ -305,11 +304,6 @@ class Registry {
       request.httpBody = body
     }
 
-    // Invalidate token if it has expired
-    if currentAuthToken?.isValid() == false {
-      currentAuthToken = nil
-    }
-
     var (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
@@ -331,7 +325,7 @@ class Registry {
 
     if wwwAuthenticate.scheme.lowercased() == "basic" {
       if let (user, password) = try lookupCredentials() {
-        currentAuthToken = BasicAuthentication(user: user, password: password)
+        await authenticationKeeper.set(BasicAuthentication(user: user, password: password))
       }
 
       return
@@ -378,7 +372,7 @@ class Registry {
         + "while retrieving an authentication token", details: data.asText())
     }
 
-    currentAuthToken = try TokenResponse.parse(fromData: data)
+    await authenticationKeeper.set(try TokenResponse.parse(fromData: data))
   }
 
   private func lookupCredentials() throws -> (String, String)? {
@@ -399,8 +393,7 @@ class Registry {
   private func authAwareRequest(request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var request = request
 
-    if let token = currentAuthToken {
-      let (name, value) = token.header()
+    if let (name, value) = await authenticationKeeper.header() {
       request.addValue(value, forHTTPHeaderField: name)
     }
 
