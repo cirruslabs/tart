@@ -304,7 +304,8 @@ struct Run: AsyncParsableCommand {
 
     let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
     if noGraphics || useVNCWithoutGraphics {
-      dispatchMain()
+      // enter the main even loop and just wait for the VM to exit
+      NSApplication.shared.run()
     } else {
       runUI(suspendable)
     }
