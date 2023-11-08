@@ -108,6 +108,10 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
   var suspendable: Bool = false
 
+  @Flag(help: ArgumentHelp("Whether system hot keys should be sent to the guest instead of the host",
+                           discussion: "If enabled then system hot keys like Cmd+Tab will be sent to the guest instead of the host."))
+  var captureSystemKeys: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -119,6 +123,10 @@ struct Run: AsyncParsableCommand {
 
     if graphics && noGraphics {
       throw ValidationError("--graphics and --no-graphics are mutually exclusive")
+    }
+
+    if (noGraphics || vnc || vncExperimental) && captureSystemKeys {
+      throw ValidationError("--captures-system-keys can only be used with the default VM view")
     }
 
     let localStorage = VMStorageLocal()
@@ -306,7 +314,7 @@ struct Run: AsyncParsableCommand {
     if noGraphics || useVNCWithoutGraphics {
       dispatchMain()
     } else {
-      runUI(suspendable)
+      runUI(suspendable, captureSystemKeys)
     }
   }
 
@@ -467,7 +475,7 @@ struct Run: AsyncParsableCommand {
     return [device]
   }
 
-  private func runUI(_ suspendable: Bool) {
+  private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool) {
     let nsApp = NSApplication.shared
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
@@ -476,13 +484,14 @@ struct Run: AsyncParsableCommand {
 
     struct MainApp: App {
       static var disappearSignal: Int32 = SIGINT
+      static var capturesSystemKeys: Bool = false
 
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
 
       var body: some Scene {
         WindowGroup(vm!.name) {
           Group {
-            VMView(vm: vm!).onAppear {
+            VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
               let ret = kill(getpid(), MainApp.disappearSignal)
@@ -532,6 +541,7 @@ struct Run: AsyncParsableCommand {
     }
 
     MainApp.disappearSignal = suspendable ? SIGUSR1 : SIGINT
+    MainApp.capturesSystemKeys = captureSystemKeys
     MainApp.main()
   }
 }
@@ -581,14 +591,12 @@ struct VMView: NSViewRepresentable {
   typealias NSViewType = VZVirtualMachineView
 
   @ObservedObject var vm: VM
+  var capturesSystemKeys: Bool
 
   func makeNSView(context: Context) -> NSViewType {
     let machineView = VZVirtualMachineView()
 
-    // Do not capture system keys so that shortcuts like
-    // Shift-Command-4 + Space (capture a screenshot of window)
-    // work on the host instead of the guest
-    machineView.capturesSystemKeys = false
+    machineView.capturesSystemKeys = capturesSystemKeys
 
     // Enable automatic display reconfiguration
     // for guests that support it
