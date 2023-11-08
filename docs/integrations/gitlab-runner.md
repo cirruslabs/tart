@@ -19,7 +19,7 @@ concurrent = 2
 [[runners]]
   # ...
   executor = "custom"
-  builds_dir = "/Users/admin/builds" # directory inside the 
+  builds_dir = "/Users/admin/builds" # directory inside the VM
   cache_dir = "/Users/admin/cache"
   [runners.feature_flags]
     FF_RESOLVE_FULL_TLS_CHAIN = false
