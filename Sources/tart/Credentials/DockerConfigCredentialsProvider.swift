@@ -43,8 +43,9 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     let outputData = try outPipe.fileHandleForReading.readToEnd()
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {
-      let outputText = outputData == nil ? "" : String(decoding: outputData!, as: UTF8.self)
-      print(outputText)
+      if let outputData = outputData {
+        print(String(decoding: outputData, as: UTF8.self))
+      }
       throw CredentialsProviderError.Failed(message: "Docker helper failed!")
     }
     if outputData == nil {
