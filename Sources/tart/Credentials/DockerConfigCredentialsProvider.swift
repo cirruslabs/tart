@@ -41,13 +41,17 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     process.waitUntilExit()
 
+    let outputData = try outPipe.fileHandleForReading.readToEnd()
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {
+      let outputText = outputData == nil ? "" : String(decoding: outputData!, as: UTF8.self)
+      print(outputText)
       throw CredentialsProviderError.Failed(message: "Docker helper failed!")
     }
+    if outputData == nil {
+      throw CredentialsProviderError.Failed(message: "Docker helper output is empty!")
+    }
 
-    let getOutput = try JSONDecoder().decode(
-      DockerGetOutput.self, from: outPipe.fileHandleForReading.readDataToEndOfFile()
-    )
+    let getOutput = try JSONDecoder().decode(DockerGetOutput.self, from: outputData!)
     return (getOutput.Username, getOutput.Secret)
   }
 
