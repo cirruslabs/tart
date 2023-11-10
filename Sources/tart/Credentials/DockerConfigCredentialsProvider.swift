@@ -48,7 +48,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
       }
       throw CredentialsProviderError.Failed(message: "Docker helper failed!")
     }
-    if outputData == nil {
+    if outputData == nil || outputData?.count == 0 {
       throw CredentialsProviderError.Failed(message: "Docker helper output is empty!")
     }
 
