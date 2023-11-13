@@ -61,6 +61,9 @@ You can see a template of a license subscription agreement [here](assets/TartLic
     There are [official AMIs for EC2 Mac Instances](https://aws.amazon.com/marketplace/pp/prodview-qczco34wlkdws)
     with preconfigured Tart installation that is optimized to work within AWS infrastructure.
 
+    Additionally, there is a [ECR Pulic Gallery mirror](https://gallery.ecr.aws/cirruslabs/macos) of all the
+    [Tart VM images managed by us](https://github.com/cirruslabs/macos-image-templates).
+
 # General Support
 
 The best way to ask general questions about particular use cases is to email our support team at [support@cirruslabs.org](mailto:support@cirruslabs.org).
