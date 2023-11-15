@@ -43,6 +43,9 @@ Many more companies are using Tart in their internal setups. Here are a few of t
   <a href="https://mullvad.net/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Mullvad.png" height="65"/>
   </a>
+  <a href="https://shape.dk/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/shape.png" height="65"/>
+  </a>
   <a href="https://suran.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Suran.png" height="65"/>
   </a>
