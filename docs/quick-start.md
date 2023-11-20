@@ -41,7 +41,7 @@ ssh admin@$(tart ip sonoma-base)
     from within Tart virtual machines. Alternatively, you can use plain ssh connection and `tart ip` command:
 
     ```bash
-    brew install sshpass
+    brew install cirruslabs/cli/sshpass
     sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) "uname -a"
     sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) < script.sh
     ```
