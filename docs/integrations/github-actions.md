@@ -24,6 +24,15 @@ We recommend to purchase several Cirrus Runners depending on your team size, so 
 parallel. Note that you can change your subscription at any time via [this page](https://billing.stripe.com/p/login/3cs7vNbzo92p7fy3cc)
 or by emailing [support@cirruslabs.org](mailto:support@cirruslabs.org).
 
+### Discounts
+
+We offer two mutually exclusive discounts:
+
+- 10% "Volume Discount" for subscriptions of 10 or more Cirrus Runners.
+- 15% "Annual Discount" for 12 months subscription commitment of any amount of Cirrus Runners.
+
+Please contact [support@cirruslabs.org](mailto:support@cirruslabs.org) after activating the subscription in order to get the discount applied.
+
 ### Priority Support
 
 Subscriptions of 20 or more Cirrus Runners include access to [Priority Support](../licensing.md#priority-support).
