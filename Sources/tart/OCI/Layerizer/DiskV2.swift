@@ -4,6 +4,7 @@ import Compression
 class DiskV2: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
   private static let layerLimitBytes = 500 * 1000 * 1000
+  private static let holeGranularityBytes = 64 * 1024
 
   static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, progress: Progress) async throws -> [OCIManifestLayer] {
     var pushedLayers: [OCIManifestLayer] = []
@@ -92,14 +93,38 @@ class DiskV2: Disk {
             return
           }
 
-          // Open the disk file at the specific offset
+          // Open the disk file
           let disk = try FileHandle(forWritingTo: diskURL)
-          try disk.seek(toOffset: diskWritingOffset)
+
+          // A zero chunk for faster than byte-by-byte comparisons
+          //
+          // Assumes that the other Data(...) is equal in size, but it's fine to get a false-negative
+          // on the last block since it costs only 64 KiB of excess data per 500 MB layer.
+          //
+          // Some simple benchmarks ("sync && sudo purge" command was used to negate the disk caching effects):
+          // +--------------------------------------+---------------------------------------------------+
+          // | Operation                            | time(1) result                                    |
+          // +--------------------------------------+---------------------------------------------------+
+          // | Data(...) == zeroChunk               | 2.16s user 11.71s system 73% cpu 18.928 total     |
+          // | Data(...).contains(where: {$0 != 0}) | 603.68s user 12.97s system 99% cpu 10:22.85 total |
+          // +--------------------------------------+---------------------------------------------------+
+          let zeroChunk = Data(count: holeGranularityBytes)
+          var diskWritingOffset = diskWritingOffset
 
           // Pull and decompress a single layer into the specific offset on disk
           let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
-            if let data = data {
-              disk.write(data)
+            guard let data = data else {
+              return
+            }
+
+            for chunk in data.chunks(ofCount: holeGranularityBytes) {
+              // Only write chunks that are not zero
+              if chunk != zeroChunk {
+                try disk.seek(toOffset: diskWritingOffset)
+                disk.write(chunk)
+              }
+
+              diskWritingOffset += UInt64(chunk.count)
             }
           }
 
