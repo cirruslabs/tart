@@ -109,6 +109,15 @@
       }
     },
     {
+      "identity" : "swiftradix",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/orchetect/SwiftRadix",
+      "state" : {
+        "revision" : "a52c37a4c213403f7377ae77b4c68451bcab8330",
+        "version" : "1.3.1"
+      }
+    },
+    {
       "identity" : "texttable",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/cfilipov/TextTable",
