@@ -21,6 +21,7 @@ let package = Package(
     .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.8.0"),
     .package(url: "https://github.com/cfilipov/TextTable", branch: "master"),
     .package(url: "https://github.com/sersoft-gmbh/swift-sysctl.git", from: "1.0.0"),
+    .package(url: "https://github.com/orchetect/SwiftRadix", from: "1.3.0")
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -34,6 +35,7 @@ let package = Package(
       .product(name: "Sentry", package: "sentry-cocoa"),
       .product(name: "TextTable", package: "TextTable"),
       .product(name: "Sysctl", package: "swift-sysctl"),
+      .product(name: "SwiftRadix", package: "SwiftRadix"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",
