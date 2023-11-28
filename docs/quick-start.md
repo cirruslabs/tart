@@ -33,28 +33,28 @@ tart run sonoma-base
 The following macOS images are currently available:
 
 * macOS 14 (Sonoma)
-  * `ghcr.io/cirruslabs/macos-sonoma-vanilla:latest`
-  * `ghcr.io/cirruslabs/macos-sonoma-base:latest`
-  * `ghcr.io/cirruslabs/macos-sonoma-xcode:latest`
+    * `ghcr.io/cirruslabs/macos-sonoma-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-sonoma-base:latest`
+    * `ghcr.io/cirruslabs/macos-sonoma-xcode:latest`
 * macOS 13 (Ventura)
-  * `ghcr.io/cirruslabs/macos-ventura-vanilla:latest`
-  * `ghcr.io/cirruslabs/macos-ventura-base:latest`
-  * `ghcr.io/cirruslabs/macos-ventura-xcode:latest`
+    * `ghcr.io/cirruslabs/macos-ventura-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-ventura-base:latest`
+    * `ghcr.io/cirruslabs/macos-ventura-xcode:latest`
 * macOS 12 (Monterey)
-  * `ghcr.io/cirruslabs/macos-monterey-vanilla:latest`
-  * `ghcr.io/cirruslabs/macos-monterey-base:latest`
-  * `ghcr.io/cirruslabs/macos-monterey-xcode:latest`
+    * `ghcr.io/cirruslabs/macos-monterey-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-monterey-base:latest`
+    * `ghcr.io/cirruslabs/macos-monterey-xcode:latest`
 
 There's also a [full list of images](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos-) in which you can discovery specific tags (e.g. `ghcr.io/cirruslabs/macos-monterey-xcode:15`) and [macOS-specific Packer templates](https://github.com/cirruslabs/macos-image-templates) that were used to generate these images.
 
 For, Linux the options are as follows:
 
 * Ubuntu
-  * `ghcr.io/cirruslabs/ubuntu:latest`
+    * `ghcr.io/cirruslabs/ubuntu:latest`
 * Debian
-  * `ghcr.io/cirruslabs/debian:latest`
+    * `ghcr.io/cirruslabs/debian:latest`
 * Fedora
-  * `ghcr.io/cirruslabs/fedora:latest`
+    * `ghcr.io/cirruslabs/fedora:latest`
 
 These Linux images can be ran natively on [Vetu](https://github.com/cirruslabs/vetu), our virtualization solution for Linux, assuming that Vetu itself is running on an `arm64` machine.
 
