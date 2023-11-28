@@ -140,6 +140,12 @@ struct Run: AsyncParsableCommand {
         throw ValidationError("Suspending VMs with shared directories is not supported")
       }
     }
+
+    for disk in disk {
+      if disk.hasSuffix("-amd64.iso") {
+        throw ValidationError("Seems you have a disk targeting x86 architecture (hence amd64 in the name). Please use an 'arm64' version of the disk.")
+      }
+    }
   }
 
   @MainActor
