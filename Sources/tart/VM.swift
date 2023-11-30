@@ -326,9 +326,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    var devices: [VZStorageDeviceConfiguration] = [
-      VZVirtioBlockDeviceConfiguration(attachment: try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false))
-    ]
+    let attachment: VZDiskImageStorageDeviceAttachment = try getStorageDevice(diskURL: diskURL, useFsWorkAround: vmConfig.os == .linux)
+    var device: VZStorageDeviceConfiguration
+    if #available(macOS 14, *), vmConfig.os == .linux {
+      device = VZNVMExpressControllerDeviceConfiguration(attachment: attachment)
+    } else {
+      device = VZVirtioBlockDeviceConfiguration(attachment: attachment)
+    }
+    var devices: [VZStorageDeviceConfiguration] = [device]
     devices.append(contentsOf: additionalStorageDevices)
     configuration.storageDevices = devices
 
@@ -360,6 +365,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try configuration.validate()
 
     return configuration
+  }
+
+  private static func getStorageDevice(diskURL: URL, useFsWorkAround: Bool = false) throws -> VZDiskImageStorageDeviceAttachment {
+    if #available(macOS 12, *), useFsWorkAround {
+      // Use cached caching mode for virtio drive to prevent fs corruption on linux when possible
+      return try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: .full)
+    } else {
+      return try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
+    }
   }
 
   func guestDidStop(_ virtualMachine: VZVirtualMachine) {
