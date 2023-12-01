@@ -29,12 +29,12 @@ struct Stop: AsyncParsableCommand {
   }
 
   func stopRunning(_ vmDir: VMDirectory) async throws {
-    let lock = try PIDLock(lockURL: vmDir.configURL)
+    let lock = try vmDir.lock()
 
     // Find the VM's PID
     var pid = try lock.pid()
     if pid == 0 {
-      throw RuntimeError.VMNotRunning("VM \"\(name)\" is not running")
+      throw RuntimeError.VMNotRunning(name)
     }
 
     // Try to gracefully terminate the VM
