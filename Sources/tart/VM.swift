@@ -326,9 +326,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    var devices: [VZStorageDeviceConfiguration] = [
-      VZVirtioBlockDeviceConfiguration(attachment: try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false))
-    ]
+    let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
+      // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
+      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: .full) :
+      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
+
+    var device: VZStorageDeviceConfiguration
+    if #available(macOS 14, *), vmConfig.os == .linux {
+      device = VZNVMExpressControllerDeviceConfiguration(attachment: attachment)
+    } else {
+      device = VZVirtioBlockDeviceConfiguration(attachment: attachment)
+    }
+    var devices: [VZStorageDeviceConfiguration] = [device]
     devices.append(contentsOf: additionalStorageDevices)
     configuration.storageDevices = devices
 
