@@ -91,6 +91,7 @@ nav:
   - "Integrations":
     - "GitHub Actions": integrations/github-actions.md
     - "GitLab Runner": integrations/gitlab-runner.md
+    - "Buildkite": integrations/buildkite.md
     - "Self-hosted CI": integrations/cirrus-cli.md
     - "Managing VMs": integrations/vm-management.md
   - "Support & Licensing": licensing.md
