@@ -39,7 +39,7 @@ class VMStorageLocal: PrunableStorage {
   }
 
   func delete(_ name: String) throws {
-    try FileManager.default.removeItem(at: vmURL(name))
+    try VMDirectory(baseURL: vmURL(name)).delete()
   }
 
   func list() throws -> [(String, VMDirectory)] {

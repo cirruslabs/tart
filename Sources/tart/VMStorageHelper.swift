@@ -50,7 +50,8 @@ enum RuntimeError : Error {
   case VMConfigurationError(_ message: String)
   case VMDoesNotExist(name: String)
   case VMMissingFiles(_ message: String)
-  case VMNotRunning(_ message: String)
+  case VMIsRunning(_ name: String)
+  case VMNotRunning(_ name: String)
   case VMAlreadyRunning(_ message: String)
   case NoIPAddressFound(_ message: String)
   case DiskAlreadyInUse(_ message: String)
@@ -81,8 +82,10 @@ extension RuntimeError : CustomStringConvertible {
       return "the specified VM \"\(name)\" does not exist"
     case .VMMissingFiles(let message):
       return message
-    case .VMNotRunning(let message):
-      return message
+    case .VMIsRunning(let name):
+      return "VM \"\(name)\" is running"
+    case .VMNotRunning(let name):
+      return "VM \"\(name)\" is not running"
     case .VMAlreadyRunning(let message):
       return message
     case .NoIPAddressFound(let message):

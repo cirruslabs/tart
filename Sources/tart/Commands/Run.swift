@@ -224,7 +224,7 @@ struct Run: AsyncParsableCommand {
     // configuration file, otherwise we will loose the lock.
     //
     // [1]: https://man.openbsd.org/fcntl
-    let lock = try PIDLock(lockURL: vmDir.configURL)
+    let lock = try vmDir.lock()
     if try !lock.trylock() {
       throw RuntimeError.VMAlreadyRunning("VM \"\(name)\" is already running!")
     }
