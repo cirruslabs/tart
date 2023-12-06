@@ -65,6 +65,12 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 **Note:** If your company or project is using Tart please consider [adding yourself to the list above](/Resources/Users/HowToAddYourself.md).
 
+<p align="center">
+  <a href="https://aws.amazon.com/marketplace/pp/prodview-qczco34wlkdws?utm_source=github&utm_medium=referral" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/aws-marketplace/Resources/AWSMarkeplaceLogo.png" height="102"/>
+  </a>
+</p>
+
 ## Usage
 
 Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) or later (will download a 25 GB image):
