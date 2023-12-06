@@ -67,7 +67,7 @@ Many more companies are using Tart in their internal setups. Here are a few of t
 
 <p align="center">
   <a href="https://aws.amazon.com/marketplace/pp/prodview-qczco34wlkdws?utm_source=github&utm_medium=referral" target=_blank>
-    <img src="https://github.com/cirruslabs/tart/raw/aws-marketplace/Resources/AWSMarkeplaceLogo.png" height="80"/>
+    <img src="https://github.com/cirruslabs/tart/raw/aws-marketplace/Resources/AWSMarkeplaceLogo.png" height="90"/>
   </a>
 </p>
 
