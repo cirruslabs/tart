@@ -659,7 +659,7 @@ struct DirectoryShare {
 
     let archiveRequest = URLRequest(url: path, cachePolicy: .returnCacheDataElseLoad)
     var response: CachedURLResponse? = urlCache.cachedResponse(for: archiveRequest)
-    if (response == nil) {
+    if (response == nil || response?.data.isEmpty == true) {
       print("Downloading \(path)...")
       // download and unarchive remote directories if needed here
       // use old school API to prevent deadlocks since we are running via MainActor
@@ -667,8 +667,12 @@ struct DirectoryShare {
       Task {
         do {
           let (archiveData, archiveResponse) = try await URLSession.shared.data(for: archiveRequest)
-          urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
-          print("Cached for future invocations!")
+          if archiveData.isEmpty {
+            print("Remote archive is empty!")
+          } else {
+            urlCache.storeCachedResponse(CachedURLResponse(response: archiveResponse, data: archiveData, storagePolicy: .allowed), for: archiveRequest)
+            print("Cached for future invocations!")
+          }
         } catch {
           print("Download failed: \(error)")
         }
