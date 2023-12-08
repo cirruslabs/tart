@@ -219,9 +219,7 @@ class VMStorageOCI: PrunableStorage {
   }
 
   func link(from: RemoteName, to: RemoteName) throws {
-    if FileManager.default.fileExists(atPath: vmURL(from).path) {
-      try FileManager.default.removeItem(at: vmURL(from))
-    }
+    try? FileManager.default.removeItem(at: vmURL(from))
 
     try FileManager.default.createSymbolicLink(at: vmURL(from), withDestinationURL: vmURL(to))
 
