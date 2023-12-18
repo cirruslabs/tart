@@ -40,7 +40,7 @@ struct Create: AsyncParsableCommand {
         } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
           ipswURL = URL(string: fromIPSW)!
         } else {
-          ipswURL = URL(fileURLWithPath: fromIPSW)
+          ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
         }
 
         _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
