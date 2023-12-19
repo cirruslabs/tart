@@ -69,9 +69,11 @@ Note that this tweak persists across reboots, so normally you'll only need to do
 
 ## Running login/clone/pull/push commands over SSH
 
-When invoking the Tart in an SSH session, you might get errors like these:
+When invoking the Tart in an SSH session, you might get error like this:
 
 >Keychain returned unsuccessful status -25308
+
+...or this:
 
 >Keychain failed to update item: User interaction is not allowed.
 
