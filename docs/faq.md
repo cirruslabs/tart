@@ -77,7 +77,7 @@ When invoking the Tart in an SSH session, you might get error like this:
 
 >Keychain failed to update item: User interaction is not allowed.
 
-This is because Tart uses Keychain to store and retrieve OCI registry credentials by default, but Keychain is only automatically/semi-automatically unlocked in GUI sessions.
+This is because Tart uses [Keychain](https://en.wikipedia.org/wiki/Keychain_(software)) to store and retrieve OCI registry credentials by default, but Keychain is only automatically/semi-automatically unlocked in GUI sessions.
 
 To unlock the Keychain in an SSH session, run the following command, which will ask for your user's password:
 
