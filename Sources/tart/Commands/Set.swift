@@ -16,7 +16,18 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
-  @Option(help: "Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data")
+  @Option(help: ArgumentHelp("Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data",
+                             discussion: """
+                             Disk resizing works on most cloud-ready Linux distributions out-of-the box (e.g. Ubuntu Cloud Images
+                             have the \"cloud-initramfs-growroot\" package installed that runs on boot) and on the rest of the
+                             distributions by running the \"growpart\" or \"resize2fs\" commands.
+
+                             For macOS, however, things are a bit more complicated: you need to remove the recovery partition
+                             first and then run various \"diskutil\" commands, see Tart's packer plugin source code for more
+                             details[1].
+
+                             [1]: https://github.com/cirruslabs/packer-plugin-tart/blob/main/builder/tart/step_disk_resize.go
+                             """))
   var diskSize: UInt16?
 
   func run() async throws {
