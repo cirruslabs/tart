@@ -132,8 +132,13 @@ struct VMConfig: Codable {
   }
 
   mutating func setCPU(cpuCount: Int) throws {
-    if cpuCount < cpuCountMin {
+    if os == .darwin && cpuCount < cpuCountMin {
       throw LessThanMinimalResourcesError("VM should have \(cpuCountMin) CPU cores"
+        + " at minimum (requested \(cpuCount))")
+    }
+
+    if cpuCount < VZVirtualMachineConfiguration.minimumAllowedCPUCount {
+      throw LessThanMinimalResourcesError("VM should have \(VZVirtualMachineConfiguration.minimumAllowedCPUCount) CPU cores"
         + " at minimum (requested \(cpuCount))")
     }
 
@@ -141,8 +146,13 @@ struct VMConfig: Codable {
   }
 
   mutating func setMemory(memorySize: UInt64) throws {
-    if memorySize < memorySizeMin {
+    if os == .darwin && memorySize < memorySizeMin {
       throw LessThanMinimalResourcesError("VM should have \(memorySizeMin) bytes"
+        + " of memory at minimum (requested \(memorySize))")
+    }
+
+    if memorySize < VZVirtualMachineConfiguration.minimumAllowedMemorySize {
+      throw LessThanMinimalResourcesError("VM should have \(VZVirtualMachineConfiguration.minimumAllowedMemorySize) bytes"
         + " of memory at minimum (requested \(memorySize))")
     }
 
