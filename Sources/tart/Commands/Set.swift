@@ -16,7 +16,7 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
-  @Option(help: .hidden)
+  @Option(help: "Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data")
   var diskSize: UInt16?
 
   func run() async throws {

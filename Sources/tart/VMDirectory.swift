@@ -134,9 +134,17 @@ struct VMDirectory: Prunable {
     if !FileManager.default.fileExists(atPath: diskURL.path) {
       FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
     }
+
     let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
-    // macOS considers kilo being 1000 and not 1024
-    try diskFileHandle.truncate(atOffset: UInt64(sizeGB) * 1000 * 1000 * 1000)
+    let currentDiskFileLength = try diskFileHandle.seekToEnd()
+    let desiredDiskFileLength = UInt64(sizeGB) * 1000 * 1000 * 1000
+    if desiredDiskFileLength <= currentDiskFileLength {
+      let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentDiskFileLength))
+      let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredDiskFileLength))
+      throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
+        "than the current disk size of \(currentLengthHuman)")
+    }
+    try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
     try diskFileHandle.close()
   }
 
