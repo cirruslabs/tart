@@ -223,7 +223,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try vmDir.resizeDisk(diskSizeGB)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 1, cpuCount: 4, memorySizeMin: 256 * 1024 * 1024, memorySize: 4096 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)

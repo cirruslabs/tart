@@ -59,28 +59,14 @@ struct VMConfig: Codable {
     memorySizeMin: UInt64,
     macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
-    self.init(platform: platform,
-              cpuCountMin: cpuCountMin, cpuCount: cpuCountMin,
-              memorySizeMin: memorySizeMin, memorySize: memorySizeMin,
-              macAddress: macAddress)
-  }
-
-  init(
-    platform: Platform,
-    cpuCountMin: Int,
-    cpuCount: Int,
-    memorySizeMin: UInt64,
-    memorySize: UInt64,
-    macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
-  ) {
     self.os = platform.os()
     self.arch = CurrentArchitecture()
     self.platform = platform
     self.macAddress = macAddress
     self.cpuCountMin = cpuCountMin
-    self.cpuCount = cpuCount
     self.memorySizeMin = memorySizeMin
-    self.memorySize = memorySize
+    cpuCount = cpuCountMin
+    memorySize = memorySizeMin
   }
 
   init(fromJSON: Data) throws {
