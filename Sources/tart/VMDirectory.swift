@@ -138,13 +138,14 @@ struct VMDirectory: Prunable {
     let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
     let currentDiskFileLength = try diskFileHandle.seekToEnd()
     let desiredDiskFileLength = UInt64(sizeGB) * 1000 * 1000 * 1000
-    if desiredDiskFileLength <= currentDiskFileLength {
+    if desiredDiskFileLength < currentDiskFileLength {
       let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentDiskFileLength))
       let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredDiskFileLength))
       throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
         "than the current disk size of \(currentLengthHuman)")
+    } else if desiredDiskFileLength > currentDiskFileLength {
+      try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
     }
-    try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
     try diskFileHandle.close()
   }
 
