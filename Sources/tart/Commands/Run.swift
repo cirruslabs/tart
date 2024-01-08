@@ -610,7 +610,10 @@ struct VMView: NSViewRepresentable {
 
     // Enable automatic display reconfiguration
     // for guests that support it
-    if #available(macOS 14.0, *) {
+    //
+    // This is disabled for Linux because of poor HiDPI
+    // support, which manifests in fonts being too small
+    if #available(macOS 14.0, *), vm.config.os != .linux {
       machineView.automaticallyReconfiguresDisplay = true
     }
 
