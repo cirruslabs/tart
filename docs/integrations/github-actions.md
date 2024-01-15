@@ -5,6 +5,10 @@ Your actions will be executed in clean macOS virtual machines with 4 Apple M2 co
 
 ## Testimonials from customers
 
+Mitchell Hashimoto, HashiCorp co-founder:
+
+> I've been using "Cirrus Runners" since [that tweet](https://twitter.com/mitchellh/status/1731071326201561194) and it has been fantastic. Huge speed increase, huge cost decrease, zero maintenance, exactly what I wanted.
+
 Max Lapides, Senior Mobile Engineer at [Tonal](https://www.tonal.com/):
 
 > Previously, we were using the GitHub‑hosted macOS runners and our iOS build took ~30 minutes. Now with Cirrus Runners, the iOS build only takes ~12 minutes. That’s a huge boost to our productivity, and for only $150/month per runner it is much less expensive too.
