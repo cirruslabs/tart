@@ -13,9 +13,7 @@ will be required to obtain a paid license.
     Tart VMs will automatically try to balance compute between all available cores of the host CPU. As a result,
     all performance and energy-efficient cores of the host CPU are always counted towards the license usage.
 
-# License Tiers
-
-## Free Tier
+## License Tiers
 
 By default, when no [license is purchased](#get-the-license), it is assumed that an organization is using a Free Tier license.
 You can find the Free Tier license text in [Tart](https://github.com/cirruslabs/tart/blob/main/LICENSE) and [Orchard](https://github.com/cirruslabs/orchard/blob/main/LICENSE) repositories.
@@ -34,23 +32,23 @@ Free Tier license has a 100 CPU core limit for Tart and 4 Orchard Workers limit 
       - Using Tart on 13 Mac Minis with 8 CPUs each.
       - Creating an Orchard cluster of 5 Mac Minis workers with 8 CPUs each.
 
-## Gold Tier
+### Gold Tier
 
 If an organization wishes to exceed the limits of the Free Tier license, a purchase of the [Gold Tier License](#get-the-license) is required, which costs \$1000 per month.
 
 Gold Tier license has a 500 CPU core limit for Tart and 20 Orchard Workers limit for Orchard.
 
-## Platinum Tier
+### Platinum Tier
 
 If an organization wishes to exceed the limits of the Gold Tier license, a purchase of the [Platinum Tier License](#get-the-license) is required, which costs \$5000 per month.
 
 Platinum Tier license has a 5,000 CPU core limit for Tart and 200 Orchard Workers limit for Orchard.
 
-## Diamond Tier
+### Diamond Tier
 
 For organizations that wish to exceed the limits of the Platinum Tier license, a purchase of a [custom Diamond Tier License](#get-the-license) is required, which costs \$1 per CPU core per month and gives the ability to run unlimited Orchard Workers.
 
-# Get the license
+## Get the license
 
 If your organization is interested in purchasing one of the license tiers, please email [licensing@cirruslabs.org](mailto:licensing@cirruslabs.org).
 
@@ -64,7 +62,7 @@ You can see a template of a license subscription agreement [here](assets/TartLic
     Additionally, there is a [ECR Pulic Gallery mirror](https://gallery.ecr.aws/cirruslabs/macos) of all the
     [Tart VM images managed by us](https://github.com/cirruslabs/macos-image-templates).
 
-# General Support
+## General Support
 
 The best way to ask general questions about particular use cases is to email our support team at [support@cirruslabs.org](mailto:support@cirruslabs.org).
 Our support team is trying our best to respond ASAP, but there is no guarantee on a response time unless your organization
@@ -73,7 +71,7 @@ has a paid license subscription which includes [Priority Support](#priority-supp
 If you have a feature request or noticed lack of some documentation please feel free to [create a GitHub issue](https://github.com/cirruslabs/tart/issues/new).
 Our support team will answer it by replying to the issue or by updating the documentation.
 
-# Priority Support
+## Priority Support
 
 In addition to the general support we provide a *Priority Support* with guaranteed response times included in all the paid license tiers.
 
