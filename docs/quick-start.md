@@ -60,6 +60,13 @@ These Linux images can be ran natively on [Vetu](https://github.com/cirruslabs/v
 
 Similarly to macOS, there's also a [full list of images](https://github.com/orgs/cirruslabs/packages?repo_name=linux-image-templates) in which you can discovery specific tags (e.g. `ghcr.io/cirruslabs/ubuntu:22.04`) and [Linux-specific Packer templates](https://github.com/cirruslabs/linux-image-templates) that were used to generate these images.
 
+All images above use the following credentials:
+
+* Username: `admin`
+* Password: `admin`
+
+These credentials work both for logging in via GUI, console (Linux) and SSH.
+
 ## SSH access
 
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
