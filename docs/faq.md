@@ -15,7 +15,7 @@ Tart doesn't yet have an analogue of Anka Controller for managing long living VM
 
 ## VM location on disk
 
-Tart stores all it's files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
+Tart stores all its files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
 Remote images are pulled into `~/.tart/cache/OCIs/`.
 
 ## Nested virtualization support?
