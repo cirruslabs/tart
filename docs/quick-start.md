@@ -60,7 +60,7 @@ Note that these Linux images have a minimal disk size of 20 GB, and you might wa
 
 ```bash
 tart clone ghcr.io/cirruslabs/ubuntu:latest ubuntu
-tart set ubuntu --disk-size 20
+tart set ubuntu --disk-size 50
 tart run ubuntu
 ```
 
