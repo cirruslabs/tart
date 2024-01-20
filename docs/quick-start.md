@@ -56,7 +56,7 @@ For, Linux the options are as follows:
 * Fedora
     * `ghcr.io/cirruslabs/fedora:latest`
 
-Note that these Linux images have a minimal disk size, and you might want to resize them right after cloning:
+Note that these Linux images have a minimal disk size of 20 GB, and you might want to resize them right after cloning:
 
 ```bash
 tart clone ghcr.io/cirruslabs/ubuntu:latest ubuntu
