@@ -56,6 +56,14 @@ For, Linux the options are as follows:
 * Fedora
     * `ghcr.io/cirruslabs/fedora:latest`
 
+Note that these Linux images have a minimal disk size of 20 GB, and you might want to resize them right after cloning:
+
+```bash
+tart clone ghcr.io/cirruslabs/ubuntu:latest ubuntu
+tart set ubuntu --disk-size 50
+tart run ubuntu
+```
+
 These Linux images can be ran natively on [Vetu](https://github.com/cirruslabs/vetu), our virtualization solution for Linux, assuming that Vetu itself is running on an `arm64` machine.
 
 Similarly to macOS, there's also a [full list of images](https://github.com/orgs/cirruslabs/packages?repo_name=linux-image-templates) in which you can discovery specific tags (e.g. `ghcr.io/cirruslabs/ubuntu:22.04`) and [Linux-specific Packer templates](https://github.com/cirruslabs/linux-image-templates) that were used to generate these images.
