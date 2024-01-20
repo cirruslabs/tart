@@ -3,16 +3,6 @@ hide:
   - navigation
 ---
 
-## How Tart is different from Anka?
-
-Under the hood Tart is using the same technology as Anka 3.0 so there should be no real difference in performance
-or features supported. If there is some feature missing please don't hesitate to [create a feature request](https://github.com/cirruslabs/tart/issues).
-
-Instead of Anka Registry, Tart can work with any OCI-compatible container registry. This provides a much more consistent
-and scalable experience for distributing virtual machines.
-
-Tart doesn't yet have an analogue of Anka Controller for managing long living VMs but [soon will be](https://github.com/cirruslabs/tart/issues/372).
-
 ## VM location on disk
 
 Tart stores all its files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
@@ -88,3 +78,13 @@ security unlock-keychain
 This command also supports the `-p` command-line argument that allows you to supply the password and unlock non-interactively, which is great for scripts.
 
 If that doesn't work for you for some reason, you can pass the credentials via the environment variables, see [Registry Authorization](integrations/vm-management.md#registry-authorization) for more details on how to do that.
+
+## How Tart is different from Anka?
+
+Under the hood Tart is using the same technology as Anka 3.0 so there should be no real difference in performance
+or features supported. If there is some feature missing please don't hesitate to [create a feature request](https://github.com/cirruslabs/tart/issues).
+
+Instead of Anka Registry, Tart can work with any OCI-compatible container registry. This provides a much more consistent
+and scalable experience for distributing virtual machines.
+
+Tart doesn't yet have an analogue of Anka Controller for managing long living VMs but [soon will be](https://github.com/cirruslabs/tart/issues/372).
