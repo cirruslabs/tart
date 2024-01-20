@@ -83,3 +83,10 @@ tart run sonoma-base
 
 Please check the [official documentation](https://tart.run) for more information and/or feel free to use [discussions](https://github.com/cirruslabs/tart/discussions)
 for remaining questions.
+
+## License
+
+Both [Tart Virtualization](https://github.com/cirruslabs/tart) and [Orchard Orchestration](https://github.com/cirruslabs/orchard)
+are licensed under [Fair Source License](LICENSE). Usage on personal computers including personal workstations is royalty-free,
+but organizations that exceed a certain number of server installations (100 CPU cores for Tart and/or 4 hosts for Orchard)
+will be required to obtain a paid license.
