@@ -3,10 +3,9 @@ project_name: tart
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build -c release --product tart
+    - swift build --arch x86_64 -c release --product tart
+    - swift build --arch arm64 -c release --product tart
     - gon gon.hcl
-    - mkdir -p tart.app/Contents/MacOS
-    - cp .build/arm64-apple-macosx/release/tart tart.app/Contents/MacOS/
 
 builds:
   - builder: prebuilt
@@ -16,10 +15,18 @@ builds:
       - arm64
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
-      path: tart.app/Contents/MacOS/tart
+      path: .build/arm64-apple-macosx/release/tart
+  - builder: prebuilt
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    binary: tart.app/Contents/MacOS/tart
+    prebuilt:
+      path: .build/x86_64-apple-macosx/release/tart
 
 archives:
-  - name_template: "{{ .ProjectName }}"
+  - name_template: "{{ .ProjectName }}-{{ .Arch }}"
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
@@ -37,7 +44,7 @@ brews:
     caveats: See the GitHub repository for more information
     homepage: https://github.com/cirruslabs/tart
     license: "Fair Source"
-    description: Run macOS VMs on Apple Silicon
+    description: Run macOS and Linux VMs on Apple Hardware
     skip_upload: auto
     dependencies:
       - "cirruslabs/cli/softnet"
@@ -46,9 +53,3 @@ brews:
       bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
     custom_block: |
       depends_on :macos => :ventura
-      
-      on_macos do
-        unless Hardware::CPU.arm?
-          odie "Tart only works on Apple Silicon!"
-        end
-      end

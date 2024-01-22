@@ -36,19 +36,25 @@ struct Run: AsyncParsableCommand {
   @Flag(help: "Force open a UI window, even when VNC is enabled.")
   var graphics: Bool = false
 
+  #if arch(arm64)
   @Flag(help: "Boot into recovery mode")
+  #endif
   var recovery: Bool = false
 
+  #if arch(arm64)
   @Flag(help: ArgumentHelp(
     "Use screen sharing instead of the built-in UI.",
     discussion: "Useful since Screen Sharing supports copy/paste, drag and drop, etc.\n"
       + "Note that Remote Login option should be enabled inside the VM."))
+  #endif
   var vnc: Bool = false
 
+  #if arch(arm64)
   @Flag(help: ArgumentHelp(
     "Use Virtualization.Framework's VNC server instead of the build-in UI.",
     discussion: "Useful since this type of VNC is available in recovery mode and in macOS installation.\n"
       + "Note that this feature is experimental and there may be bugs present when using VNC."))
+  #endif
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
@@ -66,6 +72,7 @@ struct Run: AsyncParsableCommand {
   """, valueName: "path[:ro]"))
   var disk: [String] = []
 
+  #if arch(arm64)
   @Option(name: [.customLong("rosetta")], help: ArgumentHelp(
     "Attaches a Rosetta share to the guest Linux VM with a specific tag (e.g. --rosetta=\"rosetta\")",
     discussion: """
@@ -78,6 +85,7 @@ struct Run: AsyncParsableCommand {
     """,
     valueName: "tag"
   ))
+  #endif
   var rosettaTag: String?
 
   @Option(help: ArgumentHelp("""
@@ -105,11 +113,15 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
+  #if arch(arm64)
   @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
+  #endif
   var suspendable: Bool = false
 
+  #if arch(arm64)
   @Flag(help: ArgumentHelp("Whether system hot keys should be sent to the guest instead of the host",
                            discussion: "If enabled then system hot keys like Cmd+Tab will be sent to the guest instead of the host."))
+  #endif
   var captureSystemKeys: Bool = false
 
   mutating func validate() throws {
@@ -236,6 +248,7 @@ struct Run: AsyncParsableCommand {
       do {
         var resume = false
 
+        #if arch(arm64)
         if #available(macOS 14, *) {
           if FileManager.default.fileExists(atPath: vmDir.stateURL.path) {
             print("restoring VM state from a snapshot...")
@@ -245,6 +258,7 @@ struct Run: AsyncParsableCommand {
             print("resuming VM...")
           }
         }
+        #endif
 
         try await vm!.start(recovery: recovery, resume: resume)
 
@@ -290,6 +304,7 @@ struct Run: AsyncParsableCommand {
     sigusr1Src.setEventHandler {
       Task {
         do {
+          #if arch(arm64)
           if #available(macOS 14, *) {
             try vm!.configuration.validateSaveRestoreSupport()
 
@@ -307,6 +322,7 @@ struct Run: AsyncParsableCommand {
 
             Foundation.exit(1)
           }
+          #endif
         } catch (let e) {
           print(RuntimeError.SuspendFailed(e.localizedDescription))
 
@@ -464,25 +480,29 @@ struct Run: AsyncParsableCommand {
     guard let rosettaTag = rosettaTag else {
       return []
     }
+    #if arch(arm64)
+      guard #available(macOS 13, *) else {
+        throw UnsupportedOSError("Rosetta directory share", "is")
+      }
 
-    guard #available(macOS 13, *) else {
-      throw UnsupportedOSError("Rosetta directory share", "is")
-    }
+      switch VZLinuxRosettaDirectoryShare.availability {
+      case .notInstalled:
+        throw UnsupportedOSError("Rosetta directory share", "is", "that have Rosetta installed")
+      case .notSupported:
+        throw UnsupportedOSError("Rosetta directory share", "is", "running Apple silicon")
+      default:
+        break
+      }
 
-    switch VZLinuxRosettaDirectoryShare.availability {
-    case .notInstalled:
-      throw UnsupportedOSError("Rosetta directory share", "is", "that have Rosetta installed")
-    case .notSupported:
-      throw UnsupportedOSError("Rosetta directory share", "is", "running Apple silicon")
-    default:
-      break
-    }
+      try VZVirtioFileSystemDeviceConfiguration.validateTag(rosettaTag)
+      let device = VZVirtioFileSystemDeviceConfiguration(tag: rosettaTag)
+      device.share = try VZLinuxRosettaDirectoryShare()
 
-    try VZVirtioFileSystemDeviceConfiguration.validateTag(rosettaTag)
-    let device = VZVirtioFileSystemDeviceConfiguration(tag: rosettaTag)
-    device.share = try VZLinuxRosettaDirectoryShare()
-
-    return [device]
+      return [device]
+    #elseif arch(x86_64)
+      // there is no Rosetta on Intel
+      return []
+    #endif
   }
 
   private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool) {

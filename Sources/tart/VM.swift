@@ -116,18 +116,6 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
   }
 
-  static func latestIPSWURL() async throws -> URL {
-    defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
-
-    let image = try await withCheckedThrowingContinuation { continuation in
-      VZMacOSRestoreImage.fetchLatestSupported() { result in
-        continuation.resume(with: result)
-      }
-    }
-
-    return image.url
-  }
-
   var inFinalState: Bool {
     get {
       virtualMachine.state == VZVirtualMachine.State.stopped ||
@@ -137,6 +125,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
+  #if arch(arm64)
   init(
     vmDir: VMDirectory,
     ipswURL: URL,
@@ -213,6 +202,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
   }
+  #endif
 
   @available(macOS 13, *)
   static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
@@ -257,9 +247,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   @MainActor
   private func start(_ recovery: Bool) async throws {
+    #if arch(arm64)
     let startOptions = VZMacOSVirtualMachineStartOptions()
     startOptions.startUpFromMacOSRecovery = recovery
     try await virtualMachine.start(options: startOptions)
+    #else
+    try await virtualMachine.start()
+    #endif
   }
 
   @MainActor
