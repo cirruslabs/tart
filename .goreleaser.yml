@@ -8,7 +8,8 @@ before:
     - gon gon.hcl
 
 builds:
-  - builder: prebuilt
+  - id: tart-arm64
+    builder: prebuilt
     goos:
       - darwin
     goarch:
@@ -16,7 +17,8 @@ builds:
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
       path: .build/arm64-apple-macosx/release/tart
-  - builder: prebuilt
+  - id: tart-x86_64
+    builder: prebuilt
     goos:
       - darwin
     goarch:
