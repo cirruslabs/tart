@@ -96,12 +96,12 @@ struct VMConfig: Codable {
     switch os {
     case .darwin:
       #if arch(arm64)
-      platform = try Darwin(from: decoder)
+        platform = try Darwin(from: decoder)
       #else
-      throw DecodingError.dataCorruptedError(
-        forKey: .os,
-        in: container,
-        debugDescription: "Darwin VMs are only supported on Apple Silicon hosts")
+        throw DecodingError.dataCorruptedError(
+          forKey: .os,
+          in: container,
+          debugDescription: "Darwin VMs are only supported on Apple Silicon hosts")
       #endif
     case .linux:
       platform = try Linux(from: decoder)

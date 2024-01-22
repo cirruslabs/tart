@@ -24,9 +24,9 @@ struct Create: AsyncParsableCommand {
       throw ValidationError("Please specify either a --from-ipsw or --linux option!")
     }
     #if arch(x86_64)
-    if fromIPSW != nil {
-      throw ValidationError("Only Linux VMs are supported on Intel!")
-    }
+      if fromIPSW != nil {
+        throw ValidationError("Only Linux VMs are supported on Intel!")
+      }
     #endif
   }
 
@@ -39,27 +39,27 @@ struct Create: AsyncParsableCommand {
 
     try await withTaskCancellationHandler(operation: {
       #if arch(arm64)
-      if let fromIPSW = fromIPSW {
-        let ipswURL: URL
+        if let fromIPSW = fromIPSW {
+          let ipswURL: URL
 
-        if fromIPSW == "latest" {
-          defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
+          if fromIPSW == "latest" {
+            defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
 
-          let image = try await withCheckedThrowingContinuation { continuation in
-            VZMacOSRestoreImage.fetchLatestSupported() { result in
-              continuation.resume(with: result)
+            let image = try await withCheckedThrowingContinuation { continuation in
+              VZMacOSRestoreImage.fetchLatestSupported() { result in
+                continuation.resume(with: result)
+              }
             }
+
+            ipswURL = image.url
+          } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
+            ipswURL = URL(string: fromIPSW)!
+          } else {
+            ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
           }
 
-          ipswURL = image.url
-        } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
-          ipswURL = URL(string: fromIPSW)!
-        } else {
-          ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
         }
-
-        _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
-      }
       #endif
 
       if linux {
