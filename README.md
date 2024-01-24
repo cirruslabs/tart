@@ -8,7 +8,7 @@ Built by CI engineers for your automation needs. Here are some highlights of Tar
 * Use Tart Packer Plugin to automate VM creation.
 * Easily integrates with any CI system.
 
-Tart powers [Cirrus Runners](https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral)
+Tart powers [Cirrus Runners](https://cirrus-runners.app/)
 service — a drop-in replacement for the standard GitHub-hosted runners, offering 2-3 times better performance for a fraction of the price.
 
 <p align="center">
@@ -17,21 +17,7 @@ service — a drop-in replacement for the standard GitHub-hosted runners, offeri
   </a>
 </p>
 
-Tart is also adopted by several other automation services:
-
-<p align="center">
-  <a href="https://cirrus-ci.org/guide/macOS/" target=_blank>
-    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/CirrusCI.png" height="65"/>
-  </a>
-  <a href="https://codemagic.io/" target=_blank>
-    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Codemagic.png" height="65"/>
-  </a>
-  <a href="https://testingbot.com/" target=_blank>
-    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/TestingBot.png" height="65"/>
-  </a>
-</p>
-
-Many more companies are using Tart in their internal setups. Here are a few of them:
+Many companies are using Tart in their internal setups. Here are a few of them:
 
 <p align="center">
   <a href="https://ahrefs.com/" target=_blank>
