@@ -8,24 +8,17 @@ before:
     - gon gon.hcl
 
 builds:
-  - id: tart-arm64
+  - id: tart
     builder: prebuilt
+    goamd64: [v1]
     goos:
       - darwin
     goarch:
       - arm64
-    binary: tart.app/Contents/MacOS/tart
-    prebuilt:
-      path: .build/arm64-apple-macosx/release/tart
-  - id: tart-x86_64
-    builder: prebuilt
-    goos:
-      - darwin
-    goarch:
       - amd64
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
-      path: .build/x86_64-apple-macosx/release/tart
+      path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
 
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Arch }}"
@@ -40,7 +33,7 @@ release:
 
 brews:
   - name: tart
-    tap:
+    repository:
       owner: cirruslabs
       name: homebrew-cli
     caveats: See the GitHub repository for more information
