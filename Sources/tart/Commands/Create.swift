@@ -1,7 +1,8 @@
 import ArgumentParser
 import Dispatch
-import SwiftUI
 import Foundation
+import SwiftUI
+import Virtualization
 
 struct Create: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Create a VM")
@@ -22,6 +23,11 @@ struct Create: AsyncParsableCommand {
     if fromIPSW == nil && !linux {
       throw ValidationError("Please specify either a --from-ipsw or --linux option!")
     }
+    #if arch(x86_64)
+      if fromIPSW != nil {
+        throw ValidationError("Only Linux VMs are supported on Intel!")
+      }
+    #endif
   }
 
   func run() async throws {
@@ -32,19 +38,29 @@ struct Create: AsyncParsableCommand {
     try tmpVMDirLock.lock()
 
     try await withTaskCancellationHandler(operation: {
-      if let fromIPSW = fromIPSW {
-        let ipswURL: URL
+      #if arch(arm64)
+        if let fromIPSW = fromIPSW {
+          let ipswURL: URL
 
-        if fromIPSW == "latest" {
-          ipswURL = try await VM.latestIPSWURL()
-        } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
-          ipswURL = URL(string: fromIPSW)!
-        } else {
-          ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
+          if fromIPSW == "latest" {
+            defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
+
+            let image = try await withCheckedThrowingContinuation { continuation in
+              VZMacOSRestoreImage.fetchLatestSupported() { result in
+                continuation.resume(with: result)
+              }
+            }
+
+            ipswURL = image.url
+          } else if fromIPSW.starts(with: "http://") || fromIPSW.starts(with: "https://") {
+            ipswURL = URL(string: fromIPSW)!
+          } else {
+            ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
+          }
+
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
         }
-
-        _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
-      }
+      #endif
 
       if linux {
         _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)

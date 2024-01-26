@@ -116,18 +116,6 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
   }
 
-  static func latestIPSWURL() async throws -> URL {
-    defaultLogger.appendNewLine("Looking up the latest supported IPSW...")
-
-    let image = try await withCheckedThrowingContinuation { continuation in
-      VZMacOSRestoreImage.fetchLatestSupported() { result in
-        continuation.resume(with: result)
-      }
-    }
-
-    return image.url
-  }
-
   var inFinalState: Bool {
     get {
       virtualMachine.state == VZVirtualMachine.State.stopped ||
@@ -137,82 +125,84 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
-  init(
-    vmDir: VMDirectory,
-    ipswURL: URL,
-    diskSizeGB: UInt16,
-    network: Network = NetworkShared(),
-    additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
-    directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
-    serialPorts: [VZSerialPortConfiguration] = []
-  ) async throws {
-    var ipswURL = ipswURL
+  #if arch(arm64)
+    init(
+      vmDir: VMDirectory,
+      ipswURL: URL,
+      diskSizeGB: UInt16,
+      network: Network = NetworkShared(),
+      additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
+      directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
+      serialPorts: [VZSerialPortConfiguration] = []
+    ) async throws {
+      var ipswURL = ipswURL
 
-    if !ipswURL.isFileURL {
-      ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
-    }
-
-    // We create a temporary TART_HOME directory in tests, which has its "cache" folder symlinked
-    // to the users Tart cache directory (~/.tart/cache). However, the Virtualization.Framework
-    // cannot deal with paths that contain symlinks, so expand them here first.
-    ipswURL.resolveSymlinksInPath()
-
-    // Load the restore image and try to get the requirements
-    // that match both the image and our platform
-    let image = try await withCheckedThrowingContinuation { continuation in
-      VZMacOSRestoreImage.load(from: ipswURL) { result in
-        continuation.resume(with: result)
+      if !ipswURL.isFileURL {
+        ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
       }
-    }
 
-    guard let requirements = image.mostFeaturefulSupportedConfiguration else {
-      throw UnsupportedRestoreImageError()
-    }
+      // We create a temporary TART_HOME directory in tests, which has its "cache" folder symlinked
+      // to the users Tart cache directory (~/.tart/cache). However, the Virtualization.Framework
+      // cannot deal with paths that contain symlinks, so expand them here first.
+      ipswURL.resolveSymlinksInPath()
 
-    // Create NVRAM
-    _ = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
-
-    // Create disk
-    try vmDir.resizeDisk(diskSizeGB)
-
-    name = vmDir.name
-    // Create config
-    config = VMConfig(
-      platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
-      cpuCountMin: requirements.minimumSupportedCPUCount,
-      memorySizeMin: requirements.minimumSupportedMemorySize
-    )
-    // allocate at least 4 CPUs because otherwise VMs are frequently freezing
-    try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
-    try config.save(toURL: vmDir.configURL)
-
-    // Initialize the virtual machine and its configuration
-    self.network = network
-    configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-                                                vmConfig: config, network: network,
-                                                additionalStorageDevices: additionalStorageDevices,
-                                                directorySharingDevices: directorySharingDevices,
-                                                serialPorts: serialPorts
-    )
-    virtualMachine = VZVirtualMachine(configuration: configuration)
-
-    super.init()
-    virtualMachine.delegate = self
-
-    // Run automated installation
-    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-      DispatchQueue.main.async { [ipswURL] in
-        let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
-
-        defaultLogger.appendNewLine("Installing OS...")
-        ProgressObserver(installer.progress).log(defaultLogger)
-
-        installer.install { result in
+      // Load the restore image and try to get the requirements
+      // that match both the image and our platform
+      let image = try await withCheckedThrowingContinuation { continuation in
+        VZMacOSRestoreImage.load(from: ipswURL) { result in
           continuation.resume(with: result)
         }
       }
+
+      guard let requirements = image.mostFeaturefulSupportedConfiguration else {
+        throw UnsupportedRestoreImageError()
+      }
+
+      // Create NVRAM
+      _ = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
+
+      // Create disk
+      try vmDir.resizeDisk(diskSizeGB)
+
+      name = vmDir.name
+      // Create config
+      config = VMConfig(
+        platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
+        cpuCountMin: requirements.minimumSupportedCPUCount,
+        memorySizeMin: requirements.minimumSupportedMemorySize
+      )
+      // allocate at least 4 CPUs because otherwise VMs are frequently freezing
+      try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
+      try config.save(toURL: vmDir.configURL)
+
+      // Initialize the virtual machine and its configuration
+      self.network = network
+      configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
+                                                  vmConfig: config, network: network,
+                                                  additionalStorageDevices: additionalStorageDevices,
+                                                  directorySharingDevices: directorySharingDevices,
+                                                  serialPorts: serialPorts
+      )
+      virtualMachine = VZVirtualMachine(configuration: configuration)
+
+      super.init()
+      virtualMachine.delegate = self
+
+      // Run automated installation
+      try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        DispatchQueue.main.async { [ipswURL] in
+          let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
+
+          defaultLogger.appendNewLine("Installing OS...")
+          ProgressObserver(installer.progress).log(defaultLogger)
+
+          installer.install { result in
+            continuation.resume(with: result)
+          }
+        }
+      }
     }
-  }
+  #endif
 
   @available(macOS 13, *)
   static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
@@ -257,9 +247,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   @MainActor
   private func start(_ recovery: Bool) async throws {
-    let startOptions = VZMacOSVirtualMachineStartOptions()
-    startOptions.startUpFromMacOSRecovery = recovery
-    try await virtualMachine.start(options: startOptions)
+    #if arch(arm64)
+      let startOptions = VZMacOSVirtualMachineStartOptions()
+      startOptions.startUpFromMacOSRecovery = recovery
+      try await virtualMachine.start(options: startOptions)
+    #else
+      try await virtualMachine.start()
+    #endif
   }
 
   @MainActor
