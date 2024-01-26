@@ -1,6 +1,3 @@
-import pytest
-
-@pytest.mark.skip(reason="dev-mini is corrupted now and can't create from scratch")
 def test_create_macos(tart):
     # Create a macOS VM
     tart.run(["create", "--from-ipsw", "latest", "macos-vm"])
