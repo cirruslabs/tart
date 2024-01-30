@@ -24,7 +24,7 @@ struct Rename: AsyncParsableCommand {
     }
 
     if localStorage.exists(newName) {
-      throw ValidationError("failed to rename VM \(name), target VM \(name) already exists, delete it first!")
+      throw ValidationError("failed to rename VM \(name), target VM \(newName) already exists, delete it first!")
     }
 
     try localStorage.rename(name, newName)
