@@ -89,17 +89,20 @@ struct Run: AsyncParsableCommand {
   var rosettaTag: String?
 
   @Option(help: ArgumentHelp("""
-  Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")
+  Additional directory shares with a comma separated list of options\n(e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")
   """, discussion: """
   Requires host to be macOS 13.0 (Ventura) or newer.
-  A shared directory is automatically mounted to "/Volumes/My Shared Files" directory on macOS,
-  while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
+
+  A shared directory is automatically mounted to "/Volumes/My Shared Files" directory on macOS, unless
+  the `noauto` option is specified. On Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
   For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
+
+  Passing `ro` as an option mounts the directory read only.
 
   In case of passing multiple directories it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\"
   These names will be used as directory names under the mounting point inside guests. For the example above it will be
   "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
-  """, valueName: "[name:]path[:ro]"))
+  """, valueName: "[name:]path[:ro|noauto]"))
   var dir: [String] = []
 
   @Option(help: ArgumentHelp("""
@@ -447,33 +450,45 @@ struct Run: AsyncParsableCommand {
       throw UnsupportedOSError("directory sharing", "is")
     }
 
-    var directoryShares: [DirectoryShare] = []
+    var shareConfigurations: [VZDirectorySharingDeviceConfiguration] = []
 
-    var allNamedShares = true
+    // There can only be one auto-mount configuration
+    let autoMountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
+    let autoMountConfig = VZVirtioFileSystemDeviceConfiguration(tag: autoMountTag)
+    var autoMountDirectories: [DirectoryShare] = []
+
     for rawDir in dir {
       let directoryShare = try DirectoryShare(parseFrom: rawDir)
-      if (directoryShare.name == nil) {
-        allNamedShares = false
+      if (directoryShare.autoMount) {
+        autoMountDirectories.append(directoryShare)
+      } else {
+        if (directoryShare.name == nil) {
+          throw ValidationError("Non-auto-mounted shares need a name")
+        }
+        let shareConfiguration = VZVirtioFileSystemDeviceConfiguration(tag: directoryShare.name!)
+        shareConfiguration.share = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
+        print("config \(directoryShare.path)")
+        shareConfigurations.append(shareConfiguration)
       }
-      directoryShares.append(directoryShare)
     }
 
-
-    let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
-    let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
-    if allNamedShares {
-      var directories: [String : VZSharedDirectory] = Dictionary()
-      try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
-      sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
-    } else if dir.count > 1 {
-      throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
-    } else if dir.count == 1 {
-      let directoryShare = directoryShares.first!
+    if (autoMountDirectories.count == 1) {
+      let directoryShare = autoMountDirectories.first!
       let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
-      sharingDevice.share = singleDirectoryShare
+      autoMountConfig.share = singleDirectoryShare
+    } else {
+      var directories: [String : VZSharedDirectory] = Dictionary()
+      for autoMountDirectory in autoMountDirectories {
+        if (autoMountDirectory.name == nil) {
+          throw ValidationError("invalid --dir syntax: for multiple auto-mounted shares each one of them should be named")
+        }
+        directories[autoMountDirectory.name!] = try autoMountDirectory.createConfiguration()
+      }
+      autoMountConfig.share = VZMultipleDirectoryShare(directories: directories)
     }
+    shareConfigurations.append(autoMountConfig)
 
-    return [sharingDevice]
+    return shareConfigurations
   }
 
   private func rosettaDirectoryShare() throws -> [VZDirectorySharingDeviceConfiguration] {
@@ -648,12 +663,31 @@ struct VMView: NSViewRepresentable {
 struct DirectoryShare {
   let name: String?
   let path: URL
-  let readOnly: Bool
+  var readOnly: Bool = false
+  var autoMount: Bool = true
 
   init(parseFrom: String) throws {
-    let readOnlySuffix = ":ro"
-    readOnly = parseFrom.hasSuffix(readOnlySuffix)
-    let maybeNameAndURL = readOnly ? String(parseFrom.dropLast(readOnlySuffix.count)) : parseFrom
+    var maybeNameAndURL = parseFrom
+    var splits = parseFrom.split(separator: ":", maxSplits: 2)
+    let optionsSuffix = #/:(([a-z]+(,|$))+)/#
+    if let match = parseFrom.firstMatch(of: optionsSuffix) {
+      let possiblePath = NSString(string: String(match.1)).expandingTildeInPath
+      if (FileManager.default.fileExists(atPath: possiblePath) && splits.count == 2) {
+        // Treat as path, not as option
+      } else {
+        for option in match.1.split(separator: ",") {
+          switch option {
+          case "ro":
+            readOnly = true
+          case "noauto":
+            autoMount = false
+          default:
+            throw ValidationError("Unknown directory option '\(option)'!")
+          }
+        }
+        maybeNameAndURL = String(parseFrom.dropLast(match.0.count))
+      }
+    }
 
     if maybeNameAndURL.starts(with: "https://") || maybeNameAndURL.starts(with: "http://") {
       // just a URL
@@ -662,7 +696,7 @@ struct DirectoryShare {
       return
     }
 
-    let splits = maybeNameAndURL.split(separator: ":", maxSplits: 1)
+    splits = maybeNameAndURL.split(separator: ":", maxSplits: 1)
 
     if splits.count == 2 {
       name = String(splits[0])
