@@ -26,6 +26,7 @@ struct Root: AsyncParsableCommand {
       Rename.self,
       Stop.self,
       Delete.self,
+      FQN.self,
     ])
 
   public static func main() async throws {
