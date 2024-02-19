@@ -1,6 +1,8 @@
 import XCTest
 @testable import tart
 
+import Virtualization
+
 final class DirectoryShareTests: XCTestCase {
   func testNamedParsing() throws {
     let share = try DirectoryShare(parseFrom: "build:/Users/admin/build")
@@ -43,5 +45,25 @@ final class DirectoryShareTests: XCTestCase {
     XCTAssertEqual(roShare.path, URL(filePath: "/Users/admin/build"))
     XCTAssertTrue(roShare.readOnly)
     XCTAssertEqual(roShare.mountTag, "foo-bar")
+  }
+
+  func testURL() throws {
+    let archiveWithoutNameOrOptions = try DirectoryShare(parseFrom: "https://example.com/archive.tar.gz")
+    XCTAssertNil(archiveWithoutNameOrOptions.name)
+    XCTAssertEqual(archiveWithoutNameOrOptions.path, URL(string: "https://example.com/archive.tar.gz")!)
+    XCTAssertFalse(archiveWithoutNameOrOptions.readOnly)
+    XCTAssertEqual(archiveWithoutNameOrOptions.mountTag, VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag)
+
+    let archiveWithOptions = try DirectoryShare(parseFrom: "https://example.com/archive.tar.gz:ro,tag=sometag")
+    XCTAssertNil(archiveWithOptions.name)
+    XCTAssertEqual(archiveWithOptions.path, URL(string: "https://example.com/archive.tar.gz")!)
+    XCTAssertTrue(archiveWithOptions.readOnly)
+    XCTAssertEqual(archiveWithOptions.mountTag, "sometag")
+
+    let archiveWithNameAndOptions = try DirectoryShare(parseFrom: "somename:https://example.com/archive.tar.gz:ro,tag=sometag")
+    XCTAssertEqual(archiveWithNameAndOptions.name, "somename")
+    XCTAssertEqual(archiveWithNameAndOptions.path, URL(string: "https://example.com/archive.tar.gz")!)
+    XCTAssertTrue(archiveWithNameAndOptions.readOnly)
+    XCTAssertEqual(archiveWithNameAndOptions.mountTag, "sometag")
   }
 }
