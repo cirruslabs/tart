@@ -102,6 +102,9 @@ struct Run: AsyncParsableCommand {
   """, valueName: "[name:]path[:ro]"))
   var dir: [String] = []
 
+  @Option(help: ArgumentHelp("Tag to use for the VirtioFS device configuration", visibility: .hidden))
+  var dirDeviceTag: String = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
+
   @Option(help: ArgumentHelp("""
   Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
   """, discussion: """
@@ -459,8 +462,7 @@ struct Run: AsyncParsableCommand {
     }
 
 
-    let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
-    let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
+    let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: dirDeviceTag)
     if allNamedShares {
       var directories: [String : VZSharedDirectory] = Dictionary()
       try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
