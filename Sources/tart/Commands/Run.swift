@@ -91,18 +91,19 @@ struct Run: AsyncParsableCommand {
   #endif
   var rosettaTag: String?
 
-  @Option(help: ArgumentHelp("""
-  Additional directory shares with an optional read-only specifier\n(e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")
-  """, discussion: """
-  Requires host to be macOS 13.0 (Ventura) or newer.
-  A shared directory is automatically mounted to "/Volumes/My Shared Files" directory on macOS,
-  while on Linux you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
-  For macOS guests, they must be running macOS 13.0 (Ventura) or newer.
+  @Option(help: ArgumentHelp("Additional directory shares with an optional read-only and mount tag options (e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")", discussion: """
+  Requires host to be macOS 13.0 (Ventura) or newer. macOS guests must be running macOS 13.0 (Ventura) or newer too.
 
-  In case of passing multiple directories it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\"
-  These names will be used as directory names under the mounting point inside guests. For the example above it will be
-  "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
-  """, valueName: "[name:]path[:ro]"))
+  Options are comma-separated and are as follows:
+
+  * ro — mount this directory share in read-only mode instead of the default read-write (e.g. --dir=\"~/src/sources:ro\")
+
+  * tag=<TAG> — by default, the \"com.apple.virtio-fs.automount\" mount tag is used for all directory shares. On macOS, this causes the directories to be automatically mounted to "/Volumes/My Shared Files" directory. On Linux, you have to do it manually: "mount -t virtiofs com.apple.virtio-fs.automount /mount/point".
+
+  Mount tag can be overridden by appending tag property to the directory share (e.g. --dir=\"~/src/build:tag=build\" or --dir=\"~/src/build:ro,tag=build\"). Then it can be mounted via "mount_virtiofs build ~/build" inside guest macOS and "mount -t virtiofs build ~/build" inside guest Linux.
+
+  In case of passing multiple directories per mount tag it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\". These names will be used as directory names under the mounting point inside guests. For the example above it will be "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
+  """, valueName: "[name:]path[:options]"))
   var dir: [String] = []
 
   @Option(help: ArgumentHelp("""
@@ -450,33 +451,35 @@ struct Run: AsyncParsableCommand {
       throw UnsupportedOSError("directory sharing", "is")
     }
 
-    var directoryShares: [DirectoryShare] = []
+    var allDirectoryShares: [DirectoryShare] = []
 
-    var allNamedShares = true
     for rawDir in dir {
-      let directoryShare = try DirectoryShare(parseFrom: rawDir)
-      if (directoryShare.name == nil) {
-        allNamedShares = false
+      allDirectoryShares.append(try DirectoryShare(parseFrom: rawDir))
+    }
+
+    return try Dictionary(grouping: allDirectoryShares, by: {$0.mountTag}).map { mountTag, directoryShares in
+      let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: mountTag)
+
+      var allNamedShares = true
+      for directoryShare in directoryShares {
+        if directoryShare.name == nil {
+          allNamedShares = false
+        }
       }
-      directoryShares.append(directoryShare)
+      if directoryShares.count == 1 {
+        let directoryShare = directoryShares.first!
+        let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
+        sharingDevice.share = singleDirectoryShare
+      } else if !allNamedShares {
+        throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
+      } else {
+        var directories: [String : VZSharedDirectory] = Dictionary()
+        try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
+        sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
+      }
+
+      return sharingDevice
     }
-
-
-    let automountTag = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
-    let sharingDevice = VZVirtioFileSystemDeviceConfiguration(tag: automountTag)
-    if allNamedShares {
-      var directories: [String : VZSharedDirectory] = Dictionary()
-      try directoryShares.forEach { directories[$0.name!] = try $0.createConfiguration() }
-      sharingDevice.share = VZMultipleDirectoryShare(directories: directories)
-    } else if dir.count > 1 {
-      throw ValidationError("invalid --dir syntax: for multiple directory shares each one of them should be named")
-    } else if dir.count == 1 {
-      let directoryShare = directoryShares.first!
-      let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
-      sharingDevice.share = singleDirectoryShare
-    }
-
-    return [sharingDevice]
   }
 
   private func rosettaDirectoryShare() throws -> [VZDirectorySharingDeviceConfiguration] {
@@ -652,28 +655,60 @@ struct DirectoryShare {
   let name: String?
   let path: URL
   let readOnly: Bool
+  let mountTag: String
 
   init(parseFrom: String) throws {
-    let readOnlySuffix = ":ro"
-    readOnly = parseFrom.hasSuffix(readOnlySuffix)
-    let maybeNameAndURL = readOnly ? String(parseFrom.dropLast(readOnlySuffix.count)) : parseFrom
+    var parseFrom = parseFrom
 
-    if maybeNameAndURL.starts(with: "https://") || maybeNameAndURL.starts(with: "http://") {
-      // just a URL
-      name = nil
-      path = URL(string: maybeNameAndURL)!
+    // Consume options
+    (self.readOnly, self.mountTag, parseFrom) = Self.parseOptions(parseFrom)
+
+    // Special case for URLs
+    if parseFrom.hasPrefix("http:") || parseFrom.hasPrefix("https:") {
+      self.name = nil
+      self.path = URL(string: parseFrom)!
+
       return
     }
 
-    let splits = maybeNameAndURL.split(separator: ":", maxSplits: 1)
+    let arguments = parseFrom.split(separator: ":", maxSplits: 1)
 
-    if splits.count == 2 {
-      name = String(splits[0])
-      path = String(splits[1]).toRemoteOrLocalURL()
+    if arguments.count == 2 {
+      self.name = String(arguments[0])
+      self.path = String(arguments[1]).toRemoteOrLocalURL()
     } else {
-      name = nil
-      path = String(splits[0]).toRemoteOrLocalURL()
+      self.name = nil
+      self.path = String(arguments[0]).toRemoteOrLocalURL()
     }
+  }
+
+  static func parseOptions(_ parseFrom: String) -> (Bool, String, String) {
+    var arguments = parseFrom.split(separator: ":")
+    let options = arguments.last!.split(separator: ",")
+
+    var readOnly: Bool = false
+    var mountTag: String = VZVirtioFileSystemDeviceConfiguration.macOSGuestAutomountTag
+
+    var found: Bool = false
+
+    for option in options {
+      switch true {
+      case option == "ro":
+        readOnly = true
+        found = true
+      case option.hasPrefix("tag="):
+        mountTag = String(option.dropFirst(4))
+        found = true
+      default:
+        continue
+      }
+    }
+
+    if found {
+      arguments.removeLast()
+    }
+
+    return (readOnly, mountTag, arguments.joined(separator: ":"))
   }
 
   func createConfiguration() throws -> VZSharedDirectory {
