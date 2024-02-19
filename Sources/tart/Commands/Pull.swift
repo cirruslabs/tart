@@ -23,6 +23,9 @@ struct Pull: AsyncParsableCommand {
   @Option(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
   var concurrency: UInt = 4
 
+  @Flag(help: .hidden)
+  var jsonDigest: Bool = false
+
   func validate() throws {
     if concurrency < 1 {
       throw ValidationError("network concurrency cannot be less than 1")
@@ -30,10 +33,14 @@ struct Pull: AsyncParsableCommand {
   }
 
   func run() async throws {
+    if jsonDigest {
+      jsonLogger = SimpleConsoleLogger()
+    }
+
     // Be more liberal when accepting local image as argument,
     // see https://github.com/cirruslabs/tart/issues/36
     if VMStorageLocal().exists(remoteName) {
-      print("\"\(remoteName)\" is a local image, nothing to pull here!")
+      defaultLogger.appendNewLine("\"\(remoteName)\" is a local image, nothing to pull here!")
 
       return
     }

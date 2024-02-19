@@ -147,6 +147,7 @@ class VMStorageOCI: PrunableStorage {
     if exists(name) && exists(digestName) && linked(from: name, to: digestName) {
       // optimistically check if we need to do anything at all before locking
       defaultLogger.appendNewLine("\(digestName) image is already cached and linked!")
+      jsonLogger.appendNewLine("{\"digest\": \"\(digestName)\"}")
       return
     }
 
@@ -159,7 +160,7 @@ class VMStorageOCI: PrunableStorage {
 
     let sucessfullyLocked = try lock.trylock()
     if !sucessfullyLocked {
-      print("waiting for lock...")
+      defaultLogger.appendNewLine("waiting for lock...")
       try lock.lock()
     }
     defer { try! lock.unlock() }
@@ -198,6 +199,8 @@ class VMStorageOCI: PrunableStorage {
     } else {
       defaultLogger.appendNewLine("\(digestName) image is already cached! creating a symlink...")
     }
+
+    jsonLogger.appendNewLine("{\"digest\": \"\(digestName)\"}")
 
     if name != digestName {
       // Create new or overwrite the old symbolic link
