@@ -39,12 +39,17 @@ final class DirectoryShareTests: XCTestCase {
     XCTAssertFalse(share.readOnly)
     XCTAssertEqual(share.mountTag, "foo-bar")
 
-
     let roShare = try DirectoryShare(parseFrom: "/Users/admin/build:ro,tag=foo-bar")
     XCTAssertNil(roShare.name)
     XCTAssertEqual(roShare.path, URL(filePath: "/Users/admin/build"))
     XCTAssertTrue(roShare.readOnly)
     XCTAssertEqual(roShare.mountTag, "foo-bar")
+
+    let inverseRoShare = try DirectoryShare(parseFrom: "/Users/admin/build:tag=foo-bar,ro")
+    XCTAssertNil(inverseRoShare.name)
+    XCTAssertEqual(inverseRoShare.path, URL(filePath: "/Users/admin/build"))
+    XCTAssertTrue(inverseRoShare.readOnly)
+    XCTAssertEqual(inverseRoShare.mountTag, "foo-bar")
   }
 
   func testURL() throws {
