@@ -36,6 +36,9 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Force open a UI window, even when VNC is enabled.", visibility: .hidden))
   var graphics: Bool = false
 
+  @Flag(help: "Disable audio pass-through to host.")
+  var noAudio: Bool = false
+
   #if arch(arm64)
     @Flag(help: "Boot into recovery mode")
   #endif
@@ -210,7 +213,8 @@ struct Run: AsyncParsableCommand {
       additionalStorageDevices: additionalDiskAttachments,
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
-      suspendable: suspendable
+      suspendable: suspendable,
+      audio: !noAudio
     )
 
     let vncImpl: VNC? = try {

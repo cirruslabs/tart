@@ -45,7 +45,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
-       suspendable: Bool = false
+       suspendable: Bool = false,
+       audio: Bool = true
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -61,7 +62,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 network: network, additionalStorageDevices: additionalStorageDevices,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
-                                                suspendable: suspendable
+                                                suspendable: suspendable,
+                                                audio: audio
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -274,7 +276,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     additionalStorageDevices: [VZStorageDeviceConfiguration],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
-    suspendable: Bool = false
+    suspendable: Bool = false,
+    audio: Bool = true
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -292,7 +295,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
 
     // Audio
-    if !suspendable {
+    if audio && !suspendable {
       let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
       let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
       inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
