@@ -669,12 +669,12 @@ struct DirectoryShare {
 
     let arguments = parseFrom.split(separator: ":", maxSplits: 1)
 
-    if arguments.count == 1 {
-      self.name = nil
-      self.path = String(arguments[0]).toRemoteOrLocalURL()
-    } else {
+    if arguments.count == 2 {
       self.name = String(arguments[0])
       self.path = String(arguments[1]).toRemoteOrLocalURL()
+    } else {
+      self.name = nil
+      self.path = String(arguments[0]).toRemoteOrLocalURL()
     }
   }
 
