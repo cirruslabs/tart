@@ -62,7 +62,7 @@ and before reaching the 100 CPU cores limit is royalty-free and does not have th
 
 When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Tier License](/licensing#license-tiers),
 which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Tier License](/licensing#license-tiers)
-(\$5000 per month) will be required, and for organizations that exceed 5000 CPU cores, a custom [Diamond Tier License](/licensing#license-tiers)
+(\$3000 per month) will be required, and for organizations that exceed 3000 CPU cores, a custom [Diamond Tier License](/licensing#license-tiers)
 (\$1 per core per month) will be necessary. **All paid license tiers will include priority feature development and SLAs on support with urgent issues.**
 
 ## Have we considered alternatives?
