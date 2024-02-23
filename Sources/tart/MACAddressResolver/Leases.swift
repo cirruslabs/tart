@@ -45,7 +45,10 @@ class Leases {
       (lease.mac, lease)
     })
 
-    self.leases = Dictionary(uniqueKeysWithValues: leases)
+    self.leases = Dictionary(leases) { (left, right) in
+      // When duplicate lease is found, prefer a newer lease over the older one
+      (left.expiresAt > right.expiresAt) ? left : right
+    }
   }
 
   /// Parse leases from the host cache similarly to the PLCache_read() function found in Apple's Open Source releases.
