@@ -40,9 +40,9 @@ Gold Tier license has a 500 CPU core limit for Tart and 20 Orchard Workers limit
 
 ### Platinum Tier
 
-If an organization wishes to exceed the limits of the Gold Tier license, a purchase of the [Platinum Tier License](#get-the-license) is required, which costs \$5000 per month.
+If an organization wishes to exceed the limits of the Gold Tier license, a purchase of the [Platinum Tier License](#get-the-license) is required, which costs \$3000 per month.
 
-Platinum Tier license has a 5,000 CPU core limit for Tart and 200 Orchard Workers limit for Orchard.
+Platinum Tier license has a 3,000 CPU core limit for Tart and 200 Orchard Workers limit for Orchard.
 
 ### Diamond Tier
 
