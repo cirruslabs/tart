@@ -5,6 +5,7 @@ fileprivate struct VMInfo: Encodable {
   let CPU: Int
   let Memory: UInt64
   let Disk: Int
+  let Size: String
   let Display: String
   let Running: Bool
   let State: String
@@ -22,10 +23,9 @@ struct Get: AsyncParsableCommand {
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     let vmConfig = try VMConfig(fromURL: vmDir.configURL)
-    let diskSizeInGb = try vmDir.sizeGB()
     let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 
-    let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: diskSizeInGb,
+    let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: try vmDir.sizeGB(), Size: String(format: "%.3f", Float(try vmDir.allocatedSizeBytes()) / 1000 / 1000 / 1000),
                       Display: vmConfig.display.description, Running: try vmDir.running(), State: try vmDir.state())
     print(format.renderSingle(info))
   }
