@@ -165,6 +165,14 @@ struct VMDirectory: Prunable {
     try baseURL.accessDate()
   }
 
+  func allocatedSizeBytes() throws -> Int {
+    try configURL.allocatedSizeBytes() + diskURL.allocatedSizeBytes() + nvramURL.allocatedSizeBytes()
+  }
+
+  func allocatedSizeGB() throws -> Int {
+    try allocatedSizeBytes() / 1000 / 1000 / 1000
+  }
+
   func sizeBytes() throws -> Int {
     try configURL.sizeBytes() + diskURL.sizeBytes() + nvramURL.sizeBytes()
   }

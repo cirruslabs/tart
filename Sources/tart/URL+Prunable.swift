@@ -9,7 +9,11 @@ extension URL: Prunable {
     try FileManager.default.removeItem(at: self)
   }
 
-  func sizeBytes() throws -> Int {
+  func allocatedSizeBytes() throws -> Int {
     try resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize!
+  }
+
+  func sizeBytes() throws -> Int {
+    try resourceValues(forKeys: [.totalFileSizeKey]).totalFileSize!
   }
 }

@@ -89,7 +89,7 @@ struct Prune: AsyncParsableCommand {
     var prunablesToDelete: [Prunable] = []
 
     for prunable in prunables {
-      let prunableSizeBytes = UInt64(try prunable.sizeBytes())
+      let prunableSizeBytes = UInt64(try prunable.allocatedSizeBytes())
 
       if prunableSizeBytes <= spaceBudgetBytes {
         // Don't mark for deletion as
@@ -158,7 +158,7 @@ struct Prune: AsyncParsableCommand {
       .sorted { try $0.accessDate() < $1.accessDate() }
 
     // Does it even make sense to start?
-    let cacheUsedBytes = try prunables.map { try $0.sizeBytes() }.reduce(0, +)
+    let cacheUsedBytes = try prunables.map { try $0.allocatedSizeBytes() }.reduce(0, +)
     if cacheUsedBytes < reclaimBytes {
       return
     }
@@ -177,9 +177,9 @@ struct Prune: AsyncParsableCommand {
         continue
       }
 
-      try SentrySDK.span?.setData(value: prunable.sizeBytes(), key: prunable.url.path)
+      try SentrySDK.span?.setData(value: prunable.allocatedSizeBytes(), key: prunable.url.path)
 
-      cacheReclaimedBytes += try prunable.sizeBytes()
+      cacheReclaimedBytes += try prunable.allocatedSizeBytes()
 
       try prunable.delete()
     }

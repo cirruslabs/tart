@@ -73,7 +73,7 @@ struct Clone: AsyncParsableCommand {
       // APFS is doing copy-on-write so the above cloning operation (just copying files on disk)
       // is not actually claiming new space until the VM is started and it writes something to disk.
       // So once we clone the VM let's try to claim a little bit of space for the VM to run.
-      try Prune.reclaimIfNeeded(UInt64(sourceVM.sizeBytes()), sourceVM)
+      try Prune.reclaimIfNeeded(UInt64(sourceVM.allocatedSizeBytes()), sourceVM)
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
     })
