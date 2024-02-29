@@ -379,7 +379,7 @@ struct Run: AsyncParsableCommand {
 
     if netHost {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
-      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: ["--vm-net-type=host"])
+      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: ["--vm-net-type", "host"])
     }
 
     if netBridged.count > 0 {
