@@ -117,8 +117,8 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
-  @Flag(help: ArgumentHelp("Experimental feature to allow access to host only"))
-  var netHostOnly: Bool = false
+  @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
+  var netHost: Bool = false
 
   #if arch(arm64)
     @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
@@ -140,10 +140,10 @@ struct Run: AsyncParsableCommand {
     var netFlags = 0
     if netBridged.count > 0 { netFlags += 1 }
     if netSoftnet { netFlags += 1 }
-    if netHostOnly { netFlags += 1 }
+    if netHost { netFlags += 1 }
 
     if netFlags > 1 {
-      throw ValidationError("--net-bridged, --net-softnet and --net-host-only are mutually exclusive")
+      throw ValidationError("--net-bridged, --net-softnet and --net-host are mutually exclusive")
     }
 
     if graphics {
@@ -193,7 +193,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    if netSoftnet && isInteractiveSession() {
+    if (netSoftnet || netHost) && isInteractiveSession() {
       try Softnet.configureSUIDBitIfNeeded()
     }
 
@@ -374,12 +374,12 @@ struct Run: AsyncParsableCommand {
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
     if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
-
       return try Softnet(vmMACAddress: config.macAddress.string)
     }
 
-    if netHostOnly {
-      return NetworkHostOnly()
+    if netHost {
+      let config = try VMConfig.init(fromURL: vmDir.configURL)
+      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: ["--vm-net-type=host"])
     }
 
     if netBridged.count > 0 {
