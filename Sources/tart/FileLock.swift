@@ -32,6 +32,10 @@ class FileLock {
   }
 
   func flockWrapper(_ operation: Int32) throws -> Bool {
+    if ProcessInfo.processInfo.environment.keys.contains("TART_NO_FILE_LOCKING") {
+      return true
+    }
+
     let ret = flock(fd, operation)
     if ret != 0 {
       let details = Errno(rawValue: CInt(errno))
