@@ -117,6 +117,9 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
+  @Flag(help: ArgumentHelp("Experimental feature to allow access to host only"))
+  var netHostOnly: Bool = false
+
   #if arch(arm64)
     @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
   #endif
@@ -133,8 +136,14 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
 
-    if netBridged.count > 0 && netSoftnet {
-      throw ValidationError("--net-bridged and --net-softnet are mutually exclusive")
+    // check that not more than one network option is specified
+    var netFlags = 0
+    if netBridged.count > 0 { netFlags += 1 }
+    if netSoftnet { netFlags += 1 }
+    if netHostOnly { netFlags += 1 }
+
+    if netFlags > 1 {
+      throw ValidationError("--net-bridged, --net-softnet and --net-host-only are mutually exclusive")
     }
 
     if graphics {
@@ -367,6 +376,10 @@ struct Run: AsyncParsableCommand {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
 
       return try Softnet(vmMACAddress: config.macAddress.string)
+    }
+
+    if netHostOnly {
+      return NetworkHostOnly()
     }
 
     if netBridged.count > 0 {
