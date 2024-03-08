@@ -7,6 +7,8 @@ export VERSION="${CIRRUS_TAG:-0}"
 mkdir -p .ci/pkg/
 cp .build/arm64-apple-macosx/release/tart .ci/pkg/tart
 cp Resources/embedded.provisionprofile .ci/pkg/embedded.provisionprofile
+cp Resources/AppIcon.png .ci/pkg/AppIcon.png
+cp Resources/Info.plist .ci/pkg/Info.plist
 pkgbuild --root .ci/pkg/ --identifier com.github.cirruslabs.tart --version $VERSION \
   --scripts .ci/pkg/scripts \
   --install-location "/Library/Application Support/Tart" \
