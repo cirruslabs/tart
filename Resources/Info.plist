@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Tart</string>
+    <string>tart</string>
     <key>CFBundleIdentifier</key>
     <string>org.cirruslabs.tart</string>
     <key>CFBundleExecutable</key>
