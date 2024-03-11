@@ -349,9 +349,7 @@ struct Run: AsyncParsableCommand {
     if noGraphics {
       // enter the main even loop, without bringing up any UI,
       // and just wait for the VM to exit.
-      let nsApp = NSApplication.shared
-      nsApp.setActivationPolicy(.prohibited)
-      nsApp.run()
+      NSApp.run()
     } else {
       runUI(suspendable, captureSystemKeys)
     }
@@ -528,8 +526,6 @@ struct Run: AsyncParsableCommand {
     let nsApp = NSApplication.shared
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
-
-    nsApp.applicationIconImage = NSImage(data: AppIconData)
 
     struct MainApp: App {
       static var disappearSignal: Int32 = SIGINT

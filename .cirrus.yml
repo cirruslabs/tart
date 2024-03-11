@@ -89,7 +89,6 @@ task:
   install_script:
     - brew install go goreleaser/tap/goreleaser-pro
     - brew install mitchellh/gon/gon
-    - curl -sL https://sentry.io/get-cli/ | sh
   info_script:
     - security find-identity -v
     - xcodebuild -version

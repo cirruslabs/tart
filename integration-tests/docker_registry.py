@@ -1,7 +1,7 @@
 import requests
 
 from testcontainers.core.waiting_utils import wait_container_is_ready
-from testcontainers.general import DockerContainer
+from testcontainers.core.container import DockerContainer
 
 
 class DockerRegistry(DockerContainer):
