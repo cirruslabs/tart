@@ -477,7 +477,7 @@ struct Run: AsyncParsableCommand {
           allNamedShares = false
         }
       }
-      if directoryShares.count == 1 {
+      if directoryShares.count == 1 && directoryShares.first!.name == nil {
         let directoryShare = directoryShares.first!
         let singleDirectoryShare = VZSingleDirectoryShare(directory: try directoryShare.createConfiguration())
         sharingDevice.share = singleDirectoryShare
