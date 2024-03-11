@@ -117,6 +117,9 @@ struct Run: AsyncParsableCommand {
                            discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
   var netSoftnet: Bool = false
 
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", valueName: "comma-separated CIDRs"))
+  var netSoftnetAllow: String?
+
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
 
@@ -372,7 +375,14 @@ struct Run: AsyncParsableCommand {
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
     if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
-      return try Softnet(vmMACAddress: config.macAddress.string)
+
+      var extraArguments: [String] = []
+
+      if let netSoftnetAllow = netSoftnetAllow {
+        extraArguments += ["--allow", netSoftnetAllow]
+      }
+
+      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: extraArguments)
     }
 
     if netHost {
