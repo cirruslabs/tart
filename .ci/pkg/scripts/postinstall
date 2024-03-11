@@ -3,13 +3,13 @@
 set -e
 
 # fix structure
-mkdir -p "$2/Tart.app/Contents/MacOS" "$2/Tart.app/Resources"
-mv "$2/tart" "$2/Tart.app/Contents/MacOS/tart"
-mv "$2/embedded.provisionprofile" "$2/Tart.app/Contents/embedded.provisionprofile"
-mv "$2/AppIcon.png" "$2/Tart.app/Resources/AppIcon.png"
-mv "$2/Info.plist" "$2/Tart.app/Contents/Info.plist"
+mkdir -p "$2/tart.app/Contents/MacOS" "$2/tart.app/Resources"
+mv "$2/tart" "$2/tart.app/Contents/MacOS/tart"
+mv "$2/embedded.provisionprofile" "$2/tart.app/Contents/embedded.provisionprofile"
+mv "$2/AppIcon.png" "$2/tart.app/Resources/AppIcon.png"
+mv "$2/Info.plist" "$2/tart.app/Contents/Info.plist"
 
 echo "#!/bin/sh" > /usr/local/bin/tart
-echo "exec '$2/Tart.app/Contents/MacOS/tart' \"\$@\"" >> /usr/local/bin/tart
+echo "exec '$2/tart.app/Contents/MacOS/tart' \"\$@\"" >> /usr/local/bin/tart
 
 chmod +x /usr/local/bin/tart
