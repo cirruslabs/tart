@@ -103,7 +103,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
     func keyboards() -> [VZKeyboardConfiguration] {
       if #available(macOS 14, *) {
         // Mac keyboard is only supported by guests starting with macOS Ventura
-        return [VZMacKeyboardConfiguration(), VZUSBKeyboardConfiguration()]
+        return [VZUSBKeyboardConfiguration(), VZMacKeyboardConfiguration()]
       } else {
         return [VZUSBKeyboardConfiguration()]
       }
@@ -120,7 +120,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
 
     func pointingDevices() -> [VZPointingDeviceConfiguration] {
       // Trackpad is only supported by guests starting with macOS Ventura
-      [VZMacTrackpadConfiguration(), VZUSBScreenCoordinatePointingDeviceConfiguration()]
+      [VZUSBScreenCoordinatePointingDeviceConfiguration(), VZMacTrackpadConfiguration()]
     }
 
     func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration] {
