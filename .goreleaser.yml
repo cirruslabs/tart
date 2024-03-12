@@ -26,6 +26,12 @@ archives:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
         strip_parent: true
+      - src: Resources/Info.plist
+        dst: tart.app/Contents
+        strip_parent: true
+      - src: Resources/AppIcon.png
+        dst: tart.app/Contents/Resources
+        strip_parent: true
       - LICENSE
 
 release:
