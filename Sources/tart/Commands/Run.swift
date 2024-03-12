@@ -352,7 +352,7 @@ struct Run: AsyncParsableCommand {
     if noGraphics {
       // enter the main even loop, without bringing up any UI,
       // and just wait for the VM to exit.
-      NSApp.run()
+      NSApplication.shared.run()
     } else {
       runUI(suspendable, captureSystemKeys)
     }
