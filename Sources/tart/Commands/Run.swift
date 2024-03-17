@@ -349,7 +349,7 @@ struct Run: AsyncParsableCommand {
     }
     sigusr1Src.activate()
 
-    if noGraphics {
+    if noGraphics || vnc || vncExperimental {
       // enter the main even loop, without bringing up any UI,
       // and just wait for the VM to exit.
       NSApplication.shared.run()
