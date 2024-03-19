@@ -33,7 +33,7 @@ struct Run: AsyncParsableCommand {
   ))
   var serialPath: String?
 
-  @Flag(help: ArgumentHelp("Force open a UI window, even when VNC is enabled.", visibility: .hidden))
+  @Flag(help: "Force open a UI window, even when VNC is enabled.")
   var graphics: Bool = false
 
   @Flag(help: "Disable audio pass-through to host.")
@@ -149,8 +149,8 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--net-bridged, --net-softnet and --net-host are mutually exclusive")
     }
 
-    if graphics {
-      print("--graphics is deprecated and will be removed in the future.\n")
+    if graphics && noGraphics {
+      throw ValidationError("--graphics and --no-graphics are mutually exclusive")
     }
 
     if (noGraphics || vnc || vncExperimental) && captureSystemKeys {
@@ -349,7 +349,8 @@ struct Run: AsyncParsableCommand {
     }
     sigusr1Src.activate()
 
-    if noGraphics {
+    let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
+    if noGraphics || useVNCWithoutGraphics {
       // enter the main even loop, without bringing up any UI,
       // and just wait for the VM to exit.
       NSApplication.shared.run()
