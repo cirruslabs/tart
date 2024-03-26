@@ -29,13 +29,11 @@ func NewCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	var loggerOpts []zap.Option
-
+	config := zap.NewProductionConfig()
 	if debug {
-		loggerOpts = append(loggerOpts, zap.IncreaseLevel(zap.DebugLevel))
+		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
-
-	logger, err := zap.NewProduction(loggerOpts...)
+	logger, err := config.Build()
 	if err != nil {
 		return err
 	}
