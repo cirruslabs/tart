@@ -91,12 +91,17 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Download the IPSW
     defaultLogger.appendNewLine("Fetching \(remoteURL.lastPathComponent)...")
 
-    let (channel, response) = try await Fetcher.fetch(URLRequest(url: remoteURL), viaFile: true)
+    let downloadProgress = Progress(totalUnitCount: 100)
+    ProgressObserver(downloadProgress).log(defaultLogger)
 
-    let progress = Progress(totalUnitCount: response.expectedContentLength)
-    ProgressObserver(progress).log(defaultLogger)
+    let request = URLRequest(url: remoteURL)
+    let (channel, response) = try await Fetcher.fetch(request, viaFile: true, progress: downloadProgress)
 
     let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
+    defaultLogger.appendNewLine("Computing digest for \(temporaryLocation.path)...")
+    let digestProgress = Progress(totalUnitCount: response.expectedContentLength)
+    ProgressObserver(digestProgress).log(defaultLogger)
+
     FileManager.default.createFile(atPath: temporaryLocation.path, contents: nil)
     let lock = try FileLock(lockURL: temporaryLocation)
     try lock.lock()
@@ -108,7 +113,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       let chunkAsData = Data(chunk)
       fileHandle.write(chunkAsData)
       digest.update(chunkAsData)
-      progress.completedUnitCount += Int64(chunk.count)
+      digestProgress.completedUnitCount += Int64(chunk.count)
     }
 
     try fileHandle.close()
