@@ -191,18 +191,24 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       virtualMachine.delegate = self
 
       // Run automated installation
-      try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-        DispatchQueue.main.async { [ipswURL] in
-          let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: ipswURL)
+      try await install(ipswURL)
+    }
 
-          defaultLogger.appendNewLine("Installing OS...")
-          ProgressObserver(installer.progress).log(defaultLogger)
+    @MainActor
+    private func install(_ url: URL) async throws {
+      let installer = VZMacOSInstaller(virtualMachine: self.virtualMachine, restoringFromImageAt: url)
+      defaultLogger.appendNewLine("Installing OS...")
+      ProgressObserver(installer.progress).log(defaultLogger)
 
+      try await withTaskCancellationHandler(operation: {
+        try await withCheckedThrowingContinuation { continuation in
           installer.install { result in
             continuation.resume(with: result)
           }
         }
-      }
+      }, onCancel: {
+        installer.progress.cancel()
+      })
     }
   #endif
 
