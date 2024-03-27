@@ -1,0 +1,92 @@
+run:
+  timeout: 5m
+
+linters:
+  enable-all: true
+
+  disable:
+    # Messages like "struct of size 104 bytes could be of size 96 bytes" from a package
+    # that was last updated 2 years ago[1] are barely helpful.
+    #
+    # After all, we're writing the code for other people, so let's trust the compiler here (that's
+    # constantly evolving compared to this linter) and revisit this if memory usage becomes a problem.
+    #
+    # [1]: https://github.com/mdempsky/maligned/commit/6e39bd26a8c8b58c5a22129593044655a9e25959
+    - maligned
+
+    # We don't have high-performance requirements at this moment, so sacrificing
+    # the code readability for marginal performance gains is not worth it.
+    - prealloc
+
+    # New linters that require a lot of codebase churn and noise, but perhaps we can enable them in the future.
+    - nlreturn
+    - wrapcheck
+    - errorlint
+
+    # Unfortunately, we use globals due to how spf13/cobra works.
+    - gochecknoglobals
+
+    # That's fine that some Proto objects don't have all fields initialized
+    - exhaustivestruct
+
+    # Style linters that are total nuts.
+    - wsl
+    - gofumpt
+    - goimports
+    - funlen
+
+    # This conflicts with the Protocol Buffers Version 3 design,
+    # which is largely based on default values for struct fields.
+    - exhaustivestruct
+
+    # Enough parallelism for now.
+    - paralleltest
+
+    # Ill-based assumptions about identifiers like fmt.Println without taking context into account.
+    - forbidigo
+
+    # Advantages of using t.Helper() are too small to waste developer's cognitive stamina on it.
+    - thelper
+
+    # Too restrictive defaults, plus there's already a gocyclo linter in place.
+    - cyclop
+
+    # Gives false positives for textbook examples[1][2]
+    # [1]: https://github.com/charithe/durationcheck/issues/7
+    # [2]: https://golang.org/pkg/time/ (see "To convert an integer number of units to a Duration, multiply:")
+    - durationcheck
+
+    # No way to disable the "exported" check for the whole project[1]
+    # [1]: https://github.com/mgechev/revive/issues/244#issuecomment-560512162
+    - revive
+
+    # Unfortunately too much false-positives, e.g. for a 0700 umask or number 10 when using strconv.FormatInt()
+    - gomnd
+
+    # Needs package whitelists
+    - depguard
+
+    # Generates absolutely useless errors, e.g.
+    # "string `.yml` has 3 occurrences, make it a constant"
+    - goconst
+
+    # It's OK to not sort imports
+    - gci
+
+    # It's OK to not initialize some struct fields
+    - exhaustruct
+
+    # This is not a library, so it's OK to use dynamic errors
+    - goerr113
+
+    # fmt.Sprintf() looks a bit nicer than string addition
+    - perfsprint
+
+    # We can control this ourselves
+    - varnamelen
+    - contextcheck
+
+issues:
+  # Don't hide multiple issues that belong to one class since GitHub annotations can handle them all nicely.
+  max-issues-per-linter: 0
+  max-same-issues: 0
