@@ -45,6 +45,17 @@ func run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		errs := []error{err}
+
+		for _, executor := range executors {
+			if err := executor.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("failed to close executor %s: %w", executor.Name(), err))
+			}
+		}
+
+		err = errors.Join(errs...)
+	}()
 
 	table := uitable.New()
 	table.AddRow("Name", "Executor", "Bandwidth", "I/O operations")
@@ -82,15 +93,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	fmt.Println(table.String())
 
-	var errs []error
-
-	for _, executor := range executors {
-		if err := executor.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("failed to close executor %s: %w", executor.Name(), err))
-		}
-	}
-
-	return errors.Join(errs...)
+	return nil
 }
 
 func initializeExecutors(ctx context.Context, logger *zap.Logger) ([]executor.Executor, error) {

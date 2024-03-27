@@ -3,6 +3,7 @@ package tart
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
@@ -45,7 +46,7 @@ func New(ctx context.Context, logger *zap.Logger) (*Tart, error) {
 
 	ip, err := CmdWithOutput(ctx, tart.logger, "ip", "--wait", "60", tart.vmName)
 	if err != nil {
-		return nil, err
+		return nil, tart.Close()
 	}
 
 	err = retry.Do(func() error {
@@ -76,9 +77,11 @@ func New(ctx context.Context, logger *zap.Logger) (*Tart, error) {
 		tart.sshClient = ssh.NewClient(sshConn, chans, reqs)
 
 		return nil
-	})
+	}, retry.RetryIf(func(err error) bool {
+		return !errors.Is(err, context.Canceled)
+	}))
 	if err != nil {
-		return nil, err
+		return nil, tart.Close()
 	}
 
 	return tart, nil
@@ -93,7 +96,14 @@ func (tart *Tart) Run(ctx context.Context, command string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer sshSession.Close()
+
+	// Work around x/crypto/ssh not being context.Context-friendly (e.g. https://github.com/golang/go/issues/20288)
+	monitorCtx, monitorCancel := context.WithCancel(ctx)
+	go func() {
+		<-monitorCtx.Done()
+		_ = sshSession.Close()
+	}()
+	defer monitorCancel()
 
 	stdoutBuf := &bytes.Buffer{}
 
@@ -112,7 +122,9 @@ func (tart *Tart) Run(ctx context.Context, command string) ([]byte, error) {
 }
 
 func (tart *Tart) Close() error {
-	_ = tart.sshClient.Close()
+	if tart.sshClient != nil {
+		_ = tart.sshClient.Close()
+	}
 
 	tart.vmRunCancel()
 	_ = Cmd(context.Background(), tart.logger, "delete", tart.vmName)

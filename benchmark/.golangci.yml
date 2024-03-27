@@ -82,8 +82,9 @@ linters:
     # fmt.Sprintf() looks a bit nicer than string addition
     - perfsprint
 
-    # We can control ourselves
+    # We can control this ourselves
     - varnamelen
+    - contextcheck
 
 issues:
   # Don't hide multiple issues that belong to one class since GitHub annotations can handle them all nicely.
