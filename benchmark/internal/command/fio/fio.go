@@ -83,7 +83,7 @@ func run(cmd *cobra.Command, args []string) error {
 			job := fioResult.Jobs[0]
 
 			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
-			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS") + "/s"
+			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
 
 			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s\n", writeBandwidth, writeIOPS)
 
