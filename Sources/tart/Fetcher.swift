@@ -3,19 +3,32 @@ import AsyncAlgorithms
 
 fileprivate let urlSession = createURLSession()
 
-class Fetcher {
-  static func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
-    if viaFile {
-      return try await fetchViaFile(request)
-    }
-
-    return try await fetchViaMemory(request)
+class DownloadDelegate: NSObject, URLSessionTaskDelegate {
+  let progress: Progress
+  init(_ progress: Progress) throws {
+    self.progress = progress
   }
 
-  private static func fetchViaMemory(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
+    self.progress.addChild(task.progress, withPendingUnitCount: self.progress.totalUnitCount)
+  }
+}
+
+class Fetcher {
+  static func fetch(_ request: URLRequest, viaFile: Bool = false, progress: Progress? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+    let delegate = progress != nil ? try DownloadDelegate(progress!) : nil
+
+    if viaFile {
+      return try await fetchViaFile(request, delegate: delegate)
+    }
+
+    return try await fetchViaMemory(request, delegate: delegate)
+  }
+
+  private static func fetchViaMemory(_ request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
-    let (data, response) = try await urlSession.data(for: request)
+    let (data, response) = try await urlSession.data(for: request, delegate: delegate)
 
     Task {
       await dataCh.send(data)
@@ -26,10 +39,10 @@ class Fetcher {
     return (dataCh, response as! HTTPURLResponse)
   }
 
-  private static func fetchViaFile(_ request: URLRequest) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private static func fetchViaFile(_ request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     let dataCh = AsyncThrowingChannel<Data, Error>()
 
-    let (fileURL, response) = try await urlSession.download(for: request)
+    let (fileURL, response) = try await urlSession.download(for: request, delegate: delegate)
 
     // Acquire a handle to the downloaded file and then remove it.
     //
