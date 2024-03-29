@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 
 fileprivate struct VMInfo: Encodable {
+  let OS: OS
   let CPU: Int
   let Memory: UInt64
   let Disk: Int
@@ -25,7 +26,7 @@ struct Get: AsyncParsableCommand {
     let vmConfig = try VMConfig(fromURL: vmDir.configURL)
     let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 
-    let info = VMInfo(CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: try vmDir.sizeGB(), Size: String(format: "%.3f", Float(try vmDir.allocatedSizeBytes()) / 1000 / 1000 / 1000),
+    let info = VMInfo(OS: vmConfig.os, CPU: vmConfig.cpuCount, Memory: memorySizeInMb, Disk: try vmDir.sizeGB(), Size: String(format: "%.3f", Float(try vmDir.allocatedSizeBytes()) / 1000 / 1000 / 1000),
                       Display: vmConfig.display.description, Running: try vmDir.running(), State: try vmDir.state())
     print(format.renderSingle(info))
   }
