@@ -134,7 +134,7 @@ class VMStorageOCI: PrunableStorage {
 
   func pull(_ name: RemoteName, registry: Registry, concurrency: UInt) async throws {
     SentrySDK.configureScope { scope in
-      scope.setContext(value: ["imageName": name], key: "OCI")
+      scope.setContext(value: ["imageName": name.description], key: "OCI")
     }
 
     defaultLogger.appendNewLine("pulling manifest...")
