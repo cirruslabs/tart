@@ -50,6 +50,10 @@ struct Root: AsyncParsableCommand {
     }
     defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }
 
+    SentrySDK.configureScope { scope in
+      scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
+    }
+
     // Enrich future events with Cirrus CI-specific tags
     if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
       SentrySDK.configureScope { scope in
