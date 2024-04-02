@@ -52,6 +52,6 @@ brews:
     install: |
       libexec.install Dir["*"]
       bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
-      generate_completions_from_executable(bin/"tart", "--generate-completion-script")
+      generate_completions_from_executable(libexec/"tart.app/Contents/MacOS/tart", "--generate-completion-script")
     custom_block: |
       depends_on :macos => :ventura
