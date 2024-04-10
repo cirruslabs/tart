@@ -16,52 +16,13 @@ func completeMachines(_ arguments: [String]) -> [String] {
 }
 
 func completeLocalMachines(_ arguments: [String]) -> [String] {
-  if let vms = try? VMStorageLocal().list() {
-    return vms.map { name, vmDir in
-      return name
-    }
-  }
-  return []
+  let localVMs = (try? VMStorageLocal().list()) ?? []
+  return localVMs.map { name, _ in normalizeName(name) }
 }
-
-//func completeMachines(_ arguments: [String]) -> [String] {
-//  if let vms = try? VMStorageLocal().list() {
-//    return vms.enumerated().map { (index, data) in
-//      let (name, vmDir) = data
-//      return "name\(String(describing: name.first!))"
-//    }
-//  }
-//  return ["siemka"]
-//}
 
 func completeRunningMachines(_ arguments: [String]) -> [String] {
-  if let vms = try? VMStorageLocal().list() {
-    return vms
-      .filter { (_, vm) in
-        if let state = try? vm.state() {
-          return state == "running"
-        }
-        return false
-      }
-      .map { (name, _) in
-        return name
-      }
-  }
-  return []
-}
-
-func completeActiveMachines(_ arguments: [String]) -> [String] {
-  if let vms = try? VMStorageLocal().list() {
-    return vms
-      .filter { (_, vm) in
-        if let state = try? vm.state() {
-          return state == "suspended" || state == "running"
-        }
-        return false
-      }
-      .map { (name, _) in
-        return name
-      }
-  }
-  return []
+  let localVMs = (try? VMStorageLocal().list()) ?? []
+  return localVMs
+    .filter { _, vmDir in (try? vmDir.state() == .Running) ?? false}
+    .map { name, _ in normalizeName(name) }
 }
