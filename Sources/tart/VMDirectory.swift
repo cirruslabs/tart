@@ -3,6 +3,12 @@ import Virtualization
 import CryptoKit
 
 struct VMDirectory: Prunable {
+  enum State: String {
+    case Running = "running"
+    case Suspended = "suspended"
+    case Stopped = "stopped"
+  }
+
   var baseURL: URL
 
   var configURL: URL {
@@ -47,13 +53,13 @@ struct VMDirectory: Prunable {
     return try lock.pid() != 0
   }
 
-  func state() throws -> String {
+  func state() throws -> State {
     if try running() {
-      return "running"
+      return State.Running
     } else if FileManager.default.fileExists(atPath: stateURL.path) {
-      return "suspended"
+      return State.Suspended
     } else {
-      return "stopped"
+      return State.Stopped
     }
   }
 
