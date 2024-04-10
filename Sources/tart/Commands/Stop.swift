@@ -15,11 +15,11 @@ struct Stop: AsyncParsableCommand {
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     switch try vmDir.state() {
-    case "suspended":
+    case .Suspended:
       try stopSuspended(vmDir)
-    case "running":
+    case .Running:
       try await stopRunning(vmDir)
-    default:
+    case .Stopped:
       return
     }
   }

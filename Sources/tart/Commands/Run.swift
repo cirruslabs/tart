@@ -159,7 +159,7 @@ struct Run: AsyncParsableCommand {
 
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
-    if try vmDir.state() == "suspended" {
+    if try vmDir.state() == .Suspended {
       suspendable = true
     }
 
@@ -182,7 +182,7 @@ struct Run: AsyncParsableCommand {
     let vmDir = try localStorage.open(name)
 
     let storageLock = try FileLock(lockURL: Config().tartHomeDir)
-    if try vmDir.state() == "suspended" {
+    if try vmDir.state() == .Suspended {
       try storageLock.lock() // lock before checking
       let needToGenerateNewMac = try localStorage.list().contains {
         // check if there is a running VM with the same MAC but different name
