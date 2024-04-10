@@ -20,7 +20,7 @@ struct Stop: AsyncParsableCommand {
     case .Running:
       try await stopRunning(vmDir)
     case .Stopped:
-      return
+      throw RuntimeError.VMNotRunning(name)
     }
   }
 
