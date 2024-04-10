@@ -4,7 +4,7 @@ import Foundation
 struct Export: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Export VM to a compressed .tvm file")
 
-  @Argument(help: "Source VM name.")
+  @Argument(help: "Source VM name.", completion: .custom(completeMachines))
   var name: String
 
   @Argument(help: "Path to the destination file.")

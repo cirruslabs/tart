@@ -4,7 +4,7 @@ import Foundation
 struct Set: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "set", abstract: "Modify VM's configuration")
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
 
   @Option(help: "Number of VM CPUs")

@@ -6,7 +6,7 @@ import SwiftDate
 struct Stop: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "stop", abstract: "Stop a VM")
 
-  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
+  @Argument(help: "VM name", completion: .custom(completeRunningMachines))
   var name: String
 
   @Option(name: [.short, .long], help: "Seconds to wait for graceful termination before forcefully terminating the VM")

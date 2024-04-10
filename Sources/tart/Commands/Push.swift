@@ -6,7 +6,7 @@ import Compression
 struct Push: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Push a VM to a registry")
 
-  @Argument(help: "local or remote VM name")
+  @Argument(help: "local or remote VM name", completion: .custom(completeMachines))
   var localName: String
 
   @Argument(help: "remote VM name(s)")
