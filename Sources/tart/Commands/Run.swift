@@ -54,7 +54,7 @@ struct Run: AsyncParsableCommand {
 
   #if arch(arm64)
     @Flag(help: ArgumentHelp(
-      "Use Virtualization.Framework's VNC server instead of the build-in UI.",
+      "Use Virtualization.Framework's VNC server instead of the built-in UI.",
       discussion: "Useful since this type of VNC is available in recovery mode and in macOS installation.\n"
         + "Note that this feature is experimental and there may be bugs present when using VNC."))
   #endif
