@@ -63,7 +63,7 @@ struct Clone: AsyncParsableCommand {
       try lock.lock()
 
       let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())
-        && sourceVM.state() != "suspended"
+        && sourceVM.state() != .Suspended
       try sourceVM.clone(to: tmpVMDir, generateMAC: generateMAC)
 
       try localStorage.move(newName, from: tmpVMDir)
