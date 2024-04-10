@@ -61,7 +61,7 @@ struct IP: AsyncParsableCommand {
           return ip
         }
       case .dhcp:
-        if let leases = try Leases(), let ip = try leases.ResolveMACAddress(macAddress: vmMACAddress) {
+        if let leases = try Leases(), let ip = leases.ResolveMACAddress(macAddress: vmMACAddress) {
           return ip
         }
       }
