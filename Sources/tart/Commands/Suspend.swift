@@ -6,7 +6,7 @@ import SwiftDate
 struct Suspend: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "suspend", abstract: "Suspend a VM")
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeRunningMachines))
   var name: String
 
   func run() async throws {

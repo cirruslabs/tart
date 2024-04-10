@@ -5,7 +5,7 @@ import SwiftUI
 struct Delete: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Delete a VM")
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeMachines))
   var name: [String]
 
   func run() async throws {

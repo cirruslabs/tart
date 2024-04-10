@@ -11,18 +11,10 @@ var vm: VM?
 struct IPNotFound: Error {
 }
 
-func completeMachines(_ args: [String]) -> [String] {
-  if let vms = try? VMStorageLocal().list() {
-    return vms.map { (name, _) in return name }
-  }
-  return []
-}
-
-
 struct Run: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Run a VM")
 
-  @Argument(help: "VM name", completion: .custom(completeMachines))
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
 
   @Flag(help: ArgumentHelp(

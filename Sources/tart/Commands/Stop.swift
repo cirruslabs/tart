@@ -3,26 +3,10 @@ import Foundation
 import System
 import SwiftDate
 
-func completeRunningMachines(_ args: [String]) -> [String] {
-  if let vms = try? VMStorageLocal().list() {
-    return vms
-      .filter { (_, vm) in
-        if let state = try? vm.state() {
-          return state == "suspended" || state == "running"
-        }
-        return false
-      }
-      .map { (name, _) in
-        return name
-      }
-  }
-  return []
-}
-
 struct Stop: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "stop", abstract: "Stop a VM")
 
-  @Argument(help: "VM name", completion: .custom(completeMachines))
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
 
   @Option(name: [.short, .long], help: "Seconds to wait for graceful termination before forcefully terminating the VM")
