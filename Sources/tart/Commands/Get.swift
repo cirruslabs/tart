@@ -15,7 +15,7 @@ fileprivate struct VMInfo: Encodable {
 struct Get: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "get", abstract: "Get a VM's configuration")
 
-  @Argument(help: "VM name.")
+  @Argument(help: "VM name.", completion: .custom(completeLocalMachines))
   var name: String
 
   @Option(help: "Output format: text or json")
