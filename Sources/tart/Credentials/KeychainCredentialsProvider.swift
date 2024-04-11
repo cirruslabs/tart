@@ -41,7 +41,7 @@ class KeychainCredentialsProvider: CredentialsProvider {
                               kSecAttrLabel as String: "Tart Credentials",
     ]
     let value: [String: Any] = [kSecAttrAccount as String: user,
-                                kSecValueData as String: passwordData,
+                                kSecValueData as String: passwordData as Any,
     ]
 
     let status = SecItemCopyMatching(key as CFDictionary, nil)

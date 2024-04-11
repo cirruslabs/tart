@@ -42,9 +42,6 @@ extension AsyncThrowingChannel<Data, Error> {
 }
 
 struct TokenResponse: Decodable, Authentication {
-  let defaultIssuedAt = Date()
-  let defaultExpiresIn = 60
-
   var token: String?
   var accessToken: String?
   var expiresIn: Int?
@@ -66,7 +63,8 @@ struct TokenResponse: Decodable, Authentication {
       return dateFormatter.date(from: dateString) ?? Date()
     }
 
-    let response = try decoder.decode(TokenResponse.self, from: fromData)
+    var response = try decoder.decode(TokenResponse.self, from: fromData)
+    response.issuedAt = response.issuedAt ?? Date()
 
     guard response.token != nil || response.accessToken != nil else {
       throw DecodingError.keyNotFound(CodingKeys.token, .init(codingPath: [], debugDescription: "Missing token or access_token. One must be present."))
@@ -85,7 +83,7 @@ struct TokenResponse: Decodable, Authentication {
       //
       // [1]: https://docs.docker.com/registry/spec/auth/token/#requesting-a-token
 
-      (issuedAt ?? defaultIssuedAt) + TimeInterval(expiresIn ?? defaultExpiresIn)
+      (issuedAt ?? Date()) + TimeInterval(expiresIn ?? 60)
     }
   }
 

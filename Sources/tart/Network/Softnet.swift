@@ -1,7 +1,8 @@
-import Foundation
-import Virtualization
 import Atomics
+import Foundation
+import Semaphore
 import System
+import Virtualization
 
 enum SoftnetError: Error {
   case InitializationFailed(why: String)
@@ -44,7 +45,7 @@ class Softnet: Network {
     return executableURL
   }
 
-  func run(_ sema: DispatchSemaphore) throws {
+  func run(_ sema: AsyncSemaphore) throws {
     try process.run()
 
     monitorTask = Task {

@@ -1,4 +1,5 @@
 import Foundation
+import Semaphore
 import Virtualization
 
 class NetworkShared: Network {
@@ -6,7 +7,7 @@ class NetworkShared: Network {
     [VZNATNetworkDeviceAttachment()]
   }
 
-  func run(_ sema: DispatchSemaphore) throws {
+  func run(_ sema: AsyncSemaphore) throws {
     // no-op, only used for Softnet
   }
 
