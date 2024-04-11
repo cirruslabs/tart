@@ -72,8 +72,6 @@ struct Run: AsyncParsableCommand {
   To workaround this issue pass TART_HOME explicitly:
 
   sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
-
-  To work with NBD devices use the following syntax: 
   """, valueName: "path[:ro]"))
   var disk: [String] = []
 
