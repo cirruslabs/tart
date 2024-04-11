@@ -438,10 +438,10 @@ struct Run: AsyncParsableCommand {
           throw RuntimeError.VMConfigurationError("invalid NBD URL: \(diskPath)")
         }
         let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-            url: nbdURL,
-            timeout: 30,
-            isForcedReadOnly: diskReadOnly,
-            synchronizationMode: VZDiskSynchronizationMode.none
+          url: nbdURL,
+          timeout: 30,
+          isForcedReadOnly: diskReadOnly,
+          synchronizationMode: VZDiskSynchronizationMode.none
         )
         result.append(VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment))
         continue
