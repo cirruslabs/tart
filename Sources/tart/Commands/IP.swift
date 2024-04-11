@@ -13,7 +13,7 @@ enum IPResolutionStrategy: String, ExpressibleByArgument, CaseIterable {
 struct IP: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Get VM's IP address")
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
 
   @Option(help: "Number of seconds to wait for a potential VM booting")
@@ -61,7 +61,7 @@ struct IP: AsyncParsableCommand {
           return ip
         }
       case .dhcp:
-        if let leases = try Leases(), let ip = try leases.ResolveMACAddress(macAddress: vmMACAddress) {
+        if let leases = try Leases(), let ip = leases.ResolveMACAddress(macAddress: vmMACAddress) {
           return ip
         }
       }

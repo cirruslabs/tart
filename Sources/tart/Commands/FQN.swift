@@ -5,7 +5,7 @@ import SystemConfiguration
 struct FQN: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Get a fully-qualified VM name", shouldDisplay: false)
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeMachines))
   var name: String
 
   func run() async throws {

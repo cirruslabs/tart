@@ -4,7 +4,7 @@ import Foundation
 struct Rename: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Rename a VM")
 
-  @Argument(help: "VM name")
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
 
   @Argument(help: "new VM name")

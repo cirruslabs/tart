@@ -18,7 +18,7 @@ struct Clone: AsyncParsableCommand {
     """
   )
 
-  @Argument(help: "source VM name")
+  @Argument(help: "source VM name", completion: .custom(completeMachines))
   var sourceName: String
 
   @Argument(help: "new VM name")
