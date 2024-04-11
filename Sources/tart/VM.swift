@@ -1,6 +1,7 @@
 import Foundation
 import Virtualization
 import AsyncAlgorithms
+import Semaphore
 
 struct UnsupportedRestoreImageError: Error {
 }
@@ -30,7 +31,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   var configuration: VZVirtualMachineConfiguration
 
   // Semaphore used to communicate with the VZVirtualMachineDelegate
-  var sema = DispatchSemaphore(value: 0)
+  var sema = AsyncSemaphore(value: 0)
 
   // VM's config
   var name: String
@@ -243,13 +244,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run() async throws {
-    await withTaskCancellationHandler(operation: {
-      // Wait for the VM to finish running
-      // or for the exit condition
-      sema.wait()
-    }, onCancel: {
-      sema.signal()
-    })
+    try await sema.waitUnlessCancelled()
 
     if Task.isCancelled {
       try await stop()

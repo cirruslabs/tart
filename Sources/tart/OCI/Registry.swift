@@ -41,10 +41,10 @@ extension AsyncThrowingChannel<Data, Error> {
   }
 }
 
-struct TokenResponse: Decodable, Authentication {
-  let defaultIssuedAt = Date()
-  let defaultExpiresIn = 60
+let defaultIssuedAt = Date()
+let defaultExpiresIn = 60
 
+struct TokenResponse: Decodable, Authentication {
   var token: String?
   var accessToken: String?
   var expiresIn: Int?

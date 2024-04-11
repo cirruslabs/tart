@@ -10,7 +10,7 @@ class DiskV2: Disk {
     var pushedLayers: [OCIManifestLayer] = []
 
     // Open the disk file
-    var mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
+    let mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
 
     // Compress the disk file as multiple individually decompressible streams,
     // each equal ``Self.layerLimitBytes`` bytes or slightly larger due to the

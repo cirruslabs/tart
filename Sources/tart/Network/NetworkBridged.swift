@@ -1,4 +1,5 @@
 import Foundation
+import Semaphore
 import Virtualization
 
 class NetworkBridged: Network {
@@ -12,7 +13,7 @@ class NetworkBridged: Network {
     interfaces.map { VZBridgedNetworkDeviceAttachment(interface: $0) }
   }
 
-  func run(_ sema: DispatchSemaphore) throws {
+  func run(_ sema: AsyncSemaphore) throws {
     // no-op, only used for Softnet
   }
 
