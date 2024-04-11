@@ -3,7 +3,7 @@ import XCTest
 
 final class TokenResponseTests: XCTestCase {
   func testBasic() throws {
-    let expectedTokenExpiresAtRange = DateInterval()
+    var expectedTokenExpiresAtRange = DateInterval()
     let tokenResponseRaw = Data("{\"token\":\"some token\"}".utf8)
     let tokenResponse = try TokenResponse.parse(fromData: tokenResponseRaw)
 
@@ -16,7 +16,7 @@ final class TokenResponseTests: XCTestCase {
   }
 
   func testExpirationBasic() throws {
-    let expectedTokenExpiresAtRange = DateInterval()
+    var expectedTokenExpiresAtRange = DateInterval()
     let tokenResponseRaw = Data("{\"token\":\"some token\",\"expires_in\":2}".utf8)
     let tokenResponse = try TokenResponse.parse(fromData: tokenResponseRaw)
 
