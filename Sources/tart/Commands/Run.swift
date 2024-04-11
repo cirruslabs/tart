@@ -61,9 +61,9 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\")
+  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\" --disk=\"nbd://localhost:10809/myDisk\")
   """, discussion: """
-  Can be either a disk image file or a block device like a local SSD on AWS EC2 Mac instances.
+  Can be either a disk image file, a block device like a local SSD on AWS EC2 Mac instances or a Network Block Device (NBD).
 
   Learn how to create a disk image using Disk Utility here:
   https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
@@ -72,6 +72,8 @@ struct Run: AsyncParsableCommand {
   To workaround this issue pass TART_HOME explicitly:
 
   sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
+
+  To work with NBD devices use the following syntax: 
   """, valueName: "path[:ro]"))
   var disk: [String] = []
 
@@ -429,6 +431,25 @@ struct Run: AsyncParsableCommand {
     for rawDisk in expandedDiskPaths {
       let diskReadOnly = rawDisk.hasSuffix(readOnlySuffix)
       let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
+
+      if (diskPath.starts(with: "nbd://")) {
+        guard #available(macOS 14, *) else {
+          throw UnsupportedOSError("attaching Network Block Devices", "are")
+        }
+        let nbdURL =  URL(string: diskPath)
+        if nbdURL == nil {
+          throw RuntimeError.VMConfigurationError("invalid NBD URL: \(diskPath)")
+        }
+        let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
+            url: nbdURL!,
+            timeout: 30,
+            isForcedReadOnly: diskReadOnly,
+            synchronizationMode: VZDiskSynchronizationMode.none
+        )
+        result.append(VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment))
+        continue
+      }
+
       let diskURL = URL(fileURLWithPath: diskPath)
 
       // check if `diskPath` is a block device or a directory
