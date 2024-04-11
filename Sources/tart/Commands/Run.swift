@@ -436,12 +436,11 @@ struct Run: AsyncParsableCommand {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching Network Block Devices", "are")
         }
-        let nbdURL =  URL(string: diskPath)
-        if nbdURL == nil {
+        guard let nbdURL = URL(string: diskPath) else {
           throw RuntimeError.VMConfigurationError("invalid NBD URL: \(diskPath)")
         }
         let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-            url: nbdURL!,
+            url: nbdURL,
             timeout: 30,
             isForcedReadOnly: diskReadOnly,
             synchronizationMode: VZDiskSynchronizationMode.none
