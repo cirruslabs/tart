@@ -11,7 +11,7 @@ This page covers Terms of Service only for Cirrus Runners and Tart Documentation
 
 ### The Gist
 
-Cirrus Labs Inc ("Cirrus Labs") operates the [Cirrus Runners service](../integrations/github-actions.md) which we hope you use.
+Cirrus Labs Inc ("Cirrus Labs") operates the [Cirrus Runners service](https://cirrus-runners.app/) which we hope you use.
 If you use it, please use it responsibly. If you don't, we'll have to terminate your subscription.
 
 For paid plans, you'll be charged on a monthly basis. You can cancel anytime, but there are no refunds.

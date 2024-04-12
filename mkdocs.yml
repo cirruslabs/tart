@@ -89,10 +89,10 @@ nav:
   - "Home": index.md
   - "Quick Start": quick-start.md
   - "Integrations":
-    - "GitHub Actions": integrations/github-actions.md
+    - "Self-hosted CI": integrations/cirrus-cli.md
+    - "GitHub Actions": https://cirrus-runners.app/
     - "GitLab Runner": integrations/gitlab-runner.md
     - "Buildkite": integrations/buildkite.md
-    - "Self-hosted CI": integrations/cirrus-cli.md
     - "Managing VMs": integrations/vm-management.md
   - "Support & Licensing": licensing.md
   - "Orchestration": https://github.com/cirruslabs/orchard
