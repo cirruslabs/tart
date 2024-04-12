@@ -22,7 +22,8 @@ let package = Package(
     .package(url: "https://github.com/cfilipov/TextTable", branch: "master"),
     .package(url: "https://github.com/sersoft-gmbh/swift-sysctl.git", from: "1.8.0"),
     .package(url: "https://github.com/orchetect/SwiftRadix", from: "1.3.1"),
-    .package(url: "https://github.com/groue/Semaphore", from: "0.0.8")
+    .package(url: "https://github.com/groue/Semaphore", from: "0.0.8"),
+    .package(url: "https://github.com/fumoboy007/swift-retry", from: "0.2.3"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -38,6 +39,7 @@ let package = Package(
       .product(name: "Sysctl", package: "swift-sysctl"),
       .product(name: "SwiftRadix", package: "SwiftRadix"),
       .product(name: "Semaphore", package: "Semaphore"),
+      .product(name: "DMRetry", package: "swift-retry"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",
