@@ -1,5 +1,6 @@
 import Foundation
 import Sentry
+import Retry
 
 class VMStorageOCI: PrunableStorage {
   let baseURL = try! Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
@@ -188,7 +189,14 @@ class VMStorageOCI: PrunableStorage {
       }
 
       try await withTaskCancellationHandler(operation: {
-        try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency)
+        try await retry(maxAttempts: 5, backoff: .exponentialWithFullJitter(baseDelay: .seconds(5), maxDelay: .seconds(60))) {
+          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency)
+        } recoverFromFailure: { error in
+          print("Error: \(error.localizedDescription)")
+          print("Attempting to re-try...")
+
+          return .retry
+        }
         try move(digestName, from: tmpVMDir)
         transaction.finish()
       }, onCancel: {
