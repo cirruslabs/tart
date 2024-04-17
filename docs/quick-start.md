@@ -149,8 +149,9 @@ mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 
 The directory we've mounted above will be accessible from the `/mnt/shared/project` path inside a guest VM.
 
-To automatically mount this directory at boot time, add the following line to the `/etc/fstab` file:
+??? info "Auto-mount at boot time"
+    To automatically mount this directory at boot time, add the following line to the `/etc/fstab` file:
 
-```shell
-com.apple.virtio-fs.automount /mnt/shared virtiofs rw,relatime 0 0
-```
+    ```shell
+    com.apple.virtio-fs.automount /mnt/shared virtiofs rw,relatime 0 0
+    ```
