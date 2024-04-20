@@ -5,8 +5,16 @@ struct Config {
   let tartCacheDir: URL
   let tartTmpDir: URL
 
-  var tartCacheIPSWs: URL {
+  var tartCacheIPSWsDir: URL {
     tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
+  }
+
+  var tartCacheOCIsDir: URL {
+    tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
+  }
+
+  var tartVMsDir: URL {
+    tartHomeDir.appendingPathComponent("vms", isDirectory: true)
   }
 
   static let processConfig = try! Config()
