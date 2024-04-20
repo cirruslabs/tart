@@ -10,7 +10,7 @@ struct FQN: AsyncParsableCommand {
 
   func run() async throws {
     if var remoteName = try? RemoteName(name) {
-      let digest = try VMStorageOCI().digest(remoteName)
+      let digest = try VMStorageOCI(config: Config.processConfig).digest(remoteName)
 
       remoteName.reference = Reference(digest: digest)
 

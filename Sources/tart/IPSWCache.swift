@@ -4,8 +4,8 @@ import Virtualization
 class IPSWCache: PrunableStorage {
   let baseURL: URL
 
-  init() throws {
-    baseURL = Config.processConfig.tartCacheIPSWsDir
+  init(config: Config) throws {
+    baseURL = config.tartCacheIPSWsDir
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
   }
 

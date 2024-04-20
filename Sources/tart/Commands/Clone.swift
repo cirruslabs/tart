@@ -41,17 +41,17 @@ struct Clone: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let ociStorage = VMStorageOCI()
-    let localStorage = VMStorageLocal()
+    let ociStorage = VMStorageOCI(config: Config.processConfig)
+    let localStorage = VMStorageLocal(config: Config.processConfig)
 
     if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet
       let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
-      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency)
+      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency, config: Config.processConfig)
     }
 
-    let sourceVM = try VMStorageHelper.open(sourceName)
-    let tmpVMDir = try VMDirectory.temporary()
+    let sourceVM = try VMStorageHelper.open(sourceName, config: Config.processConfig)
+    let tmpVMDir = try VMDirectory.temporary(config: Config.processConfig)
 
     // Lock the temporary VM directory to prevent it's garbage collection
     let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)

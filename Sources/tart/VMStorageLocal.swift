@@ -1,7 +1,12 @@
 import Foundation
 
 class VMStorageLocal: PrunableStorage {
-  let baseURL: URL = Config.processConfig.tartVMsDir
+  let baseURL: URL
+
+  init(config: Config) {
+    baseURL = config.tartVMsDir
+  }
+
 
   private func vmURL(_ name: String) -> URL {
     baseURL.appendingPathComponent(name, isDirectory: true)

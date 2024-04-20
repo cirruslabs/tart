@@ -31,7 +31,7 @@ struct Export: AsyncParsableCommand {
 
     print("exporting...")
 
-    try VMStorageHelper.open(name).exportToArchive(path: correctedPath)
+    try VMStorageHelper.open(name, config: Config.processConfig).exportToArchive(path: correctedPath)
   }
 
   func userWantsOverwrite(_ filename: String) -> Bool {

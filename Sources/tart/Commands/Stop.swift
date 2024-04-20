@@ -13,7 +13,7 @@ struct Stop: AsyncParsableCommand {
   var timeout: UInt64 = 30
 
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let vmDir = try VMStorageLocal(config: Config.processConfig).open(name)
     switch try vmDir.state() {
     case .Suspended:
       try stopSuspended(vmDir)

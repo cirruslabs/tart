@@ -31,8 +31,8 @@ struct Push: AsyncParsableCommand {
   var populateCache: Bool = false
 
   func run() async throws {
-    let ociStorage = VMStorageOCI()
-    let localVMDir = try VMStorageHelper.open(localName)
+    let ociStorage = VMStorageOCI(config: Config.processConfig)
+    let localVMDir = try VMStorageHelper.open(localName, config: Config.processConfig)
 
     // Parse remote names supplied by the user
     let remoteNames = try remoteNames.map{
@@ -93,7 +93,7 @@ struct Push: AsyncParsableCommand {
 
   func lightweightPushToRegistry(registry: Registry, remoteName: RemoteName, references: [String]) async throws -> RemoteName {
     // Is the local OCI VM already present in the registry?
-    let digest = try VMStorageOCI().digest(remoteName)
+    let digest = try VMStorageOCI(config: Config.processConfig).digest(remoteName)
 
     let (remoteManifest, _) = try await registry.pullManifest(reference: digest)
 

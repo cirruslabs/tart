@@ -1,22 +1,22 @@
 import Foundation
 
 class VMStorageHelper {
-  static func open(_ name: String) throws -> VMDirectory {
+  static func open(_ name: String, config: Config) throws -> VMDirectory {
     try missingVMWrap(name) {
       if let remoteName = try? RemoteName(name) {
-        return try VMStorageOCI().open(remoteName)
+        return try VMStorageOCI(config: config).open(remoteName)
       } else {
-        return try VMStorageLocal().open(name)
+        return try VMStorageLocal(config: config).open(name)
       }
     }
   }
 
-  static func delete(_ name: String) throws {
+  static func delete(_ name: String, config: Config) throws {
     try missingVMWrap(name) {
       if let remoteName = try? RemoteName(name) {
-        try VMStorageOCI().delete(remoteName)
+        try VMStorageOCI(config: config).delete(remoteName)
       } else {
-        try VMStorageLocal().delete(name)
+        try VMStorageLocal(config: config).delete(name)
       }
     }
   }

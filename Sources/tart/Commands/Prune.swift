@@ -45,7 +45,7 @@ struct Prune: AsyncParsableCommand {
 
   func run() async throws {
     if gc {
-      try VMStorageOCI().gc()
+      try VMStorageOCI(config: Config.processConfig).gc()
     }
 
     // Build a list of prunable storages that we're going to prune based on user's request
@@ -53,9 +53,9 @@ struct Prune: AsyncParsableCommand {
 
     switch entries {
     case "caches":
-      prunableStorages = [VMStorageOCI(), try IPSWCache()]
+      prunableStorages = [VMStorageOCI(config: Config.processConfig), try IPSWCache(config: Config.processConfig)]
     case "vms":
-      prunableStorages = [VMStorageLocal()]
+      prunableStorages = [VMStorageLocal(config: Config.processConfig)]
     default:
       throw ValidationError("unsupported --entries value, please specify either \"caches\" or \"vms\"")
     }
@@ -152,7 +152,7 @@ struct Prune: AsyncParsableCommand {
     let transaction = SentrySDK.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
     defer { transaction.finish() }
 
-    let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
+    let prunableStorages: [PrunableStorage] = [VMStorageOCI(config: Config.processConfig), try IPSWCache(config: Config.processConfig)]
     let prunables: [Prunable] = try prunableStorages
       .flatMap { try $0.prunables() }
       .sorted { try $0.accessDate() < $1.accessDate() }

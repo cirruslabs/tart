@@ -22,7 +22,7 @@ struct Get: AsyncParsableCommand {
   var format: Format = .text
 
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let vmDir = try VMStorageLocal(config: Config.processConfig).open(name)
     let vmConfig = try VMConfig(fromURL: vmDir.configURL)
     let memorySizeInMb = vmConfig.memorySize / 1024 / 1024
 

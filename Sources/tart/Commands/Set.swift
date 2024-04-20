@@ -31,7 +31,7 @@ struct Set: AsyncParsableCommand {
   var diskSize: UInt16?
 
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let vmDir = try VMStorageLocal(config: Config.processConfig).open(name)
     var vmConfig = try VMConfig(fromURL: vmDir.configURL)
 
     if let cpu = cpu {

@@ -32,7 +32,7 @@ struct Pull: AsyncParsableCommand {
   func run() async throws {
     // Be more liberal when accepting local image as argument,
     // see https://github.com/cirruslabs/tart/issues/36
-    if VMStorageLocal().exists(remoteName) {
+    if VMStorageLocal(config: Config.processConfig).exists(remoteName) {
       print("\"\(remoteName)\" is a local image, nothing to pull here!")
 
       return
@@ -43,6 +43,6 @@ struct Pull: AsyncParsableCommand {
 
     defaultLogger.appendNewLine("pulling \(remoteName)...")
 
-    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency)
+    try await VMStorageOCI(config: Config.processConfig).pull(remoteName, registry: registry, concurrency: concurrency, config: Config.processConfig)
   }
 }

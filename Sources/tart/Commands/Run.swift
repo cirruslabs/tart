@@ -157,7 +157,7 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--captures-system-keys can only be used with the default VM view")
     }
 
-    let localStorage = VMStorageLocal()
+    let localStorage = VMStorageLocal(config: Config.processConfig)
     let vmDir = try localStorage.open(name)
     if try vmDir.state() == .Suspended {
       suspendable = true
@@ -178,7 +178,7 @@ struct Run: AsyncParsableCommand {
 
   @MainActor
   func run() async throws {
-    let localStorage = VMStorageLocal()
+    let localStorage = VMStorageLocal(config: Config.processConfig)
     let vmDir = try localStorage.open(name)
 
     let storageLock = try FileLock(lockURL: Config.processConfig.tartHomeDir)
@@ -577,11 +577,11 @@ struct Run: AsyncParsableCommand {
               }
             }
           }.frame(
-            minWidth: CGFloat(vm!.config.display.width),
-            idealWidth: CGFloat(vm!.config.display.width),
+            minWidth: CGFloat(vm!.vmConfig.display.width),
+            idealWidth: CGFloat(vm!.vmConfig.display.width),
             maxWidth: .infinity,
-            minHeight: CGFloat(vm!.config.display.height),
-            idealHeight: CGFloat(vm!.config.display.height),
+            minHeight: CGFloat(vm!.vmConfig.display.height),
+            idealHeight: CGFloat(vm!.vmConfig.display.height),
             maxHeight: .infinity
           )
         }.commands {
@@ -593,7 +593,7 @@ struct Run: AsyncParsableCommand {
           CommandGroup(replacing: .undoRedo, addition: {})
           CommandGroup(replacing: .windowSize, addition: {})
           // Replace some standard menu options
-          CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.config) }
+          CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.vmConfig) }
           CommandMenu("Control") {
             Button("Start") {
               Task { try await vm!.virtualMachine.start() }
@@ -677,7 +677,7 @@ struct VMView: NSViewRepresentable {
     //
     // This is disabled for Linux because of poor HiDPI
     // support, which manifests in fonts being too small
-    if #available(macOS 14.0, *), vm.config.os != .linux {
+    if #available(macOS 14.0, *), vm.vmConfig.os != .linux {
       machineView.automaticallyReconfiguresDisplay = true
     }
 

@@ -63,20 +63,20 @@ struct VMDirectory: Prunable {
     }
   }
 
-  static func temporary() throws -> VMDirectory {
-    let tmpDir = Config.processConfig.tartTmpDir.appendingPathComponent(UUID().uuidString)
+  static func temporary(config: Config) throws -> VMDirectory {
+    let tmpDir = config.tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
 
     return VMDirectory(baseURL: tmpDir)
   }
 
   //Create tmp directory with hashing
-  static func temporaryDeterministic(key: String) throws -> VMDirectory {
+  static func temporaryDeterministic(key: String, config: Config) throws -> VMDirectory {
     let keyData = Data(key.utf8)
     let hash = Insecure.MD5.hash(data: keyData)
     // Convert hash to string
     let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
-    let tmpDir = Config.processConfig.tartTmpDir.appendingPathComponent(hashString)
+    let tmpDir = config.tartTmpDir.appendingPathComponent(hashString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
     return VMDirectory(baseURL: tmpDir)
   }

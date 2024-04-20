@@ -31,7 +31,7 @@ struct Create: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let tmpVMDir = try VMDirectory.temporary()
+    let tmpVMDir = try VMDirectory.temporary(config: Config.processConfig)
 
     // Lock the temporary VM directory to prevent it's garbage collection
     let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
@@ -58,7 +58,7 @@ struct Create: AsyncParsableCommand {
             ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
           }
 
-          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize, config: Config.processConfig)
         }
       #endif
 
@@ -66,7 +66,7 @@ struct Create: AsyncParsableCommand {
         _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
       }
 
-      try VMStorageLocal().move(name, from: tmpVMDir)
+      try VMStorageLocal(config: Config.processConfig).move(name, from: tmpVMDir)
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
     })

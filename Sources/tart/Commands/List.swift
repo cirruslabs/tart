@@ -37,13 +37,13 @@ struct List: AsyncParsableCommand {
     var infos: [VMInfo] = []
 
     if source == nil || source == "local" {
-      infos += sortedInfos(try VMStorageLocal().list().map { (name, vmDir) in
+      infos += sortedInfos(try VMStorageLocal(config: Config.processConfig).list().map { (name, vmDir) in
         try VMInfo(Source: "local", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
       })
     }
 
     if source == nil || source == "oci" {
-      infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
+      infos += sortedInfos(try VMStorageOCI(config: Config.processConfig).list().map { (name, vmDir, _) in
         try VMInfo(Source: "oci", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
       })
     }

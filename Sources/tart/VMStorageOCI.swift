@@ -3,7 +3,11 @@ import Sentry
 import Retry
 
 class VMStorageOCI: PrunableStorage {
-  let baseURL = Config.processConfig.tartCacheOCIsDir
+  let baseURL: URL
+
+  init(config: Config) {
+    baseURL = config.tartCacheOCIsDir
+  }
 
   private func vmURL(_ name: RemoteName) -> URL {
     baseURL.appendingRemoteName(name)
@@ -133,7 +137,7 @@ class VMStorageOCI: PrunableStorage {
     try list().filter { (_, _, isSymlink) in !isSymlink }.map { (_, vmDir, _) in vmDir }
   }
 
-  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt) async throws {
+  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, config: Config) async throws {
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["imageName": name.description], key: "OCI")
     }
@@ -171,7 +175,7 @@ class VMStorageOCI: PrunableStorage {
 
     if !exists(digestName) {
       let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
-      let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description)
+      let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description, config: config)
 
       // Lock the temporary VM directory to prevent it's garbage collection
       let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)

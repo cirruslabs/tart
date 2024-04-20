@@ -10,7 +10,7 @@ struct Suspend: AsyncParsableCommand {
   var name: String
 
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let vmDir = try VMStorageLocal(config: Config.processConfig).open(name)
     let lock = try vmDir.lock()
 
     // Find the VM's PID

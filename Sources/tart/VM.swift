@@ -37,7 +37,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   var name: String
 
   // VM's config
-  var config: VMConfig
+  var vmConfig: VMConfig
 
   var network: Network
 
@@ -50,16 +50,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        audio: Bool = true
   ) throws {
     name = vmDir.name
-    config = try VMConfig.init(fromURL: vmDir.configURL)
+    vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
 
-    if config.arch != CurrentArchitecture() {
+    if vmConfig.arch != CurrentArchitecture() {
       throw UnsupportedArchitectureError()
     }
 
     // Initialize the virtual machine and its configuration
     self.network = network
     configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
-                                                nvramURL: vmDir.nvramURL, vmConfig: config,
+                                                nvramURL: vmDir.nvramURL, vmConfig: vmConfig,
                                                 network: network, additionalStorageDevices: additionalStorageDevices,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
@@ -72,14 +72,14 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     virtualMachine.delegate = self
   }
 
-  static func retrieveIPSW(remoteURL: URL) async throws -> URL {
+  static func retrieveIPSW(remoteURL: URL, config: Config) async throws -> URL {
     // Check if we already have this IPSW in cache
     var headRequest = URLRequest(url: remoteURL)
     headRequest.httpMethod = "HEAD"
     let (_, headResponse) = try await Fetcher.fetch(headRequest, viaFile: false)
 
     if let hash = headResponse.value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
-      let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
+      let ipswLocation = try IPSWCache(config: config).locationFor(fileName: "sha256:\(hash).ipsw")
 
       if FileManager.default.fileExists(atPath: ipswLocation.path) {
         defaultLogger.appendNewLine("Using cached *.ipsw file...")
@@ -98,7 +98,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let request = URLRequest(url: remoteURL)
     let (channel, response) = try await Fetcher.fetch(request, viaFile: true, progress: downloadProgress)
 
-    let temporaryLocation = Config.processConfig.tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
+    let temporaryLocation = config.tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
     defaultLogger.appendNewLine("Computing digest for \(temporaryLocation.path)...")
     let digestProgress = Progress(totalUnitCount: response.expectedContentLength)
     ProgressObserver(digestProgress).log(defaultLogger)
@@ -119,7 +119,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     try fileHandle.close()
 
-    let finalLocation = try IPSWCache().locationFor(fileName: digest.finalize() + ".ipsw")
+    let finalLocation = try IPSWCache(config: config).locationFor(fileName: digest.finalize() + ".ipsw")
 
     return try FileManager.default.replaceItemAt(finalLocation, withItemAt: temporaryLocation)!
   }
@@ -141,12 +141,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
-      serialPorts: [VZSerialPortConfiguration] = []
+      serialPorts: [VZSerialPortConfiguration] = [],
+      config: Config
     ) async throws {
       var ipswURL = ipswURL
 
       if !ipswURL.isFileURL {
-        ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL)
+        ipswURL = try await VM.retrieveIPSW(remoteURL: ipswURL, config: config)
       }
 
       // We create a temporary TART_HOME directory in tests, which has its "cache" folder symlinked
@@ -174,19 +175,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
       name = vmDir.name
       // Create config
-      config = VMConfig(
+      vmConfig = VMConfig(
         platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
         cpuCountMin: requirements.minimumSupportedCPUCount,
         memorySizeMin: requirements.minimumSupportedMemorySize
       )
       // allocate at least 4 CPUs because otherwise VMs are frequently freezing
-      try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
-      try config.save(toURL: vmDir.configURL)
+      try vmConfig.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
+      try vmConfig.save(toURL: vmDir.configURL)
 
       // Initialize the virtual machine and its configuration
       self.network = network
       configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-                                                  vmConfig: config, network: network,
+                                                  vmConfig: vmConfig, network: network,
                                                   additionalStorageDevices: additionalStorageDevices,
                                                   directorySharingDevices: directorySharingDevices,
                                                   serialPorts: serialPorts

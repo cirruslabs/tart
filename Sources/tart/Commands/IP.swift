@@ -30,7 +30,7 @@ struct IP: AsyncParsableCommand {
   var resolver: IPResolutionStrategy = .dhcp
 
   func run() async throws {
-    let vmDir = try VMStorageLocal().open(name)
+    let vmDir = try VMStorageLocal(config: Config.processConfig).open(name)
     let vmConfig = try VMConfig.init(fromURL: vmDir.configURL)
     let vmMACAddress = MACAddress(fromString: vmConfig.macAddress.string)!
 
