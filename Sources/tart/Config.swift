@@ -5,7 +5,13 @@ struct Config {
   let tartCacheDir: URL
   let tartTmpDir: URL
 
-  init() throws {
+  var tartCacheIPSWs: URL {
+    tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
+  }
+
+  static let processConfig = try! Config()
+
+  private init() throws {
     var tartHomeDir: URL
 
     if let customTartHome = ProcessInfo.processInfo.environment["TART_HOME"] {

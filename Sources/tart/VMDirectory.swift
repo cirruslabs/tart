@@ -64,7 +64,7 @@ struct VMDirectory: Prunable {
   }
 
   static func temporary() throws -> VMDirectory {
-    let tmpDir = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString)
+    let tmpDir = Config.processConfig.tartTmpDir.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
 
     return VMDirectory(baseURL: tmpDir)
@@ -76,7 +76,7 @@ struct VMDirectory: Prunable {
     let hash = Insecure.MD5.hash(data: keyData)
     // Convert hash to string
     let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
-    let tmpDir = try Config().tartTmpDir.appendingPathComponent(hashString)
+    let tmpDir = Config.processConfig.tartTmpDir.appendingPathComponent(hashString)
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
     return VMDirectory(baseURL: tmpDir)
   }

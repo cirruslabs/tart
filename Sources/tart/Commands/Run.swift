@@ -181,7 +181,7 @@ struct Run: AsyncParsableCommand {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
 
-    let storageLock = try FileLock(lockURL: Config().tartHomeDir)
+    let storageLock = try FileLock(lockURL: Config.processConfig.tartHomeDir)
     if try vmDir.state() == .Suspended {
       try storageLock.lock() // lock before checking
       let needToGenerateNewMac = try localStorage.list().contains {
@@ -787,7 +787,7 @@ struct DirectoryShare {
       throw ValidationError("Failed to fetch a remote archive!")
     }
 
-    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
+    let temporaryLocation = Config.processConfig.tartTmpDir.appendingPathComponent(UUID().uuidString + ".volume")
     try FileManager.default.createDirectory(atPath: temporaryLocation.path, withIntermediateDirectories: true)
     let lock = try FileLock(lockURL: temporaryLocation)
     try lock.lock()

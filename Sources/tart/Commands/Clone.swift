@@ -59,7 +59,7 @@ struct Clone: AsyncParsableCommand {
 
     try await withTaskCancellationHandler(operation: {
       // Acquire a global lock
-      let lock = try FileLock(lockURL: Config().tartHomeDir)
+      let lock = try FileLock(lockURL: Config.processConfig.tartHomeDir)
       try lock.lock()
 
       let generateMAC = try localStorage.hasVMsWithMACAddress(macAddress: sourceVM.macAddress())

@@ -98,7 +98,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let request = URLRequest(url: remoteURL)
     let (channel, response) = try await Fetcher.fetch(request, viaFile: true, progress: downloadProgress)
 
-    let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
+    let temporaryLocation = Config.processConfig.tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
     defaultLogger.appendNewLine("Computing digest for \(temporaryLocation.path)...")
     let digestProgress = Progress(totalUnitCount: response.expectedContentLength)
     ProgressObserver(digestProgress).log(defaultLogger)

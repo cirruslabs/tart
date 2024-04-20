@@ -33,7 +33,7 @@ struct Import: AsyncParsableCommand {
 
     try await withTaskCancellationHandler(operation: {
       // Acquire a global lock
-      let lock = try FileLock(lockURL: Config().tartHomeDir)
+      let lock = try FileLock(lockURL: Config.processConfig.tartHomeDir)
       try lock.lock()
 
       // Re-generate the VM's MAC address importing it will result in address collision

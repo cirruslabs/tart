@@ -114,7 +114,7 @@ struct Prune: AsyncParsableCommand {
     }
 
     // Figure out how much disk space is available
-    let attrs = try Config().tartCacheDir.resourceValues(forKeys: [
+    let attrs = try Config.processConfig.tartCacheDir.resourceValues(forKeys: [
       .volumeAvailableCapacityKey,
       .volumeAvailableCapacityForImportantUsageKey
     ])

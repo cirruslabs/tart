@@ -5,7 +5,7 @@ class IPSWCache: PrunableStorage {
   let baseURL: URL
 
   init() throws {
-    baseURL = try Config().tartCacheDir.appendingPathComponent("IPSWs", isDirectory: true)
+    baseURL = Config.processConfig.tartCacheIPSWs
     try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
   }
 

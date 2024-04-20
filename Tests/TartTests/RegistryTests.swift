@@ -62,7 +62,7 @@ final class RegistryTests: XCTestCase {
 
   func testPushPullManifest() async throws {
     // Craft a basic config
-    let configData = try OCIConfig().toJSON()
+    let configData = try OCIConfig.processConfig.toJSON()
     let configDigest = try await registry.pushBlob(fromData: configData)
 
     // Craft a basic layer
