@@ -51,16 +51,4 @@ struct Config {
       try lock.unlock()
     }
   }
-
-  static func jsonEncoder() -> JSONEncoder {
-    let encoder = JSONEncoder()
-
-    encoder.outputFormatting = [.sortedKeys]
-
-    return encoder
-  }
-
-  static func jsonDecoder() -> JSONDecoder {
-    JSONDecoder()
-  }
 }

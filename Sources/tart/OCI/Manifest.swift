@@ -43,11 +43,11 @@ struct OCIManifest: Codable, Equatable {
   }
 
   init(fromJSON: Data) throws {
-    self = try Config.jsonDecoder().decode(Self.self, from: fromJSON)
+    self = try jsonDecoder().decode(Self.self, from: fromJSON)
   }
 
   func toJSON() throws -> Data {
-    try Config.jsonEncoder().encode(self)
+    try jsonEncoder().encode(self)
   }
 
   func digest() throws -> String {
@@ -68,7 +68,7 @@ struct OCIConfig: Codable {
   var os: OS = .darwin
 
   func toJSON() throws -> Data {
-    try Config.jsonEncoder().encode(self)
+    try jsonEncoder().encode(self)
   }
 }
 

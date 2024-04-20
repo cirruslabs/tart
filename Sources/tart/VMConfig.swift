@@ -70,7 +70,7 @@ struct VMConfig: Codable {
   }
 
   init(fromJSON: Data) throws {
-    self = try Config.jsonDecoder().decode(Self.self, from: fromJSON)
+    self = try jsonDecoder().decode(Self.self, from: fromJSON)
   }
 
   init(fromURL: URL) throws {
@@ -78,7 +78,7 @@ struct VMConfig: Codable {
   }
 
   func toJSON() throws -> Data {
-    try Config.jsonEncoder().encode(self)
+    try jsonEncoder().encode(self)
   }
 
   func save(toURL: URL) throws {

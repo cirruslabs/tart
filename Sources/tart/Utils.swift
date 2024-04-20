@@ -22,3 +22,15 @@ func resolveBinaryPath(_ name: String) -> URL? {
 
   return nil
 }
+
+func jsonEncoder() -> JSONEncoder {
+  let encoder = JSONEncoder()
+
+  encoder.outputFormatting = [.sortedKeys]
+
+  return encoder
+}
+
+func jsonDecoder() -> JSONDecoder {
+  JSONDecoder()
+}

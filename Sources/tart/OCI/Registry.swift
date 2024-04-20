@@ -48,7 +48,7 @@ struct TokenResponse: Decodable, Authentication {
   var issuedAt: Date?
 
   static func parse(fromData: Data) throws -> Self {
-    let decoder = Config.jsonDecoder()
+    let decoder = jsonDecoder()
 
     decoder.keyDecodingStrategy = .convertFromSnakeCase
 
