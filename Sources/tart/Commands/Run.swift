@@ -164,6 +164,10 @@ struct Run: AsyncParsableCommand {
     }
 
     if suspendable {
+      let config = try VMConfig.init(fromURL: vmDir.configURL)
+      if !(config.platform is PlatformSuspendable) {
+        throw ValidationError("You can only suspend macOS VMs")
+      }
       if dir.count > 0 {
         throw ValidationError("Suspending VMs with shared directories is not supported")
       }
@@ -557,7 +561,7 @@ struct Run: AsyncParsableCommand {
     nsApp.activate(ignoringOtherApps: true)
 
     struct MainApp: App {
-      static var disappearSignal: Int32 = SIGINT
+      static var suspendable: Bool = false
       static var capturesSystemKeys: Bool = false
 
       @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
@@ -568,7 +572,7 @@ struct Run: AsyncParsableCommand {
             VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys).onAppear {
               NSWindow.allowsAutomaticWindowTabbing = false
             }.onDisappear {
-              let ret = kill(getpid(), MainApp.disappearSignal)
+              let ret = kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT)
               if ret != 0 {
                 // Fallback to the old termination method that doesn't
                 // propagate the cancellation to Task's in case graceful
@@ -605,8 +609,10 @@ struct Run: AsyncParsableCommand {
               Task { try vm!.virtualMachine.requestStop() }
             }
             if #available(macOS 14, *) {
-              Button("Suspend") {
-                kill(getpid(), SIGUSR1)
+              if (MainApp.suspendable) {
+                Button("Suspend") {
+                  kill(getpid(), SIGUSR1)
+                }
               }
             }
           }
@@ -614,7 +620,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    MainApp.disappearSignal = suspendable ? SIGUSR1 : SIGINT
+    MainApp.suspendable = suspendable
     MainApp.capturesSystemKeys = captureSystemKeys
     MainApp.main()
   }
