@@ -441,6 +441,7 @@ struct Run: AsyncParsableCommand {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching Network Block Devices", "are")
         }
+
         let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
           url: diskURL!,
           timeout: 30,
@@ -453,8 +454,7 @@ struct Run: AsyncParsableCommand {
 
       let diskFileURL = URL(fileURLWithPath: diskPath)
 
-      // check if `diskPath` is a block device or a directory
-      if pathHasMode(diskPath, mode: S_IFBLK) || pathHasMode(diskPath, mode: S_IFDIR) {
+      if pathHasMode(diskPath, mode: S_IFBLK) {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching block devices", "are")
         }
@@ -473,22 +473,23 @@ struct Run: AsyncParsableCommand {
           }
         }
 
-        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
-                                                                      readOnly: diskReadOnly, synchronizationMode: .full)
-        result.append(VZVirtioBlockDeviceConfiguration(attachment: attachment))
-      } else {
-        // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
-        // see https://github.com/cirruslabs/tart/issues/323 for more details.
-        if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
-          throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
-        }
-
-        let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
-          url: diskFileURL,
-          readOnly: diskReadOnly
-        )
-        result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
+        let blockAttachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
+                                                                           readOnly: diskReadOnly, synchronizationMode: .full)
+        result.append(VZVirtioBlockDeviceConfiguration(attachment: blockAttachment))
+        continue
       }
+
+      // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
+      // see https://github.com/cirruslabs/tart/issues/323 for more details.
+      if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
+        throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
+      }
+
+      let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
+        url: diskFileURL,
+        readOnly: diskReadOnly
+      )
+      result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
     }
 
     return result
@@ -849,5 +850,5 @@ func pathHasMode(_ path: String, mode: mode_t) -> Bool {
   guard statRes != -1 else {
     return false
   }
-  return (Int32(st.st_mode) & Int32(mode)) == Int32(mode)
+  return (st.st_mode & S_IFMT) == mode
 }
