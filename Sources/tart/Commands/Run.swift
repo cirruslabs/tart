@@ -437,7 +437,7 @@ struct Run: AsyncParsableCommand {
       let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
 
       let diskURL = URL(string: diskPath)
-      if (diskURL?.scheme?.contains("nbd") == true) {
+      if (["nbd", "nbds", "nbd+unix", "nbds+unix"].contains(diskURL?.scheme)) {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching Network Block Devices", "are")
         }
