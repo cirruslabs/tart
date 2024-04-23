@@ -436,15 +436,13 @@ struct Run: AsyncParsableCommand {
       let diskReadOnly = rawDisk.hasSuffix(readOnlySuffix)
       let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
 
-      if (diskPath.starts(with: "nbd://")) {
+      let diskURL = URL(string: diskPath)
+      if (diskURL?.scheme?.contains("nbd") == true) {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching Network Block Devices", "are")
         }
-        guard let nbdURL = URL(string: diskPath) else {
-          throw RuntimeError.VMConfigurationError("invalid NBD URL: \(diskPath)")
-        }
         let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-          url: nbdURL,
+          url: diskURL!,
           timeout: 30,
           isForcedReadOnly: diskReadOnly,
           synchronizationMode: VZDiskSynchronizationMode.none
@@ -453,7 +451,7 @@ struct Run: AsyncParsableCommand {
         continue
       }
 
-      let diskURL = URL(fileURLWithPath: diskPath)
+      let diskFileURL = URL(fileURLWithPath: diskPath)
 
       // check if `diskPath` is a block device or a directory
       if pathHasMode(diskPath, mode: S_IFBLK) || pathHasMode(diskPath, mode: S_IFDIR) {
@@ -481,12 +479,12 @@ struct Run: AsyncParsableCommand {
       } else {
         // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
         // see https://github.com/cirruslabs/tart/issues/323 for more details.
-        if try !diskReadOnly && !FileLock(lockURL: diskURL).trylock() {
-          throw RuntimeError.DiskAlreadyInUse("disk \(diskURL.url.path) seems to be already in use, unmount it first in Finder")
+        if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
+          throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
         }
 
         let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
-          url: diskURL,
+          url: diskFileURL,
           readOnly: diskReadOnly
         )
         result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
