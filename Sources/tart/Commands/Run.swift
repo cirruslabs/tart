@@ -5,6 +5,7 @@ import Dispatch
 import SwiftUI
 import Virtualization
 import Sentry
+import TartEngine
 
 var vm: VM?
 

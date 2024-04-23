@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TartEngine
 
 struct Rename: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Rename a VM")

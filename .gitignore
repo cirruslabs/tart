@@ -16,3 +16,6 @@ dist/
 
 # mkdocs
 .cache
+
+# macOS
+.DS_Store

@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 import System
 import SwiftDate
+import TartEngine
 
 struct Stop: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "stop", abstract: "Stop a VM")

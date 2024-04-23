@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TartEngine
 
 struct Import: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Import VM from a compressed .tvm file")

@@ -3,6 +3,7 @@ import Dispatch
 import Sentry
 import SwiftUI
 import SwiftDate
+import TartEngine
 
 struct Prune: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Prune OCI and IPSW caches or local VMs")

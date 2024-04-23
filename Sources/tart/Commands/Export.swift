@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TartEngine
 
 struct Export: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Export VM to a compressed .tvm file")

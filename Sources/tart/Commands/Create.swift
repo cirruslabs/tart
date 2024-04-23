@@ -3,6 +3,7 @@ import Dispatch
 import Foundation
 import SwiftUI
 import Virtualization
+import TartEngine
 
 struct Create: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Create a VM")

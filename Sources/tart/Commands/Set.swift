@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TartEngine
 
 struct Set: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "set", abstract: "Modify VM's configuration")

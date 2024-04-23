@@ -1,6 +1,7 @@
 import ArgumentParser
 import Dispatch
 import SwiftUI
+import TartEngine
 
 struct Pull: AsyncParsableCommand {
   static var configuration = CommandConfiguration(

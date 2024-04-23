@@ -1,6 +1,7 @@
 import ArgumentParser
 import Dispatch
 import SwiftUI
+import TartEngine
 
 fileprivate struct VMInfo: Encodable {
   let Source: String

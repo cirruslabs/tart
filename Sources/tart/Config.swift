@@ -1,6 +1,7 @@
 import Foundation
+import TartEngine
 
-struct Config {
+struct Config: ConfigProtocol {
   let tartHomeDir: URL
   let tartCacheDir: URL
   let tartTmpDir: URL
@@ -37,18 +38,5 @@ struct Config {
     tartTmpDir = tartHomeDir.appendingPathComponent("tmp", isDirectory: true)
     try FileManager.default.createDirectory(at: tartTmpDir, withIntermediateDirectories: true)
   }
-
-  func gc() throws {
-    for entry in try FileManager.default.contentsOfDirectory(at: tartTmpDir,
-                                                             includingPropertiesForKeys: [], options: []) {
-      let lock = try FileLock(lockURL: entry)
-      if try !lock.trylock() {
-        continue
-      }
-
-      try FileManager.default.removeItem(at: entry)
-
-      try lock.unlock()
-    }
-  }
+  
 }

@@ -7,6 +7,7 @@ let package = Package(
     .macOS(.v13)
   ],
   products: [
+    .library(name: "Tart", targets: ["TartEngine"]),
     .executable(name: "tart", targets: ["tart"])
   ],
   dependencies: [
@@ -26,10 +27,9 @@ let package = Package(
     .package(url: "https://github.com/fumoboy007/swift-retry", from: "0.2.3"),
   ],
   targets: [
-    .executableTarget(name: "tart", dependencies: [
+    .target(name: "TartEngine", dependencies: [
       .product(name: "Algorithms", package: "swift-algorithms"),
       .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
-      .product(name: "ArgumentParser", package: "swift-argument-parser"),
       .product(name: "Dynamic", package: "Dynamic"),
       .product(name: "SwiftDate", package: "SwiftDate"),
       .product(name: "Antlr4Static", package: "Antlr4"),
@@ -47,6 +47,22 @@ let package = Package(
       "OCI/Reference/Generated/Reference.tokens",
       "OCI/Reference/Generated/ReferenceLexer.interp",
       "OCI/Reference/Generated/ReferenceLexer.tokens",
+    ]),
+    .executableTarget(name: "tart", dependencies: [
+      "TartEngine",
+      .product(name: "Algorithms", package: "swift-algorithms"),
+      .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
+      .product(name: "ArgumentParser", package: "swift-argument-parser"),
+      .product(name: "Dynamic", package: "Dynamic"),
+      .product(name: "SwiftDate", package: "SwiftDate"),
+      .product(name: "Antlr4Static", package: "Antlr4"),
+      .product(name: "Atomics", package: "swift-atomics"),
+      .product(name: "Sentry", package: "sentry-cocoa"),
+      .product(name: "TextTable", package: "TextTable"),
+      .product(name: "Sysctl", package: "swift-sysctl"),
+      .product(name: "SwiftRadix", package: "SwiftRadix"),
+      .product(name: "Semaphore", package: "Semaphore"),
+      .product(name: "DMRetry", package: "swift-retry"),
     ]),
     .testTarget(name: "TartTests", dependencies: ["tart"])
   ]

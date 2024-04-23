@@ -1,6 +1,7 @@
 import ArgumentParser
 import Dispatch
 import SwiftUI
+import TartEngine
 
 struct Logout: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Logout from a registry")

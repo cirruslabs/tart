@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 import SystemConfiguration
+import TartEngine
 
 struct FQN: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Get a fully-qualified VM name", shouldDisplay: false)
