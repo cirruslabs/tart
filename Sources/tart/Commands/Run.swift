@@ -5,6 +5,7 @@ import Dispatch
 import SwiftUI
 import Virtualization
 import Sentry
+import System
 
 var vm: VM?
 
@@ -68,8 +69,9 @@ struct Run: AsyncParsableCommand {
   Learn how to create a disk image using Disk Utility here:
   https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
 
-  To work with block devices 'tart' binary must be executed as root which affects locating Tart VMs.
-  To workaround this issue pass TART_HOME explicitly:
+  To work with block devices, the easiest way is to modify their permissions (e.g. by using "sudo chown $USER /dev/diskX") or to run the Tart binary as root, which affects locating Tart VMs.
+
+  To work around this pass TART_HOME explicitly:
 
   sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
   """, valueName: "path[:ro]"))
@@ -455,18 +457,26 @@ struct Run: AsyncParsableCommand {
 
       // check if `diskPath` is a block device or a directory
       if pathHasMode(diskPath, mode: S_IFBLK) || pathHasMode(diskPath, mode: S_IFDIR) {
-        print("Using block device\n")
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching block devices", "are")
         }
-        let fileHandle = FileHandle(forUpdatingAtPath: diskPath)
-        guard fileHandle != nil else {
-          if ProcessInfo.processInfo.userName != "root" {
-            throw RuntimeError.VMConfigurationError("need to run as root to work with block devices")
+
+        let fd = open(diskPath, diskReadOnly ? O_RDONLY : O_RDWR)
+        if fd == -1 {
+          let details = Errno(rawValue: CInt(errno))
+
+          switch details.rawValue {
+          case EBUSY:
+            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
+          case EACCES:
+            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
+          default:
+            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "\(details)")
           }
-          throw RuntimeError.VMConfigurationError("block device \(diskURL.url.path) seems to be already in use, unmount it first via 'diskutil unmount'")
         }
-        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: fileHandle!, readOnly: diskReadOnly, synchronizationMode: .full)
+
+        let attachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
+                                                                      readOnly: diskReadOnly, synchronizationMode: .full)
         result.append(VZVirtioBlockDeviceConfiguration(attachment: attachment))
       } else {
         // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
