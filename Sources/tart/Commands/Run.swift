@@ -465,11 +465,11 @@ struct Run: AsyncParsableCommand {
 
           switch details.rawValue {
           case EBUSY:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
           case EACCES:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskFileURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
           default:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "\(details)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "\(details)")
           }
         }
 
