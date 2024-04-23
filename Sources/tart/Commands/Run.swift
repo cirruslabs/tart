@@ -436,15 +436,13 @@ struct Run: AsyncParsableCommand {
       let diskReadOnly = rawDisk.hasSuffix(readOnlySuffix)
       let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
 
-      if (diskPath.starts(with: "nbd://")) {
+      let diskURL = URL(string: diskPath)
+      if (["nbd", "nbds", "nbd+unix", "nbds+unix"].contains(diskURL?.scheme)) {
         guard #available(macOS 14, *) else {
           throw UnsupportedOSError("attaching Network Block Devices", "are")
         }
-        guard let nbdURL = URL(string: diskPath) else {
-          throw RuntimeError.VMConfigurationError("invalid NBD URL: \(diskPath)")
-        }
         let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-          url: nbdURL,
+          url: diskURL!,
           timeout: 30,
           isForcedReadOnly: diskReadOnly,
           synchronizationMode: VZDiskSynchronizationMode.none
@@ -453,7 +451,7 @@ struct Run: AsyncParsableCommand {
         continue
       }
 
-      let diskURL = URL(fileURLWithPath: diskPath)
+      let diskFileURL = URL(fileURLWithPath: diskPath)
 
       // check if `diskPath` is a block device or a directory
       if pathHasMode(diskPath, mode: S_IFBLK) || pathHasMode(diskPath, mode: S_IFDIR) {
@@ -467,11 +465,11 @@ struct Run: AsyncParsableCommand {
 
           switch details.rawValue {
           case EBUSY:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
           case EACCES:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskFileURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
           default:
-            throw RuntimeError.FailedToOpenBlockDevice(diskURL.url.path, "\(details)")
+            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "\(details)")
           }
         }
 
@@ -481,12 +479,12 @@ struct Run: AsyncParsableCommand {
       } else {
         // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
         // see https://github.com/cirruslabs/tart/issues/323 for more details.
-        if try !diskReadOnly && !FileLock(lockURL: diskURL).trylock() {
-          throw RuntimeError.DiskAlreadyInUse("disk \(diskURL.url.path) seems to be already in use, unmount it first in Finder")
+        if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
+          throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
         }
 
         let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
-          url: diskURL,
+          url: diskFileURL,
           readOnly: diskReadOnly
         )
         result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
