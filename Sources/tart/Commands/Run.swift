@@ -188,18 +188,16 @@ struct Run: AsyncParsableCommand {
     let vmDir = try localStorage.open(name)
 
     let storageLock = try FileLock(lockURL: Config().tartHomeDir)
-    if try vmDir.state() == .Suspended {
-      try storageLock.lock() // lock before checking
-      let needToGenerateNewMac = try localStorage.list().contains {
-        // check if there is a running VM with the same MAC but different name
-        try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
-      }
-
-      if needToGenerateNewMac {
-        print("There is already a running VM with the same MAC address!")
-        print("Resetting VM to assign a new MAC address...")
-        try vmDir.regenerateMACAddress()
-      }
+    try storageLock.lock()
+    // check if there is a running VM with the same MAC address
+    let hasRunningMACCollision = try localStorage.list().contains {
+      // check if there is a running VM with the same MAC but different name
+      try $1.running() && $1.macAddress() == vmDir.macAddress() && $1.name != vmDir.name
+    }
+    if hasRunningMACCollision {
+      print("There is already a running VM with the same MAC address!")
+      print("Resetting VM to assign a new MAC address...")
+      try vmDir.regenerateMACAddress()
     }
 
     if (netSoftnet || netHost) && isInteractiveSession() {
