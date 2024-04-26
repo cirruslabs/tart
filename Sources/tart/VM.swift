@@ -328,6 +328,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       return vio
     }
 
+    // Spice agent
+    if vmConfig.os == .linux {
+      let spiceAgentConsoleDevice = VZVirtioConsoleDeviceConfiguration()
+      let spiceAgentPort = VZVirtioConsolePortConfiguration()
+      spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
+      spiceAgentPort.attachment = VZSpiceAgentPortAttachment()
+      spiceAgentConsoleDevice.ports[0] = spiceAgentPort
+      configuration.consoleDevices.append(spiceAgentConsoleDevice)
+    }
+
     // Storage
     let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
       // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
