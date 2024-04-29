@@ -563,10 +563,6 @@ struct Run: AsyncParsableCommand {
   }
 
   private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool) {
-    let nsApp = NSApplication.shared
-    nsApp.setActivationPolicy(.regular)
-    nsApp.activate(ignoringOtherApps: true)
-
     MainApp.suspendable = suspendable
     MainApp.capturesSystemKeys = captureSystemKeys
     MainApp.main()
@@ -639,6 +635,10 @@ class MinimalMenuAppDelegate: NSObject, NSApplicationDelegate, ObservableObject 
 
   func applicationDidFinishLaunching(_ : Notification) {
     NSApplication.shared.mainMenu?.removeItem(at: indexOfEditMenu)
+
+    let nsApp = NSApplication.shared
+    nsApp.setActivationPolicy(.regular)
+    nsApp.activate(ignoringOtherApps: true)
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
