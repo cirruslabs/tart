@@ -567,69 +567,69 @@ struct Run: AsyncParsableCommand {
     nsApp.setActivationPolicy(.regular)
     nsApp.activate(ignoringOtherApps: true)
 
-    struct MainApp: App {
-      static var suspendable: Bool = false
-      static var capturesSystemKeys: Bool = false
+    MainApp.suspendable = suspendable
+    MainApp.capturesSystemKeys = captureSystemKeys
+    MainApp.main()
+  }
+}
 
-      @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
+struct MainApp: App {
+  static var suspendable: Bool = false
+  static var capturesSystemKeys: Bool = false
 
-      var body: some Scene {
-        WindowGroup(vm!.name) {
-          Group {
-            VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys).onAppear {
-              NSWindow.allowsAutomaticWindowTabbing = false
-            }.onDisappear {
-              let ret = kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT)
-              if ret != 0 {
-                // Fallback to the old termination method that doesn't
-                // propagate the cancellation to Task's in case graceful
-                // termination via kill(2) is not successful
-                NSApplication.shared.terminate(self)
-              }
-            }
-          }.frame(
-            minWidth: CGFloat(vm!.config.display.width),
-            idealWidth: CGFloat(vm!.config.display.width),
-            maxWidth: .infinity,
-            minHeight: CGFloat(vm!.config.display.height),
-            idealHeight: CGFloat(vm!.config.display.height),
-            maxHeight: .infinity
-          )
-        }.commands {
-          // Remove some standard menu options
-          CommandGroup(replacing: .help, addition: {})
-          CommandGroup(replacing: .newItem, addition: {})
-          CommandGroup(replacing: .pasteboard, addition: {})
-          CommandGroup(replacing: .textEditing, addition: {})
-          CommandGroup(replacing: .undoRedo, addition: {})
-          CommandGroup(replacing: .windowSize, addition: {})
-          // Replace some standard menu options
-          CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.config) }
-          CommandMenu("Control") {
-            Button("Start") {
-              Task { try await vm!.virtualMachine.start() }
-            }
-            Button("Stop") {
-              Task { try await vm!.virtualMachine.stop() }
-            }
-            Button("Request Stop") {
-              Task { try vm!.virtualMachine.requestStop() }
-            }
-            if #available(macOS 14, *) {
-              if (MainApp.suspendable) {
-                Button("Suspend") {
-                  kill(getpid(), SIGUSR1)
-                }
-              }
+  @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
+
+  var body: some Scene {
+    WindowGroup(vm!.name) {
+      Group {
+        VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys).onAppear {
+          NSWindow.allowsAutomaticWindowTabbing = false
+        }.onDisappear {
+          let ret = kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT)
+          if ret != 0 {
+            // Fallback to the old termination method that doesn't
+            // propagate the cancellation to Task's in case graceful
+            // termination via kill(2) is not successful
+            NSApplication.shared.terminate(self)
+          }
+        }
+      }.frame(
+        minWidth: CGFloat(vm!.config.display.width),
+        idealWidth: CGFloat(vm!.config.display.width),
+        maxWidth: .infinity,
+        minHeight: CGFloat(vm!.config.display.height),
+        idealHeight: CGFloat(vm!.config.display.height),
+        maxHeight: .infinity
+      )
+    }.commands {
+      // Remove some standard menu options
+      CommandGroup(replacing: .help, addition: {})
+      CommandGroup(replacing: .newItem, addition: {})
+      CommandGroup(replacing: .pasteboard, addition: {})
+      CommandGroup(replacing: .textEditing, addition: {})
+      CommandGroup(replacing: .undoRedo, addition: {})
+      CommandGroup(replacing: .windowSize, addition: {})
+      // Replace some standard menu options
+      CommandGroup(replacing: .appInfo) { AboutTart(config: vm!.config) }
+      CommandMenu("Control") {
+        Button("Start") {
+          Task { try await vm!.virtualMachine.start() }
+        }
+        Button("Stop") {
+          Task { try await vm!.virtualMachine.stop() }
+        }
+        Button("Request Stop") {
+          Task { try vm!.virtualMachine.requestStop() }
+        }
+        if #available(macOS 14, *) {
+          if (MainApp.suspendable) {
+            Button("Suspend") {
+              kill(getpid(), SIGUSR1)
             }
           }
         }
       }
     }
-
-    MainApp.suspendable = suspendable
-    MainApp.capturesSystemKeys = captureSystemKeys
-    MainApp.main()
   }
 }
 
@@ -639,6 +639,14 @@ class MinimalMenuAppDelegate: NSObject, NSApplicationDelegate, ObservableObject 
 
   func applicationDidFinishLaunching(_ : Notification) {
     NSApplication.shared.mainMenu?.removeItem(at: indexOfEditMenu)
+  }
+
+  func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    if (kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT) == 0) {
+      return .terminateLater
+    } else {
+      return .terminateNow
+    }
   }
 }
 
