@@ -244,10 +244,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   }
 
   func run() async throws {
-    try await sema.waitUnlessCancelled()
+    do {
+      try await sema.waitUnlessCancelled()
+    } catch is CancellationError {
+      // Triggered by "tart stop", Ctrl+C, or closing the
+      // VM window, so shut down the VM gracefully below.
+    }
 
     if Task.isCancelled {
-      try await stop()
+      if (self.virtualMachine.state == VZVirtualMachine.State.running) {
+        print("Stopping VM...")
+        try await stop()
+      }
     }
 
     try await network.stop()
