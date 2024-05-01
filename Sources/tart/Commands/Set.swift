@@ -20,7 +20,9 @@ struct Set: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
 
-  @Flag(help: ArgumentHelp("Generate a new random serial number for the macOS VM."))
+  #if arch(arm64)
+    @Flag(help: ArgumentHelp("Generate a new random serial number for the macOS VM."))
+  #endif
   var randomSerial: Bool = false
 
   @Option(help: ArgumentHelp("Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data)",
@@ -62,10 +64,12 @@ struct Set: AsyncParsableCommand {
       vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
     }
 
-    if randomSerial {
-      let oldPlatform = vmConfig.platform as! Darwin
-      vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
-    }
+    #if arch(arm64)
+      if randomSerial {
+        let oldPlatform = vmConfig.platform as! Darwin
+        vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
+      }
+    #endif
 
     try vmConfig.save(toURL: vmDir.configURL)
 
