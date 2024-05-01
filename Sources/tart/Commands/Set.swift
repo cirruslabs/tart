@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import Virtualization
 
 struct Set: AsyncParsableCommand {
   static var configuration = CommandConfiguration(commandName: "set", abstract: "Modify VM's configuration")
@@ -15,6 +16,12 @@ struct Set: AsyncParsableCommand {
 
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
+
+  @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
+  var randomMAC: Bool = false
+
+  @Flag(help: ArgumentHelp("Generate a new random serial number for the macOS VM."))
+  var randomSerial: Bool = false
 
   @Option(help: ArgumentHelp("Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data)",
                              discussion: """
@@ -49,6 +56,15 @@ struct Set: AsyncParsableCommand {
       if (display.height > 0) {
         vmConfig.display.height = display.height
       }
+    }
+
+    if randomMAC {
+      vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
+    }
+
+    if randomSerial {
+      let oldPlatform = vmConfig.platform as! Darwin
+      vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
     }
 
     try vmConfig.save(toURL: vmDir.configURL)
