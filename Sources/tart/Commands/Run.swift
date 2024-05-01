@@ -40,6 +40,11 @@ struct Run: AsyncParsableCommand {
   @Flag(help: "Disable audio pass-through to host.")
   var noAudio: Bool = false
 
+  @Flag(help: ArgumentHelp(
+    "Disable clipboard sharing between host and guest.",
+    discussion: "Only works with Linux-based guest operating systems."))
+  var noClipboard: Bool = false
+
   #if arch(arm64)
     @Flag(help: "Boot into recovery mode")
   #endif
@@ -231,7 +236,8 @@ struct Run: AsyncParsableCommand {
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
       suspendable: suspendable,
-      audio: !noAudio
+      audio: !noAudio,
+      clipboard: !noClipboard
     )
 
     let vncImpl: VNC? = try {
