@@ -15,7 +15,7 @@ class FullFledgedVNC: VNC {
     vnc.start()
   }
 
-  func waitForURL() async throws -> URL {
+  func waitForURL(netBridged: Bool) async throws -> URL {
     while true {
       // Port is 0 shortly after start(),
       // but will be initialized later
