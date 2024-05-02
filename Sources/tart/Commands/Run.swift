@@ -284,7 +284,7 @@ struct Run: AsyncParsableCommand {
         try await vm!.start(recovery: recovery, resume: resume)
 
         if let vncImpl = vncImpl {
-          let vncURL = try await vncImpl.waitForURL()
+          let vncURL = try await vncImpl.waitForURL(netBridged: !netBridged.isEmpty)
 
           if noGraphics || ProcessInfo.processInfo.environment["CI"] != nil {
             print("VNC server is running at \(vncURL)")
