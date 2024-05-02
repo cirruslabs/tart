@@ -47,7 +47,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
        suspendable: Bool = false,
-       audio: Bool = true
+       audio: Bool = true,
+       clipboard: Bool = true
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -64,7 +65,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
                                                 suspendable: suspendable,
-                                                audio: audio
+                                                audio: audio,
+                                                clipboard: clipboard
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -291,7 +293,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
     suspendable: Bool = false,
-    audio: Bool = true
+    audio: Bool = true,
+    clipboard: Bool = true
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -334,6 +337,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       vio.attachment = $0
       vio.macAddress = vmConfig.macAddress
       return vio
+    }
+
+    // Clipboard sharing via Spice agent
+    if clipboard && vmConfig.os == .linux {
+      let spiceAgentConsoleDevice = VZVirtioConsoleDeviceConfiguration()
+      let spiceAgentPort = VZVirtioConsolePortConfiguration()
+      spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
+      spiceAgentPort.attachment = VZSpiceAgentPortAttachment()
+      spiceAgentConsoleDevice.ports[0] = spiceAgentPort
+      configuration.consoleDevices.append(spiceAgentConsoleDevice)
     }
 
     // Storage
