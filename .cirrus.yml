@@ -1,8 +1,5 @@
 use_compute_credits: true
 
-env: 
-  XCODE_TAG: latest
-
 task:
   name: Test on Sonoma
   alias: test
@@ -41,7 +38,7 @@ task:
   name: Lint
   alias: lint
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-runner:sonoma
   lint_script:
     - swift package plugin --allow-writing-to-package-directory swiftformat --cache ignore --lint --report swiftformat.json .
   always:
@@ -58,7 +55,7 @@ task:
   name: Build ($BUILD_ARCH)
   alias: build
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-runner:sonoma
   build_script: swift build --arch $BUILD_ARCH --product tart
   sign_script: codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/$BUILD_ARCH-apple-macosx/debug/tart
   binary_artifacts:
@@ -106,7 +103,7 @@ task:
     - test
     - build
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-runner:sonoma
   env:
     MACOS_CERTIFICATE: ENCRYPTED[552b9d275d1c2bdbc1bff778b104a8f9a53cbd0d59344d4b7f6d0ca3c811a5cefb97bef9ba0ef31c219cb07bdacdd2c2]
     AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
