@@ -12,7 +12,7 @@ Tart powers [Cirrus Runners](https://cirrus-runners.app/)
 service — a drop-in replacement for the standard GitHub-hosted runners, offering 2-3 times better performance for a fraction of the price.
 
 <p align="center">
-  <a href="https://tart.run/integrations/github-actions/?utm_source=github&utm_medium=referral" target=_blank>
+  <a href="https://cirrus-runners.app/?utm_source=github&utm_medium=referral" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/CirrusRunnersForGHA.png" height="65"/>
   </a>
 </p>
