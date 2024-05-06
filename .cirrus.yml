@@ -68,7 +68,7 @@ task:
     - lint
     - build
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode:$XCODE_TAG
+    image: ghcr.io/cirruslabs/macos-runner:sonoma
   env:
     MACOS_CERTIFICATE: ENCRYPTED[552b9d275d1c2bdbc1bff778b104a8f9a53cbd0d59344d4b7f6d0ca3c811a5cefb97bef9ba0ef31c219cb07bdacdd2c2]
     AC_PASSWORD: ENCRYPTED[4a761023e7e06fe2eb350c8b6e8e7ca961af193cb9ba47605f25f1d353abc3142606f412e405be48fd897a78787ea8c2]
