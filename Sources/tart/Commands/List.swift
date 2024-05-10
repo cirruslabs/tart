@@ -44,7 +44,7 @@ struct List: AsyncParsableCommand {
 
     if source == nil || source == "oci" {
       infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
-        try VMInfo(Source: "oci", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
+        try VMInfo(Source: "OCI", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
       })
     }
 

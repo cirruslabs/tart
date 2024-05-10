@@ -8,7 +8,7 @@ struct Clone: AsyncParsableCommand {
     discussion: """
     Creates a local virtual machine by cloning either a remote or another local virtual machine.
 
-    Due to copy-on-write magic in Apple File System a cloned VM won't actually claim all the space right away.
+    Due to copy-on-write magic in Apple File System, a cloned VM won't actually claim all the space right away.
     Only changes to a cloned disk will be written and claim new space. By default, Tart checks available capacity
     in Tart's home directory and checks if there is enough space for the worst possible scenario: when the whole disk
     will be modified.
