@@ -103,6 +103,7 @@ First, you need to login to `acme.io` with the `tart login` command:
 ```bash
 tart login acme.io
 ```
+
 If you login to your registry with OAuth, you may need to create an access token to use as the password.
 Credentials are securely stored in Keychain.
 
