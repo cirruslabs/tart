@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 struct Rename: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Rename a VM")
+  static var configuration = CommandConfiguration(abstract: "Rename a local VM")
 
   @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
@@ -20,7 +20,7 @@ struct Rename: AsyncParsableCommand {
     let localStorage = VMStorageLocal()
 
     if !localStorage.exists(name) {
-      throw ValidationError("failed to rename a non-existent VM: \(name)")
+      throw ValidationError("failed to rename a non-existent local VM: \(name)")
     }
 
     if localStorage.exists(newName) {

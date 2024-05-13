@@ -15,7 +15,7 @@ tart create --from-ipsw=latest sonoma-vanilla
 tart run sonoma-vanilla
 ```
 
-After the initial booting of the VM you'll need to manually go through the macOS installation process. As a convention we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
+After the initial booting of the VM, you'll need to manually go through the macOS installation process. As a convention we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
 
 1. Enable Auto-Login. Users & Groups -> Login Options -> Automatic login -> admin.
 2. Allow SSH. Sharing -> Remote Login
@@ -48,7 +48,7 @@ sudo ufw allow ssh
 
 ## Configuring a VM
 
-By default, a tart VM uses 2 CPUs and 4 GB of memory with a `1024x768` display. This can be changed with `tart set` command.
+By default, a Tart VM uses 2 CPUs and 4 GB of memory with a `1024x768` display. This can be changed after VM creation with `tart set` command.
 Please refer to `tart set --help` for additional details.
 
 ## Building with Packer
@@ -92,18 +92,19 @@ Here is a [repository with Packer templates](https://github.com/cirruslabs/macos
 
 ## Working with a Remote OCI Container Registry
 
-<!-- markdownlint-disable MD034 -->
-For example, let's say you want to push/pull images to a registry hosted at https://acme.io/.
-<!-- markdownlint-enable MD034 -->
+Tart supports interacting with Open Container Initiative (OCI) registries, but only runs images created and pushed by Tart. This means images created for container engines, like Docker, can't be pulled. Instead, create a custom image as documented above.
+
+For example, let's say you want to push/pull images to an OCI registry hosted at `https://acme.io/`.
 
 ### Registry Authorization
 
-First, you need to log in and save credential for `acme.io` host via `tart login` command:
+First, you need to login to `acme.io` with the `tart login` command:
 
 ```bash
 tart login acme.io
 ```
 
+If you login to your registry with OAuth, you may need to create an access token to use as the password.
 Credentials are securely stored in Keychain.
 
 In addition, Tart supports [Docker credential helpers](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers)
@@ -128,10 +129,10 @@ You can either pull an image:
 tart pull acme.io/remoteorg/name:latest
 ```
 
-...or instantiate a VM from a remote image:
+or create a VM from a remote image:
 
 ```bash
 tart clone acme.io/remoteorg/name:latest my-local-vm-name
 ```
 
-This invocation calls the `tart pull` implicitly (if the image is not being present) before doing the actual cloning.
+If the specified image is not already present, this invocation calls the `tart pull` implicitly before cloning.

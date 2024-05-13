@@ -16,7 +16,7 @@ struct Create: AsyncParsableCommand {
   @Flag(help: "create a Linux VM")
   var linux: Bool = false
 
-  @Option(help: ArgumentHelp("Disk size in Gb")) 
+  @Option(help: ArgumentHelp("Disk size in GB"))
   var diskSize: UInt16 = 50
 
   func validate() throws {

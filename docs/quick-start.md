@@ -13,7 +13,7 @@ tart run sonoma-base
 
 ??? info "Manual installation from a release archive"
     It's also possible to manually install `tart` binary from the latest released archive:
-    
+
     ```bash
     curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart-arm64.tar.gz
     tar -xzvf tart-arm64.tar.gz
@@ -129,7 +129,7 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 
 ??? tip "Changing mount location"
     It is possible to remount the directories after a virtual machine is started by running the following commands:
-    
+
     ```bash
     sudo umount "/Volumes/My Shared Files"
     mkdir ~/workspace
@@ -143,8 +143,8 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
 
 ```bash
-mkdir /mnt/shared
-mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
+sudo mkdir /mnt/shared
+sudo mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 
 The directory we've mounted above will be accessible from the `/mnt/shared/project` path inside a guest VM.
