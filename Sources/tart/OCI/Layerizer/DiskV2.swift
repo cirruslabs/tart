@@ -13,12 +13,9 @@ class DiskV2: Disk {
     let mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
 
     // Compress the disk file as multiple individually decompressible streams,
-    // each equal ``Self.layerLimitBytes`` bytes or slightly larger due to the
-    // internal compressor's buffer
-    var offset: UInt64 = 0
-
-    while let (compressedData, uncompressedSize, uncompressedDigest) = try compressNextLayerOfLimitBytesOrMore(mappedDisk: mappedDisk, offset: offset) {
-      offset += uncompressedSize
+    // each equal ``Self.layerLimitBytes`` bytes or less due to LZ4 compression
+    for data in mappedDisk.chunks(ofCount: layerLimitBytes) {
+      let compressedData = try (data as NSData).compressed(using: .lz4) as Data
 
       let layerDigest = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb)
 
@@ -26,12 +23,12 @@ class DiskV2: Disk {
         mediaType: diskV2MediaType,
         size: compressedData.count,
         digest: layerDigest,
-        uncompressedSize: uncompressedSize,
-        uncompressedContentDigest: uncompressedDigest
+        uncompressedSize: UInt64(data.count),
+        uncompressedContentDigest: Digest.hash(data)
       ))
 
       // Update progress using a relative value
-      progress.completedUnitCount += Int64(uncompressedSize)
+      progress.completedUnitCount += Int64(data.count)
     }
 
     return pushedLayers
@@ -143,46 +140,5 @@ class DiskV2: Disk {
         globalDiskWritingOffset += uncompressedLayerSize
       }
     }
-  }
-
-  private static func compressNextLayerOfLimitBytesOrMore(mappedDisk: Data, offset: UInt64) throws -> (Data, UInt64, String)? {
-    var compressedData = Data()
-    var bytesRead: UInt64 = 0
-    let digest = Digest()
-
-    // Create a compressing filter that we will terminate upon
-    // reaching ``Self.layerLimitBytes`` of compressed data
-    let compressingFilter = try InputFilter(.compress, using: .lz4, bufferCapacity: bufferSizeBytes) { (length: Int) -> Data? in
-      if compressedData.count >= Self.layerLimitBytes {
-        return nil
-      }
-
-      let readFromByte = Int(offset + bytesRead)
-
-      let numBytesToRead = min(mappedDisk.count - readFromByte, bufferSizeBytes)
-      if numBytesToRead == 0 {
-        return nil
-      }
-
-      let uncompressedChunk = mappedDisk.subdata(in: readFromByte ..< (readFromByte + numBytesToRead))
-
-      bytesRead += UInt64(uncompressedChunk.count)
-      digest.update(uncompressedChunk)
-
-      return uncompressedChunk
-    }
-
-    // Retrieve compressed data chunks, but normally no more than ``Self.layerLimitBytes`` bytes
-    while let compressedChunk = try compressingFilter.readData(ofLength: Self.bufferSizeBytes) {
-      compressedData.append(compressedChunk)
-    }
-
-    // Nothing was read this time from the disk,
-    // signal that to the consumer
-    if bytesRead == 0 {
-      return nil
-    }
-
-    return (compressedData, bytesRead, digest.finalize())
   }
 }
