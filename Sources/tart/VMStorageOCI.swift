@@ -190,7 +190,16 @@ class VMStorageOCI: PrunableStorage {
 
       try await withTaskCancellationHandler(operation: {
         try await retry(maxAttempts: 5, backoff: .exponentialWithFullJitter(baseDelay: .seconds(5), maxDelay: .seconds(60))) {
-          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency)
+          var localLayerCache: LocalLayerCache? = nil
+
+          if name.reference.type == .Tag,
+             let vmDir = try? open(name),
+             let digest = try? digest(name),
+             let (manifest, _) = try? await registry.pullManifest(reference: digest) {
+            localLayerCache = try LocalLayerCache(vmDir.diskURL, manifest)
+          }
+
+          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
         } recoverFromFailure: { error in
           print("Error: \(error.localizedDescription)")
           print("Attempting to re-try...")
