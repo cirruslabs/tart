@@ -13,14 +13,6 @@ extension VMDirectory {
   private static let bufferSizeBytes = 64 * 1024 * 1024
   private static let layerLimitBytes = 500 * 1000 * 1000
 
-  func pullFromRegistry(registry: Registry, reference: String, concurrency: UInt) async throws {
-    defaultLogger.appendNewLine("pulling manifest...")
-
-    let (manifest, _) = try await registry.pullManifest(reference: reference)
-
-    return try await pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency)
-  }
-
   func pullFromRegistry(registry: Registry, manifest: OCIManifest, concurrency: UInt) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     let configLayers = manifest.layers.filter {
