@@ -113,7 +113,11 @@ class VMStorageOCI: PrunableStorage {
         continue
       }
 
-      let parts = [foundURL.deletingLastPathComponent().relativePath.percentDecoding(), foundURL.lastPathComponent]
+      // Split the relative VM's path at the last component
+      // and figure out which character should be used
+      // to join them together, either ":" for tags or
+      // "@" for hashes
+      let parts = [foundURL.deletingLastPathComponent().relativePath, foundURL.lastPathComponent]
       var name: String
 
       let isSymlink = try foundURL.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink!
@@ -122,6 +126,9 @@ class VMStorageOCI: PrunableStorage {
       } else {
         name = parts.joined(separator: "@")
       }
+
+      // Remove the percent-encoding, if any
+      name = percentDecode(name)
 
       result.append((name, vmDir, isSymlink))
     }
@@ -248,7 +255,7 @@ extension URL {
   func appendingRemoteName(_ name: RemoteName) -> URL {
     var result: URL = self
 
-    for pathComponent in (name.host.percentEncoding() + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
+    for pathComponent in (percentEncode(name.host) + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
       result = result.appendingPathComponent(String(pathComponent))
     }
 
@@ -256,7 +263,7 @@ extension URL {
   }
 
   func appendingHost(_ name: RemoteName) -> URL {
-    self.appendingPathComponent(name.host.percentEncoding(), isDirectory: true)
+    self.appendingPathComponent(percentEncode(name.host), isDirectory: true)
   }
 }
 
@@ -269,12 +276,10 @@ extension URL {
 // The same kind of operations won't do anything to a URL like
 // URL(filePath: "127.0.0.1:8080"), which makes things even more
 // ridiculous.
-private extension String {
-  func percentEncoding() -> String {
-    return self.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: ":").inverted)!
-  }
+private func percentEncode(_ s: String) -> String {
+  return s.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: ":").inverted)!
+}
 
-  func percentDecoding() -> String {
-    self.removingPercentEncoding!
-  }
+private func percentDecode(_ s: String) -> String {
+  s.removingPercentEncoding!
 }
