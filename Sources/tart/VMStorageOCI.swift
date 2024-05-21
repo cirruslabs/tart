@@ -113,6 +113,10 @@ class VMStorageOCI: PrunableStorage {
         continue
       }
 
+      // Split the relative VM's path at the last component
+      // and figure out which character should be used
+      // to join them together, either ":" for tags or
+      // "@" for hashes
       let parts = [foundURL.deletingLastPathComponent().relativePath, foundURL.lastPathComponent]
       var name: String
 
@@ -122,6 +126,9 @@ class VMStorageOCI: PrunableStorage {
       } else {
         name = parts.joined(separator: "@")
       }
+
+      // Remove the percent-encoding, if any
+      name = percentDecode(name)
 
       result.append((name, vmDir, isSymlink))
     }
@@ -248,7 +255,7 @@ extension URL {
   func appendingRemoteName(_ name: RemoteName) -> URL {
     var result: URL = self
 
-    for pathComponent in (name.host + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
+    for pathComponent in (percentEncode(name.host) + "/" + name.namespace + "/" + name.reference.value).split(separator: "/") {
       result = result.appendingPathComponent(String(pathComponent))
     }
 
@@ -256,6 +263,23 @@ extension URL {
   }
 
   func appendingHost(_ name: RemoteName) -> URL {
-    self.appendingPathComponent(name.host, isDirectory: true)
+    self.appendingPathComponent(percentEncode(name.host), isDirectory: true)
   }
+}
+
+// Work around a pretty inane Swift's URL behavior where calling
+// appendingPathComponent() or deletingLastPathComponent() on a
+// URL like URL(filePath: "example.com:8080") (note the "filePath")
+// will flip its isFileURL from "true" to "false" and discard its
+// absolute path infromation (if any).
+//
+// The same kind of operations won't do anything to a URL like
+// URL(filePath: "127.0.0.1:8080"), which makes things even more
+// ridiculous.
+private func percentEncode(_ s: String) -> String {
+  return s.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: ":").inverted)!
+}
+
+private func percentDecode(_ s: String) -> String {
+  s.removingPercentEncoding!
 }
