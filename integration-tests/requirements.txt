@@ -1,6 +1,6 @@
 pytest
 testcontainers
-requests
+requests == 2.31.0 # work around https://github.com/psf/requests/issues/6707
 bitmath
 pytest-dependency
 paramiko
