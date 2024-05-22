@@ -1,3 +1,8 @@
+---
+title: Buildkite Integration
+description: Run pipeline steps in isolated ephemeral Tart Virtual Machines.
+---
+
 # Buildkite
 
 It is possible to run [Buildkite](https://buildkite.com/) pipeline steps in isolated ephemeral Tart Virtual Machines with the help of [Tart Buildkite Plugin](https://github.com/cirruslabs/tart-buildkite-plugin):

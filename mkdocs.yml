@@ -2,12 +2,11 @@ repo_url: https://github.com/cirruslabs/tart/
 site_url: https://tart.run/
 edit_uri: blob/main/docs/
 
-site_name: Tart
+site_name: Tart Virtualization
 site_author: Cirrus Labs
 copyright: © Cirrus Labs 2017-present
 site_description: >
   Tart is a virtualization toolset to build, run and manage macOS and Linux virtual machines (VMs) on Apple Silicon.
-  Built by CI engineers for your automation needs. 
 
 remote_branch: main
 
@@ -47,7 +46,10 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
-  - social
+  - social:
+      cards_layout_dir: docs/layouts
+      cards_layout: custom
+      debug: true
   - search
   - minify
 

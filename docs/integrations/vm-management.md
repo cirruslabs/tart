@@ -1,3 +1,8 @@
+---
+title: Managing Virtual Machine
+description: Use Packer to build custom VM images, configure VMs and work with remote OCI registries.
+---
+
 # Managing Virtual Machine
 
 ## Creating from scratch

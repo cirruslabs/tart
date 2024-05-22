@@ -1,6 +1,8 @@
 ---
 hide:
   - navigation
+title: Licensing and Support
+description: Free Tier with 100 CPU core limit. Very affordable Tiers for larger enterprises.
 ---
 
 Both [Tart Virtualization](https://github.com/cirruslabs/tart) and [Orchard Orchestration](https://github.com/cirruslabs/orchard)

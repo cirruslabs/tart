@@ -1,6 +1,8 @@
 ---
 hide:
   - navigation
+title: Quick Start
+description: Install Tart and run your first virtual machine on Apple Silicon in minutes.
 ---
 
 Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) or later (will download a 25 GB image):
