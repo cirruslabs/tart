@@ -1,6 +1,8 @@
 ---
 hide:
   - navigation
+title: Frequently Asked Questions
+description: Advanced configuration and troubleshooting tips for advanced configurations.
 ---
 
 ## VM location on disk

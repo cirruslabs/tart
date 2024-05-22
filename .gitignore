@@ -16,3 +16,6 @@ dist/
 
 # mkdocs
 .cache
+
+# mkdocs-material
+site
