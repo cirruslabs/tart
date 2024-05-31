@@ -59,8 +59,7 @@ extension VMDirectory {
                                   concurrency: concurrency, progress: progress,
                                   localLayerCache: localLayerCache)
     } catch let error where error is FilterError {
-      defaultLogger.appendNewLine("failed to decompress disk: \(error.localizedDescription)")
-      throw error
+      throw RuntimeError.PullFailed("failed to decompress disk: \(error.localizedDescription)")
     }
 
     // Pull VM's NVRAM file layer and store it in an NVRAM file
