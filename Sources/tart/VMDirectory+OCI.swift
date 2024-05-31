@@ -1,3 +1,4 @@
+import Compression
 import Foundation
 import Sentry
 
@@ -53,8 +54,14 @@ extension VMDirectory {
     let progress = Progress(totalUnitCount: diskCompressedSize)
     ProgressObserver(progress).log(defaultLogger)
 
-    try await diskImplType.pull(registry: registry, diskLayers: layers, diskURL: diskURL, concurrency: concurrency, progress: progress,
-                                localLayerCache: localLayerCache)
+    do {
+      try await diskImplType.pull(registry: registry, diskLayers: layers, diskURL: diskURL,
+                                  concurrency: concurrency, progress: progress,
+                                  localLayerCache: localLayerCache)
+    } catch let error where error is FilterError {
+      defaultLogger.appendNewLine("failed to decompress disk: \(error.localizedDescription)")
+      throw error
+    }
 
     // Pull VM's NVRAM file layer and store it in an NVRAM file
     defaultLogger.appendNewLine("pulling NVRAM...")
