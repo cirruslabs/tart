@@ -69,6 +69,7 @@ enum RuntimeError : Error {
   case OCIStorageError(_ message: String)
   case OCIUnsupportedDiskFormat(_ format: String)
   case SuspendFailed(_ message: String)
+  case PullFailed(_ message: String)
 }
 
 protocol HasExitCode {
@@ -122,6 +123,8 @@ extension RuntimeError : CustomStringConvertible {
       return "OCI disk format \(format) is not supported by this version of Tart"
     case .SuspendFailed(let message):
       return "Failed to suspend the VM: \(message)"
+    case .PullFailed(let message):
+      return message
     }
   }
 }
