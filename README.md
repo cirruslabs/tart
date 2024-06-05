@@ -23,6 +23,9 @@ Many companies are using Tart in their internal setups. Here are a few of them:
   <a href="https://ahrefs.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/ahrefs.png" height="65"/>
   </a>
+  <a href="https://atlassian.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Atlassian.png" height="65"/>
+  </a>
   <a href="https://krisp.ai/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Krisp.png" height="65"/>
   </a>
