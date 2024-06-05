@@ -20,9 +20,6 @@ service — a drop-in replacement for the standard GitHub-hosted runners, offeri
 Many companies are using Tart in their internal setups. Here are a few of them:
 
 <p align="center">
-  <a href="https://ahrefs.com/" target=_blank>
-    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/ahrefs.png" height="65"/>
-  </a>
   <a href="https://atlassian.com/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Atlassian.png" height="65"/>
   </a>
@@ -49,6 +46,9 @@ Many companies are using Tart in their internal setups. Here are a few of them:
   </a>
   <a href="https://www.pitsdatarecovery.net/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/PITSGlobalDataRecoveryServices.png" height="65"/>
+  </a>
+  <a href="https://ahrefs.com/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/ahrefs.png" height="65"/>
   </a>
 </p>
 
