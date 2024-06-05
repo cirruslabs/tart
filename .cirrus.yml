@@ -90,7 +90,7 @@ task:
     - security find-identity -v
     - xcodebuild -version
     - swift -version
-  goreleaser_script: goreleaser release --skip-publish --snapshot --clean
+  goreleaser_script: goreleaser release --skip=publish --snapshot --clean
   always:
     dist_artifacts:
       path: "dist/*"
