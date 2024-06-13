@@ -359,6 +359,18 @@ struct Run: AsyncParsableCommand {
     }
     sigusr1Src.activate()
 
+    // Gracefull shutdown support. For macOS this brings up a dialog,
+    // asking the user if they are sure they want to shut down.
+    signal(SIGUSR2, SIG_IGN)
+    let sigusr2Src = DispatchSource.makeSignalSource(signal: SIGUSR2)
+    sigusr2Src.setEventHandler {
+      Task {
+        print("Requesting guest OS to stop...")
+        try vm!.virtualMachine.requestStop()
+      }
+    }
+    sigusr2Src.activate()
+
     let useVNCWithoutGraphics = (vnc || vncExperimental) && !graphics
     if noGraphics || useVNCWithoutGraphics {
       // enter the main even loop, without bringing up any UI,
