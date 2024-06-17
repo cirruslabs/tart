@@ -323,13 +323,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Keyboard and mouse
-    if suspendable, let platformSuspendable = vmConfig.platform.self as? PlatformSuspendable {
-      configuration.keyboards = platformSuspendable.keyboardsSuspendable()
-      configuration.pointingDevices = platformSuspendable.pointingDevicesSuspendable()
-    } else {
-      configuration.keyboards = vmConfig.platform.keyboards()
-      configuration.pointingDevices = vmConfig.platform.pointingDevices()
-    }
+    configuration.keyboards = vmConfig.platform.keyboards()
+    configuration.pointingDevices = vmConfig.platform.pointingDevices()
 
     // Networking
     configuration.networkDevices = network.attachments().map {
