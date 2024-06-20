@@ -11,7 +11,7 @@ categories:
 
 # Jumping through the hoops: SSH jump host functionality in Orchard
 
-Almost a year ago, when we started building [Orchard](https://github.com/cirruslabs/orchard), an orchestration system for Tart, we quickly realized that most worker machines will be in a private network, and that VMs will be only reachable from the worker machines themselves. Thus, one of our goals became to simplify accessing the workers and the VMs in a cluster through a centralized controller host.
+Almost a year ago, when we started building [Orchard](https://github.com/cirruslabs/orchard), an orchestration system for Tart, we quickly realized that most worker machines will be in a private network, and that VMs will be only reachable from the worker machines themselves. Thus, one of our goals became to simplify accessing the compute resources in a cluster through a centralized controller host.
 
 This effort resulted in commands like `orchard port-forward` and `orchard ssh`, which were later improved to support connecting not just to the VMs, but to the worker machines themselves.
 
