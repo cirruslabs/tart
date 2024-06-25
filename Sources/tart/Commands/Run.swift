@@ -505,7 +505,7 @@ struct Run: AsyncParsableCommand {
 
         // Unfortunately, VZDiskImageStorageDeviceAttachment does not support
         // FileHandle, so we can't easily clone the disk, open it and unlink(2)
-        // to simplify the garbage collection, so use the <>
+        // to simplify the garbage collection, so use an intermediate directory.
         let clonedDiskURL = try Config().tartTmpDir.appendingPathComponent("run-disk-\(UUID().uuidString)")
 
         try FileManager.default.copyItem(at: vmDir.diskURL, to: clonedDiskURL)
