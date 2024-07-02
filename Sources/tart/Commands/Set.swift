@@ -25,6 +25,9 @@ struct Set: AsyncParsableCommand {
   #endif
   var randomSerial: Bool = false
 
+  @Option(help: ArgumentHelp("Replace the VM's disk contents with the disk contents at path.", valueName: "path"))
+  var disk: String?
+
   @Option(help: ArgumentHelp("Resize the VMs disk to the specified size in GB (note that the disk size can only be increased to avoid losing data)",
                              discussion: """
                              Disk resizing works on most cloud-ready Linux distributions out-of-the box (e.g. Ubuntu Cloud Images
@@ -72,6 +75,14 @@ struct Set: AsyncParsableCommand {
     #endif
 
     try vmConfig.save(toURL: vmDir.configURL)
+
+    if let disk = disk {
+      let temporaryDiskURL = try Config().tartTmpDir.appendingPathComponent("set-disk-\(UUID().uuidString)")
+
+      try FileManager.default.copyItem(atPath: disk, toPath: temporaryDiskURL.path())
+
+      _ = try FileManager.default.replaceItemAt(vmDir.diskURL, withItemAt: temporaryDiskURL)
+    }
 
     if diskSize != nil {
       try vmDir.resizeDisk(diskSize!)

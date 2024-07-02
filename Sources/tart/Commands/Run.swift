@@ -67,12 +67,16 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\" --disk=\"nbd://localhost:10809/myDisk\")
+  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\" --disk "ghcr.io/cirruslabs/xcode:16.0:ro" --disk=\"nbd://localhost:10809/myDisk\")
   """, discussion: """
-  Can be either a disk image file, a block device like a local SSD on AWS EC2 Mac instances or a Network Block Device (NBD).
+  The disk attachment can be a:
 
-  Learn how to create a disk image using Disk Utility here:
-  https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
+  * path to a disk image file
+  * path to a block device (for example, a local SSD on AWS EC2 Mac instances)
+  * remote VM name whose disk will be mounted
+  * Network Block Device (NBD) URL
+
+  Learn how to create a disk image using Disk Utility here: https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
 
   To work with block devices, the easiest way is to modify their permissions (e.g. by using "sudo chown $USER /dev/diskX") or to run the Tart binary as root, which affects locating Tart VMs.
 
@@ -493,6 +497,25 @@ struct Run: AsyncParsableCommand {
         let blockAttachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
                                                                            readOnly: diskReadOnly, synchronizationMode: .full)
         result.append(VZVirtioBlockDeviceConfiguration(attachment: blockAttachment))
+        continue
+      }
+
+      // Support remote VM names in --disk command-line argument
+      if let remoteName = try? RemoteName(diskPath) {
+        let vmDir = try VMStorageOCI().open(remoteName)
+
+        // Unfortunately, VZDiskImageStorageDeviceAttachment does not support
+        // FileHandle, so we can't easily clone the disk, open it and unlink(2)
+        // to simplify the garbage collection, so use an intermediate directory.
+        let clonedDiskURL = try Config().tartTmpDir.appendingPathComponent("run-disk-\(UUID().uuidString)")
+
+        try FileManager.default.copyItem(at: vmDir.diskURL, to: clonedDiskURL)
+
+        let lock = try FileLock(lockURL: clonedDiskURL)
+        try lock.lock()
+
+        let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(url: clonedDiskURL, readOnly: diskReadOnly)
+        result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
         continue
       }
 
