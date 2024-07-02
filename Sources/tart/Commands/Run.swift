@@ -396,21 +396,22 @@ struct Run: AsyncParsableCommand {
   }
 
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
+    var softnetExtraArguments: [String] = []
+
+    if let netSoftnetAllow = netSoftnetAllow {
+      softnetExtraArguments += ["--allow", netSoftnetAllow]
+    }
+
     if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
 
-      var extraArguments: [String] = []
-
-      if let netSoftnetAllow = netSoftnetAllow {
-        extraArguments += ["--allow", netSoftnetAllow]
-      }
-
-      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: extraArguments)
+      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: softnetExtraArguments)
     }
 
     if netHost {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
-      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: ["--vm-net-type", "host"])
+
+      return try Softnet(vmMACAddress: config.macAddress.string, extraArguments: ["--vm-net-type", "host"] + softnetExtraArguments)
     }
 
     if netBridged.count > 0 {
