@@ -33,6 +33,10 @@ struct Push: AsyncParsableCommand {
   func run() async throws {
     let ociStorage = VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
+    let lock = try localVMDir.lock()
+    if try !lock.trylock() {
+      throw RuntimeError.VMIsRunning(localName)
+    }
 
     // Parse remote names supplied by the user
     let remoteNames = try remoteNames.map{
