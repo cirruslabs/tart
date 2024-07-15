@@ -66,7 +66,7 @@ class VMStorageLocal: PrunableStorage {
   }
 
   func prunables() throws -> [Prunable] {
-    try list().map { (_, vmDir) in vmDir }
+    try list().map { (_, vmDir) in vmDir }.filter { try !$0.running() }
   }
 
   func hasVMsWithMACAddress(macAddress: String) throws -> Bool {
