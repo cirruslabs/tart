@@ -79,6 +79,9 @@ extension VMDirectory {
       nvram.write(data)
     }
     try nvram.close()
+
+    // Serialize VM's manifest to enable better de-duplication on subsequent "tart pull"'s
+    try manifest.toJSON().write(to: manifestURL)
   }
 
   func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String) async throws -> RemoteName {

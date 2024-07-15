@@ -23,6 +23,9 @@ struct VMDirectory: Prunable {
   var stateURL: URL {
     baseURL.appendingPathComponent("state.vzvmsave")
   }
+  var manifestURL: URL {
+    baseURL.appendingPathComponent("manifest.json")
+  }
 
   var explicitlyPulledMark: URL {
     baseURL.appendingPathComponent(".explicitly-pulled")
