@@ -49,9 +49,10 @@ struct Login: AsyncParsableCommand {
     ])
 
     if !noValidate {
+      let registry = try Registry(host: host, namespace: "", insecure: insecure,
+                                  credentialsProviders: [credentialsProvider])
+
       do {
-        let registry = try Registry(host: host, namespace: "", insecure: insecure,
-                                    credentialsProviders: [credentialsProvider])
         try await registry.ping()
       } catch {
         throw RuntimeError.InvalidCredentials("invalid credentials: \(error)")
