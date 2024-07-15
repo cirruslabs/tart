@@ -1,10 +1,13 @@
 import Foundation
 
 struct LocalLayerCache {
+  let diskURL: URL
   private let mappedDisk: Data
   private var digestToRange: [String : Range<Data.Index>] = [:]
 
   init?(_ diskURL: URL, _ manifest: OCIManifest) throws {
+    self.diskURL = diskURL
+
     // mmap(2) the disk that contains the layers from the manifest
     self.mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
 

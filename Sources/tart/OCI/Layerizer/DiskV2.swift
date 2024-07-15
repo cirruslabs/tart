@@ -37,8 +37,17 @@ class DiskV2: Disk {
     // Support resumable pulls
     let pullResumed = FileManager.default.fileExists(atPath: diskURL.path)
 
-    if !pullResumed && !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
-      throw OCIError.FailedToCreateVmFile
+    if !pullResumed {
+      if let localLayerCache = localLayerCache {
+        // Clone the local layer cache's disk and use it as a base, potentially
+        // reducing the space usage since some blocks won't be written at all
+        try FileManager.default.copyItem(at: localLayerCache.diskURL, to: diskURL)
+      } else {
+        // Otherwise create an empty disk
+        if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
+          throw OCIError.FailedToCreateVmFile
+        }
+      }
     }
 
     // Calculate the uncompressed disk size
@@ -89,13 +98,21 @@ class DiskV2: Disk {
             return
           }
 
-          // Open the disk file
+          // Open the disk file for writing
           let disk = try FileHandle(forWritingTo: diskURL)
+
+          // Also open the disk file for reading and verifying
+          // its contents in case the local layer cache is used
+          let rdisk: FileHandle? = if localLayerCache != nil {
+            try FileHandle(forReadingFrom: diskURL)
+          } else {
+            nil
+          }
 
           // Check if we already have this layer contents in the local layer cache
           if let localLayerCache = localLayerCache, let data = localLayerCache.find(diskLayer.digest), Digest.hash(data) == uncompressedLayerContentDigest {
             // Fulfil the layer contents from the local blob cache
-            _ = try zeroSkippingWrite(disk, diskWritingOffset, data)
+            _ = try zeroSkippingWrite(disk, rdisk, diskWritingOffset, data)
             try disk.close()
 
             // Update the progress
@@ -112,7 +129,7 @@ class DiskV2: Disk {
               return
             }
 
-            diskWritingOffset = try zeroSkippingWrite(disk, diskWritingOffset, data)
+            diskWritingOffset = try zeroSkippingWrite(disk, rdisk, diskWritingOffset, data)
           }
 
           try await registry.pullBlob(diskLayer.digest) { data in
@@ -132,7 +149,7 @@ class DiskV2: Disk {
     }
   }
 
-  private static func zeroSkippingWrite(_ disk: FileHandle, _ offset: UInt64, _ data: Data) throws -> UInt64 {
+  private static func zeroSkippingWrite(_ disk: FileHandle, _ rdisk: FileHandle?, _ offset: UInt64, _ data: Data) throws -> UInt64 {
     let holeGranularityBytes = 64 * 1024
 
     // A zero chunk for faster than byte-by-byte comparisons
@@ -152,7 +169,25 @@ class DiskV2: Disk {
     var offset = offset
 
     for chunk in data.chunks(ofCount: holeGranularityBytes) {
-      // Only write chunks that are not zero
+      // If the local layer cache is used, only write chunks that differ
+      // since the base disk can contain anything at any position
+      if let rdisk = rdisk {
+        try rdisk.seek(toOffset: offset)
+        let actualContentsOnDisk = try rdisk.read(upToCount: chunk.count)
+
+        if chunk != actualContentsOnDisk {
+          try disk.seek(toOffset: offset)
+          disk.write(chunk)
+        }
+
+        offset += UInt64(chunk.count)
+
+        continue
+      }
+
+      // Otherwise, only write chunks that are not zero
+      // since the base disk is created from scratch and
+      // is zeroed via truncate(2)
       if chunk != zeroChunk {
         try disk.seek(toOffset: offset)
         disk.write(chunk)
