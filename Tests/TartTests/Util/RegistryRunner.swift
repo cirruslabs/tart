@@ -39,7 +39,7 @@ class RegistryRunner {
     let port = try Self.dockerCmd("inspect", containerID, "--format", "{{(index (index .NetworkSettings.Ports \"5000/tcp\") 0).HostPort}}")
       .trimmingCharacters(in: CharacterSet.newlines)
 
-    registry = try Registry(urlComponents: URLComponents(string: "http://127.0.0.1:\(port)/v2/")!,
+    registry = try Registry(baseURL: URL(string: "http://127.0.0.1:\(port)/v2/")!,
                             namespace: "vm-image")
 
     // Wait for the Docker Registry to start

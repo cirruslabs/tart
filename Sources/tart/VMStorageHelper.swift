@@ -61,6 +61,7 @@ enum RuntimeError : Error {
   case PIDLockFailed(_ message: String)
   case FailedToParseRemoteName(_ message: String)
   case VMTerminationFailed(_ message: String)
+  case ImproperlyFormattedHost(_ host: String, _ hint: String)
   case InvalidCredentials(_ message: String)
   case VMDirectoryAlreadyInitialized(_ message: String)
   case ExportFailed(_ message: String)
@@ -107,6 +108,8 @@ extension RuntimeError : CustomStringConvertible {
       return "failed to parse remote name: \(cause)"
     case .VMTerminationFailed(let message):
       return message
+    case .ImproperlyFormattedHost(let host, let hint):
+      return "improperly formatted host \"\(host)\" was provided\(hint)"
     case .InvalidCredentials(let message):
       return message
     case .VMDirectoryAlreadyInitialized(let message):

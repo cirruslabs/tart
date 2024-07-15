@@ -112,11 +112,11 @@ class Registry {
     return host
   }
 
-  init(urlComponents: URLComponents,
+  init(baseURL: URL,
        namespace: String,
        credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
-    baseURL = urlComponents.url!
+    self.baseURL = baseURL
     self.namespace = namespace
     self.credentialsProviders = credentialsProviders
   }
@@ -130,7 +130,17 @@ class Registry {
     let proto = insecure ? "http" : "https"
     let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
 
-    try self.init(urlComponents: baseURLComponents, namespace: namespace, credentialsProviders: credentialsProviders)
+    guard let baseURL = baseURLComponents.url else {
+      var hint = ""
+
+      if host.hasPrefix("http://") || host.hasPrefix("https://") {
+        hint += ", make sure that it doesn't start with http:// or https://"
+      }
+
+      throw RuntimeError.ImproperlyFormattedHost(host, hint)
+    }
+
+    try self.init(baseURL: baseURL, namespace: namespace, credentialsProviders: credentialsProviders)
   }
 
   func ping() async throws {
