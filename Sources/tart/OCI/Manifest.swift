@@ -78,7 +78,7 @@ struct OCIManifestConfig: Codable, Equatable {
   var digest: String
 }
 
-struct OCIManifestLayer: Codable, Equatable {
+struct OCIManifestLayer: Codable, Equatable, Hashable {
   var mediaType: String
   var size: Int
   var digest: String
@@ -112,6 +112,14 @@ struct OCIManifestLayer: Codable, Equatable {
 
   func uncompressedContentDigest() -> String? {
     annotations?[uncompressedContentDigestAnnotation]
+  }
+
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    return lhs.digest == rhs.digest
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine(digest)
   }
 }
 

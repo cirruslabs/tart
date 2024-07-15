@@ -197,14 +197,8 @@ class VMStorageOCI: PrunableStorage {
 
       try await withTaskCancellationHandler(operation: {
         try await retry(maxAttempts: 5, backoff: .exponentialWithFullJitter(baseDelay: .seconds(5), maxDelay: .seconds(60))) {
-          var localLayerCache: LocalLayerCache? = nil
-
-          if name.reference.type == .Tag,
-             let vmDir = try? open(name),
-             let digest = try? digest(name),
-             let (manifest, _) = try? await registry.pullManifest(reference: digest) {
-            localLayerCache = try LocalLayerCache(vmDir.diskURL, manifest)
-          }
+          // Choose the best base image which has the most deduplication ratio
+          let localLayerCache = try await chooseLocalLayerCache(name, manifest, registry)
 
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
         } recoverFromFailure: { error in
@@ -248,6 +242,57 @@ class VMStorageOCI: PrunableStorage {
     try FileManager.default.createSymbolicLink(at: vmURL(from), withDestinationURL: vmURL(to))
 
     try gc()
+  }
+
+  func chooseLocalLayerCache(_ name: RemoteName, _ manifest: OCIManifest, _ registry: Registry) async throws -> LocalLayerCache? {
+    // Establish a closure that will calculate how much bytes
+    // we'll de-duplicate if we re-use the given manifest
+    let target = Swift.Set(manifest.layers)
+
+    let calculateDeduplicatedBytes = { (manifest: OCIManifest) -> Int in
+      target.intersection(manifest.layers).map({ $0.size }).reduce(0, +)
+    }
+
+    // Load OCI VM images and their manifests (if present)
+    var candidates: [(name: String, vmDir: VMDirectory, manifest: OCIManifest, deduplicatedBytes: Int)] = []
+
+    for (name, vmDir, isSymlink) in try list() {
+      if isSymlink {
+        continue
+      }
+
+      guard let manifestJSON = try? Data(contentsOf: vmDir.manifestURL) else {
+        continue
+      }
+
+      guard let manifest = try? OCIManifest(fromJSON: manifestJSON) else {
+        continue
+      }
+
+      candidates.append((name, vmDir, manifest, calculateDeduplicatedBytes(manifest)))
+    }
+
+    // Previously we haven't stored the OCI VM image manifests, but still fetched the VM image manifest if
+    // what the user was trying to pull was a tagged image, and we already had that image in the OCI VM cache
+    //
+    // Keep supporting this behavior for backwards comaptibility, but only communicate
+    // with the registry if we haven't already retrieved the manifest for that OCI VM image.
+    if name.reference.type == .Tag,
+       let vmDir = try? open(name),
+       let digest = try? digest(name),
+       try !candidates.contains(where: {try $0.manifest.digest() == digest}),
+       let (manifest, _) = try? await registry.pullManifest(reference: digest) {
+      candidates.append((name.description, vmDir, manifest, calculateDeduplicatedBytes(manifest)))
+    }
+
+    // Now, find the best match based on how many bytes we'll de-duplicate
+    let choosen = candidates.max { left, right in
+      return left.deduplicatedBytes < right.deduplicatedBytes
+    }
+
+    return try choosen.flatMap({ choosen in
+      try LocalLayerCache(choosen.vmDir.diskURL, choosen.manifest)
+    })
   }
 }
 
