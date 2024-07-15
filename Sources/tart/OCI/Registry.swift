@@ -127,10 +127,8 @@ class Registry {
     insecure: Bool = false,
     credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
-    var baseURLComponents = URLComponents()
-    baseURLComponents.scheme = insecure ? "http" : "https"
-    baseURLComponents.host = host
-    baseURLComponents.path = "/v2/"
+    let proto = insecure ? "http" : "https"
+    let baseURLComponents = URLComponents(string: proto + "://" + host + "/v2/")!
 
     guard let baseURL = baseURLComponents.url else {
       var hint = ""
