@@ -11,9 +11,6 @@ enum OCIError: Error {
 }
 
 extension VMDirectory {
-  private static let bufferSizeBytes = 64 * 1024 * 1024
-  private static let layerLimitBytes = 500 * 1000 * 1000
-
   func pullFromRegistry(registry: Registry, manifest: OCIManifest, concurrency: UInt, localLayerCache: LocalLayerCache?) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     let configLayers = manifest.layers.filter {
