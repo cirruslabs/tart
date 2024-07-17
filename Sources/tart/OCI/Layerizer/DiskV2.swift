@@ -1,5 +1,6 @@
 import Foundation
 import Compression
+import System
 
 class DiskV2: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
@@ -175,7 +176,13 @@ class DiskV2: Disk {
         try rdisk.seek(toOffset: offset)
         let actualContentsOnDisk = try rdisk.read(upToCount: chunk.count)
 
-        if chunk != actualContentsOnDisk {
+        if chunk == zeroChunk {
+          var arg = fpunchhole_t(fp_flags: 0, reserved: 0, fp_offset: off_t(offset), fp_length: off_t(chunk.count))
+
+          if fcntl(disk.fileDescriptor, F_PUNCHHOLE, &arg) == -1 {
+            throw RuntimeError.PullFailed("failed to punch hole: \(Errno.lastErrnoValue)")
+          }
+        } else if chunk != actualContentsOnDisk {
           try disk.seek(toOffset: offset)
           disk.write(chunk)
         }
