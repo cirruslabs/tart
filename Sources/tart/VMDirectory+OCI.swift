@@ -77,7 +77,7 @@ extension VMDirectory {
     }
     try nvram.close()
 
-    // Serialize VM's manifest to enable better de-duplication on subsequent "tart pull"'s
+    // Serialize VM's manifest to enable better deduplication on subsequent "tart pull"'s
     try manifest.toJSON().write(to: manifestURL)
   }
 
