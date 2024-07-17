@@ -68,6 +68,15 @@ class DiskV2: Disk {
     try disk.truncate(atOffset: uncompressedDiskSize)
     try disk.close()
 
+    // Determine the file system block size
+    var st = stat()
+    if stat(diskURL.path, &st) == -1 {
+      let details = Errno(rawValue: errno)
+
+      throw RuntimeError.PullFailed("failed to stat(2) disk \(diskURL.path): \(details)")
+    }
+    let fsBlockSize = UInt64(st.st_blksize)
+
     // Concurrently fetch and decompress layers
     try await withThrowingTaskGroup(of: Void.self) { group in
       var globalDiskWritingOffset: UInt64 = 0
@@ -113,7 +122,7 @@ class DiskV2: Disk {
           // Check if we already have this layer contents in the local layer cache
           if let localLayerCache = localLayerCache, let data = localLayerCache.find(diskLayer.digest), Digest.hash(data) == uncompressedLayerContentDigest {
             // Fulfil the layer contents from the local blob cache
-            _ = try zeroSkippingWrite(disk, rdisk, diskWritingOffset, data)
+            _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
             try disk.close()
 
             // Update the progress
@@ -130,7 +139,7 @@ class DiskV2: Disk {
               return
             }
 
-            diskWritingOffset = try zeroSkippingWrite(disk, rdisk, diskWritingOffset, data)
+            diskWritingOffset = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
           }
 
           try await registry.pullBlob(diskLayer.digest) { data in
@@ -150,7 +159,7 @@ class DiskV2: Disk {
     }
   }
 
-  private static func zeroSkippingWrite(_ disk: FileHandle, _ rdisk: FileHandle?, _ offset: UInt64, _ data: Data) throws -> UInt64 {
+  private static func zeroSkippingWrite(_ disk: FileHandle, _ rdisk: FileHandle?, _ fsBlockSize: UInt64, _ offset: UInt64, _ data: Data) throws -> UInt64 {
     let holeGranularityBytes = 64 * 1024
 
     // A zero chunk for faster than byte-by-byte comparisons
@@ -176,7 +185,10 @@ class DiskV2: Disk {
         try rdisk.seek(toOffset: offset)
         let actualContentsOnDisk = try rdisk.read(upToCount: chunk.count)
 
-        if chunk == zeroChunk {
+        // F_PUNCHHOLE requires the holes to be aligned to file system block boundaries
+        let isHoleAligned = (offset % fsBlockSize) == 0 && (UInt64(chunk.count) % fsBlockSize) == 0
+
+        if isHoleAligned && chunk == zeroChunk {
           var arg = fpunchhole_t(fp_flags: 0, reserved: 0, fp_offset: off_t(offset), fp_length: off_t(chunk.count))
 
           if fcntl(disk.fileDescriptor, F_PUNCHHOLE, &arg) == -1 {
