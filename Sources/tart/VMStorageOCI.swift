@@ -202,6 +202,10 @@ class VMStorageOCI: PrunableStorage {
 
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
         } recoverFromFailure: { error in
+          if error is RuntimeError {
+            return .throw
+          }
+
           print("Error: \(error.localizedDescription)")
           print("Attempting to re-try...")
 
