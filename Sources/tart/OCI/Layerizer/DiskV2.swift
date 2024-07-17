@@ -3,7 +3,7 @@ import Compression
 
 class DiskV2: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
-  private static let layerLimitBytes = 500 * 1000 * 1000
+  private static let layerLimitBytes = 512 * 1024 * 1024
 
   static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, progress: Progress) async throws -> [OCIManifestLayer] {
     var pushedLayers: [OCIManifestLayer] = []
