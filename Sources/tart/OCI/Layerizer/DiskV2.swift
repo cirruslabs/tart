@@ -180,7 +180,9 @@ class DiskV2: Disk {
           var arg = fpunchhole_t(fp_flags: 0, reserved: 0, fp_offset: off_t(offset), fp_length: off_t(chunk.count))
 
           if fcntl(disk.fileDescriptor, F_PUNCHHOLE, &arg) == -1 {
-            throw RuntimeError.PullFailed("failed to punch hole: \(Errno.lastErrnoValue)")
+            let details = Errno(rawValue: errno)
+
+            throw RuntimeError.PullFailed("failed to punch hole: \(details)")
           }
         } else if chunk != actualContentsOnDisk {
           try disk.seek(toOffset: offset)
