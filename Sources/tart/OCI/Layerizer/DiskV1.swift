@@ -5,7 +5,7 @@ class DiskV1: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
   private static let layerLimitBytes = 500 * 1000 * 1000
 
-  static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, progress: Progress) async throws -> [OCIManifestLayer] {
+  static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, concurrency: UInt, progress: Progress) async throws -> [OCIManifestLayer] {
     var pushedLayers: [OCIManifestLayer] = []
 
     // Open the disk file
