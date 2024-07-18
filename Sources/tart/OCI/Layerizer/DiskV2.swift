@@ -5,32 +5,52 @@ class DiskV2: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
   private static let layerLimitBytes = 512 * 1024 * 1024
 
-  static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, progress: Progress) async throws -> [OCIManifestLayer] {
-    var pushedLayers: [OCIManifestLayer] = []
+  static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, concurrency: UInt, progress: Progress) async throws -> [OCIManifestLayer] {
+    var pushedLayers: [(index: Int, pushedLayer: OCIManifestLayer)] = []
 
     // Open the disk file
     let mappedDisk = try Data(contentsOf: diskURL, options: [.alwaysMapped])
 
     // Compress the disk file as multiple individually decompressible streams,
     // each equal ``Self.layerLimitBytes`` bytes or less due to LZ4 compression
-    for data in mappedDisk.chunks(ofCount: layerLimitBytes) {
-      let compressedData = try (data as NSData).compressed(using: .lz4) as Data
+    try await withThrowingTaskGroup(of: (Int, OCIManifestLayer).self) { group in
+      for (index, data) in mappedDisk.chunks(ofCount: layerLimitBytes).enumerated() {
+        // Respect the concurrency limit
+        if index >= concurrency {
+          if let (index, pushedLayer) = try await group.next() {
+            pushedLayers.append((index, pushedLayer))
+          }
+        }
 
-      let layerDigest = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb)
+        // Launch a disk layer pushing task
+        group.addTask {
+          let compressedData = try (data as NSData).compressed(using: .lz4) as Data
 
-      pushedLayers.append(OCIManifestLayer(
-        mediaType: diskV2MediaType,
-        size: compressedData.count,
-        digest: layerDigest,
-        uncompressedSize: UInt64(data.count),
-        uncompressedContentDigest: Digest.hash(data)
-      ))
+          let layerDigest = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb)
 
-      // Update progress using a relative value
-      progress.completedUnitCount += Int64(data.count)
+          // Update progress using a relative value
+          progress.completedUnitCount += Int64(data.count)
+
+          return (index, OCIManifestLayer(
+            mediaType: diskV2MediaType,
+            size: compressedData.count,
+            digest: layerDigest,
+            uncompressedSize: UInt64(data.count),
+            uncompressedContentDigest: Digest.hash(data)
+          ))
+        }
+      }
+
+      for try await pushedLayer in group {
+        pushedLayers.append(pushedLayer)
+      }
     }
 
-    return pushedLayers
+    return pushedLayers.sorted {
+      $0.index < $1.index
+    }.map {
+      $0.pushedLayer
+    }
   }
 
   static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil) async throws {

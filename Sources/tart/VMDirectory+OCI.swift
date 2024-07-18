@@ -84,7 +84,7 @@ extension VMDirectory {
     try manifest.toJSON().write(to: manifestURL)
   }
 
-  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String) async throws -> RemoteName {
+  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String, concurrency: UInt) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -103,9 +103,9 @@ extension VMDirectory {
 
     switch diskFormat {
     case "v1":
-      layers.append(contentsOf: try await DiskV1.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, progress: progress))
+      layers.append(contentsOf: try await DiskV1.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, concurrency: concurrency, progress: progress))
     case "v2":
-      layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, progress: progress))
+      layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, concurrency: concurrency, progress: progress))
     default:
       throw RuntimeError.OCIUnsupportedDiskFormat(diskFormat)
     }
