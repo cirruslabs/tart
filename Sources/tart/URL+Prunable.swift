@@ -25,16 +25,18 @@ extension URL: Prunable {
   }
 
   func setDeduplicatedBytes(_ size: UInt64) {
-    var intVal = size
-    let data = Data(bytes: &intVal, count: MemoryLayout.size(ofValue: intVal))
-    try! self.setExtendedAttribute(name: "user.deduplicatedBytes", value: data)
+    let data = "\(size)".data(using: .utf8)!
+    try! self.setExtendedAttribute(name: "run.tart.deduplicated-bytes", value: data)
   }
 
   func deduplicatedBytes() -> UInt64 {
-    let data = try? self.extendedAttributeValue(forName: "user.deduplicatedBytes")
-    if data == nil {
+    let data = try? self.extendedAttributeValue(forName: "run.tart.deduplicated-bytes")
+    guard let data else {
       return 0
     }
-    return data!.withUnsafeBytes { $0.load(as: UInt64.self) }
+    if let strValue = String(data: data, encoding: .utf8) {
+      return UInt64(strValue) ?? 0
+    }
+    return 0
   }
 }
