@@ -30,8 +30,7 @@ extension URL: Prunable {
   }
 
   func deduplicatedBytes() -> UInt64 {
-    let data = try? self.extendedAttributeValue(forName: "run.tart.deduplicated-bytes")
-    guard let data else {
+    guard let data = try? self.extendedAttributeValue(forName: "run.tart.deduplicated-bytes") else {
       return 0
     }
     if let strValue = String(data: data, encoding: .utf8) {
