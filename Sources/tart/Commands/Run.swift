@@ -67,7 +67,7 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only specifier\n(e.g. --disk=\"disk.bin\" --disk=\"ubuntu.iso:ro\" --disk=\"/dev/disk0\" --disk "ghcr.io/cirruslabs/xcode:16.0:ro" --disk=\"nbd://localhost:10809/myDisk\")
+  Additional disk attachments with an optional read-only and synchronization options (e.g. --disk="disk.bin", --disk="ubuntu.iso:ro", --disk="/dev/disk0", --disk "ghcr.io/cirruslabs/xcode:16.0:ro" or --disk="nbd://localhost:10809/myDisk:sync=none")
   """, discussion: """
   The disk attachment can be a:
 
@@ -76,6 +76,12 @@ struct Run: AsyncParsableCommand {
   * remote VM name whose disk will be mounted
   * Network Block Device (NBD) URL
 
+  Options are comma-separated and are as follows:
+
+  * ro — attach the specified disk in read-only mode instead of the default read-write (e.g. --disk="disk.img:ro")
+
+  * sync=none — disable data synchronization with the permanent storage to increase performance at the cost of a higher chance of data loss (e.g. --disk="disk.img:sync=none")
+
   Learn how to create a disk image using Disk Utility here: https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
 
   To work with block devices, the easiest way is to modify their permissions (e.g. by using "sudo chown $USER /dev/diskX") or to run the Tart binary as root, which affects locating Tart VMs.
@@ -83,7 +89,7 @@ struct Run: AsyncParsableCommand {
   To work around this pass TART_HOME explicitly:
 
   sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
-  """, valueName: "path[:ro]"))
+  """, valueName: "path[:options]"))
   var disk: [String] = []
 
   #if arch(arm64)
@@ -450,86 +456,11 @@ struct Run: AsyncParsableCommand {
 
   func additionalDiskAttachments() throws -> [VZStorageDeviceConfiguration] {
     var result: [VZStorageDeviceConfiguration] = []
-    let readOnlySuffix = ":ro"
+
     let expandedDiskPaths = disk.map { NSString(string:$0).expandingTildeInPath }
 
     for rawDisk in expandedDiskPaths {
-      let diskReadOnly = rawDisk.hasSuffix(readOnlySuffix)
-      let diskPath = diskReadOnly ? String(rawDisk.prefix(rawDisk.count - readOnlySuffix.count)) : rawDisk
-
-      let diskURL = URL(string: diskPath)
-      if (["nbd", "nbds", "nbd+unix", "nbds+unix"].contains(diskURL?.scheme)) {
-        guard #available(macOS 14, *) else {
-          throw UnsupportedOSError("attaching Network Block Devices", "are")
-        }
-
-        let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-          url: diskURL!,
-          timeout: 30,
-          isForcedReadOnly: diskReadOnly,
-          synchronizationMode: VZDiskSynchronizationMode.none
-        )
-        result.append(VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment))
-        continue
-      }
-
-      let diskFileURL = URL(fileURLWithPath: diskPath)
-
-      if pathHasMode(diskPath, mode: S_IFBLK) {
-        guard #available(macOS 14, *) else {
-          throw UnsupportedOSError("attaching block devices", "are")
-        }
-
-        let fd = open(diskPath, diskReadOnly ? O_RDONLY : O_RDWR)
-        if fd == -1 {
-          let details = Errno(rawValue: CInt(errno))
-
-          switch details.rawValue {
-          case EBUSY:
-            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
-          case EACCES:
-            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskFileURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
-          default:
-            throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "\(details)")
-          }
-        }
-
-        let blockAttachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
-                                                                           readOnly: diskReadOnly, synchronizationMode: .full)
-        result.append(VZVirtioBlockDeviceConfiguration(attachment: blockAttachment))
-        continue
-      }
-
-      // Support remote VM names in --disk command-line argument
-      if let remoteName = try? RemoteName(diskPath) {
-        let vmDir = try VMStorageOCI().open(remoteName)
-
-        // Unfortunately, VZDiskImageStorageDeviceAttachment does not support
-        // FileHandle, so we can't easily clone the disk, open it and unlink(2)
-        // to simplify the garbage collection, so use an intermediate directory.
-        let clonedDiskURL = try Config().tartTmpDir.appendingPathComponent("run-disk-\(UUID().uuidString)")
-
-        try FileManager.default.copyItem(at: vmDir.diskURL, to: clonedDiskURL)
-
-        let lock = try FileLock(lockURL: clonedDiskURL)
-        try lock.lock()
-
-        let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(url: clonedDiskURL, readOnly: diskReadOnly)
-        result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
-        continue
-      }
-
-      // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
-      // see https://github.com/cirruslabs/tart/issues/323 for more details.
-      if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
-        throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
-      }
-
-      let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
-        url: diskFileURL,
-        readOnly: diskReadOnly
-      )
-      result.append(VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment))
+      result.append(try AdditionalDisk(parseFrom: rawDisk).configuration)
     }
 
     return result
@@ -749,6 +680,154 @@ struct VMView: NSViewRepresentable {
 
   func updateNSView(_ nsView: NSViewType, context: Context) {
     nsView.virtualMachine = vm.virtualMachine
+  }
+}
+
+struct AdditionalDisk {
+  let configuration: VZStorageDeviceConfiguration
+
+  init(parseFrom: String) throws {
+    let (diskPath, readOnly, syncModeRaw) = Self.parseOptions(parseFrom)
+
+    self.configuration = try Self.craft(diskPath, readOnly: readOnly, syncModeRaw: syncModeRaw)
+  }
+
+  static func craft(_ diskPath: String, readOnly diskReadOnly: Bool, syncModeRaw: String) throws -> VZStorageDeviceConfiguration {
+    let diskURL = URL(string: diskPath)
+
+    if (["nbd", "nbds", "nbd+unix", "nbds+unix"].contains(diskURL?.scheme)) {
+      guard #available(macOS 14, *) else {
+        throw UnsupportedOSError("attaching Network Block Devices", "are")
+      }
+
+      let syncMode = try parseSyncMode(syncModeRaw)
+
+      let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
+        url: diskURL!,
+        timeout: 30,
+        isForcedReadOnly: diskReadOnly,
+        synchronizationMode: syncMode
+      )
+
+      return VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment)
+    }
+
+    let diskFileURL = URL(fileURLWithPath: diskPath)
+
+    if pathHasMode(diskPath, mode: S_IFBLK) {
+      guard #available(macOS 14, *) else {
+        throw UnsupportedOSError("attaching block devices", "are")
+      }
+
+      let fd = open(diskPath, diskReadOnly ? O_RDONLY : O_RDWR)
+      if fd == -1 {
+        let details = Errno(rawValue: CInt(errno))
+
+        switch details.rawValue {
+        case EBUSY:
+          throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "already in use, try umounting it via \"diskutil unmountDisk\" (when the whole disk) or \"diskutil umount\" (when mounting a single partition)")
+        case EACCES:
+          throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "permission denied, consider changing the disk's owner using \"sudo chown $USER \(diskFileURL.url.path)\" or run Tart as a superuser (see --disk help for more details on how to do that correctly)")
+        default:
+          throw RuntimeError.FailedToOpenBlockDevice(diskFileURL.url.path, "\(details)")
+        }
+      }
+
+      let blockAttachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
+                                                                         readOnly: diskReadOnly, synchronizationMode: try parseSyncMode(syncModeRaw))
+
+      return VZVirtioBlockDeviceConfiguration(attachment: blockAttachment)
+    }
+
+    // Support remote VM names in --disk command-line argument
+    if let remoteName = try? RemoteName(diskPath) {
+      let vmDir = try VMStorageOCI().open(remoteName)
+
+      // Unfortunately, VZDiskImageStorageDeviceAttachment does not support
+      // FileHandle, so we can't easily clone the disk, open it and unlink(2)
+      // to simplify the garbage collection, so use an intermediate directory.
+      let clonedDiskURL = try Config().tartTmpDir.appendingPathComponent("run-disk-\(UUID().uuidString)")
+
+      try FileManager.default.copyItem(at: vmDir.diskURL, to: clonedDiskURL)
+
+      let lock = try FileLock(lockURL: clonedDiskURL)
+      try lock.lock()
+
+      let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(url: clonedDiskURL, readOnly: diskReadOnly)
+
+      return VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment)
+    }
+
+    // Error out if the disk is locked by the host (e.g. it was mounted in Finder),
+    // see https://github.com/cirruslabs/tart/issues/323 for more details.
+    if try !diskReadOnly && !FileLock(lockURL: diskFileURL).trylock() {
+      throw RuntimeError.DiskAlreadyInUse("disk \(diskFileURL.url.path) seems to be already in use, unmount it first in Finder")
+    }
+
+    let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
+      url: diskFileURL,
+      readOnly: diskReadOnly,
+      cachingMode: .automatic,
+      synchronizationMode: try Self.parseImageSyncMode(syncModeRaw)
+    )
+
+    return VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment)
+  }
+
+  static func parseOptions(_ parseFrom: String) -> (String, Bool, String) {
+    var arguments = parseFrom.split(separator: ":")
+    let options = arguments.last!.split(separator: ",")
+
+    var readOnly: Bool = false
+    var syncModeRaw: String = ""
+
+    var foundAtLeastOneOption: Bool = false
+
+    for option in options {
+      switch true {
+      case option == "ro":
+        readOnly = true
+        foundAtLeastOneOption = true
+      case option.hasPrefix("sync="):
+        syncModeRaw = String(option.dropFirst("sync=".count))
+        foundAtLeastOneOption = true
+      default:
+        continue
+      }
+    }
+
+    if foundAtLeastOneOption {
+      arguments.removeLast()
+    }
+
+    return (arguments.joined(separator: ":"), readOnly, syncModeRaw)
+  }
+
+  @available(macOS 14, *)
+  static func parseSyncMode(_ parseFrom: String) throws -> VZDiskSynchronizationMode {
+    switch parseFrom {
+    case "none":
+      return .none
+    case "full":
+      return .full
+    case "":
+      return .full
+    default:
+      throw RuntimeError.VMConfigurationError("unsupported disk synchronization mode: \"\(parseFrom)\"")
+    }
+  }
+
+  static func parseImageSyncMode(_ parseFrom: String) throws -> VZDiskImageSynchronizationMode {
+    switch parseFrom {
+    case "none":
+      return .none
+    case "full":
+      return .full
+    case "":
+      return .full
+    default:
+      throw RuntimeError.VMConfigurationError("unsupported disk image synchronization mode: \"\(parseFrom)\"")
+    }
   }
 }
 
