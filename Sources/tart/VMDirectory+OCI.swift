@@ -11,9 +11,6 @@ enum OCIError: Error {
 }
 
 extension VMDirectory {
-  private static let bufferSizeBytes = 64 * 1024 * 1024
-  private static let layerLimitBytes = 500 * 1000 * 1000
-
   func pullFromRegistry(registry: Registry, manifest: OCIManifest, concurrency: UInt, localLayerCache: LocalLayerCache?) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     let configLayers = manifest.layers.filter {
@@ -62,6 +59,11 @@ extension VMDirectory {
       throw RuntimeError.PullFailed("failed to decompress disk: \(error.localizedDescription)")
     }
 
+    if let llc = localLayerCache {
+      // set custom attribute to remember deduplicated bytes
+      diskURL.setDeduplicatedBytes(llc.deduplicatedBytes)
+    }
+
     // Pull VM's NVRAM file layer and store it in an NVRAM file
     defaultLogger.appendNewLine("pulling NVRAM...")
 
@@ -80,7 +82,7 @@ extension VMDirectory {
     }
     try nvram.close()
 
-    // Serialize VM's manifest to enable better de-duplication on subsequent "tart pull"'s
+    // Serialize VM's manifest to enable better deduplication on subsequent "tart pull"'s
     try manifest.toJSON().write(to: manifestURL)
   }
 

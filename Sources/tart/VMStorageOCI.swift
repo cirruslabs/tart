@@ -200,8 +200,18 @@ class VMStorageOCI: PrunableStorage {
           // Choose the best base image which has the most deduplication ratio
           let localLayerCache = try await chooseLocalLayerCache(name, manifest, registry)
 
+          if let llc = localLayerCache {
+            let deduplicatedHuman = ByteCountFormatter.string(fromByteCount: Int64(llc.deduplicatedBytes), countStyle: .file)
+
+            defaultLogger.appendNewLine("found an image \(llc.name) that will allow us to deduplicate \(deduplicatedHuman), using it as a base...")
+          }
+
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
         } recoverFromFailure: { error in
+          if error is RuntimeError {
+            return .throw
+          }
+
           print("Error: \(error.localizedDescription)")
           print("Attempting to re-try...")
 
@@ -246,15 +256,15 @@ class VMStorageOCI: PrunableStorage {
 
   func chooseLocalLayerCache(_ name: RemoteName, _ manifest: OCIManifest, _ registry: Registry) async throws -> LocalLayerCache? {
     // Establish a closure that will calculate how much bytes
-    // we'll de-duplicate if we re-use the given manifest
+    // we'll deduplicate if we re-use the given manifest
     let target = Swift.Set(manifest.layers)
 
-    let calculateDeduplicatedBytes = { (manifest: OCIManifest) -> Int in
-      target.intersection(manifest.layers).map({ $0.size }).reduce(0, +)
+    let calculateDeduplicatedBytes = { (manifest: OCIManifest) -> UInt64 in
+      target.intersection(manifest.layers).map({ UInt64($0.size) }).reduce(0, +)
     }
 
     // Load OCI VM images and their manifests (if present)
-    var candidates: [(name: String, vmDir: VMDirectory, manifest: OCIManifest, deduplicatedBytes: Int)] = []
+    var candidates: [(name: String, vmDir: VMDirectory, manifest: OCIManifest, deduplicatedBytes: UInt64)] = []
 
     for (name, vmDir, isSymlink) in try list() {
       if isSymlink {
@@ -285,13 +295,15 @@ class VMStorageOCI: PrunableStorage {
       candidates.append((name.description, vmDir, manifest, calculateDeduplicatedBytes(manifest)))
     }
 
-    // Now, find the best match based on how many bytes we'll de-duplicate
-    let choosen = candidates.max { left, right in
+    // Now, find the best match based on how many bytes we'll deduplicate
+    let choosen = candidates.filter {
+      $0.deduplicatedBytes > 0
+    }.max { left, right in
       return left.deduplicatedBytes < right.deduplicatedBytes
     }
 
     return try choosen.flatMap({ choosen in
-      try LocalLayerCache(choosen.vmDir.diskURL, choosen.manifest)
+      try LocalLayerCache(choosen.name, choosen.deduplicatedBytes, choosen.vmDir.diskURL, choosen.manifest)
     })
   }
 }
