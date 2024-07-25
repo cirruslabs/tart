@@ -11,13 +11,17 @@ extension URL: Prunable {
   }
 
   func allocatedSizeBytes() throws -> Int {
+    try resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize!
+  }
+
+  func deduplicatedSizeBytes() throws -> Int {
     let values = try resourceValues(forKeys: [.totalFileAllocatedSizeKey, .mayShareFileContentKey])
     // make sure the file's origin file is there and duplication works
     var dedublicatedSize = 0
     if values.mayShareFileContent == true {
-      dedublicatedSize = Int(deduplicatedBytes())
+      return Int(deduplicatedBytes())
     }
-    return values.totalFileAllocatedSize! - dedublicatedSize
+    return 0
   }
 
   func sizeBytes() throws -> Int {
