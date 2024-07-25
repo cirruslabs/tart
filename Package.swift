@@ -24,6 +24,7 @@ let package = Package(
     .package(url: "https://github.com/orchetect/SwiftRadix", from: "1.3.1"),
     .package(url: "https://github.com/groue/Semaphore", from: "0.0.8"),
     .package(url: "https://github.com/fumoboy007/swift-retry", from: "0.2.3"),
+    .package(url: "https://github.com/jozefizso/swift-xattr", from: "3.0.0"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -40,6 +41,7 @@ let package = Package(
       .product(name: "SwiftRadix", package: "SwiftRadix"),
       .product(name: "Semaphore", package: "Semaphore"),
       .product(name: "DMRetry", package: "swift-retry"),
+      .product(name: "XAttr", package: "swift-xattr"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",

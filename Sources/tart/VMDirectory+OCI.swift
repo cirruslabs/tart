@@ -59,6 +59,11 @@ extension VMDirectory {
       throw RuntimeError.PullFailed("failed to decompress disk: \(error.localizedDescription)")
     }
 
+    if let llc = localLayerCache {
+      // set custom attribute to remember deduplicated bytes
+      diskURL.setDeduplicatedBytes(llc.deduplicatedBytes)
+    }
+
     // Pull VM's NVRAM file layer and store it in an NVRAM file
     defaultLogger.appendNewLine("pulling NVRAM...")
 

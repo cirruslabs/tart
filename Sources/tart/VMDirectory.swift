@@ -182,6 +182,14 @@ struct VMDirectory: Prunable {
     try allocatedSizeBytes() / 1000 / 1000 / 1000
   }
 
+  func deduplicatedSizeBytes() throws -> Int {
+    try configURL.deduplicatedSizeBytes() + diskURL.deduplicatedSizeBytes() + nvramURL.deduplicatedSizeBytes()
+  }
+
+  func deduplicatedSizeGB() throws -> Int {
+    try deduplicatedSizeBytes() / 1000 / 1000 / 1000
+  }
+
   func sizeBytes() throws -> Int {
     try configURL.sizeBytes() + diskURL.sizeBytes() + nvramURL.sizeBytes()
   }
