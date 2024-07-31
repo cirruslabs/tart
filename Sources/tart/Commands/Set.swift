@@ -42,6 +42,14 @@ struct Set: AsyncParsableCommand {
                              """))
   var diskSize: UInt16?
 
+  @Option(help: ArgumentHelp("Set the root disk synchronization mode (Linux images only). Possible values: none, fsync, full.",
+                            discussion: """
+                            'full' synchronizes data with the drive and ensures that it is written to permanent storage.
+                            'fsync' synchronizes data with the drive but doesn't guarantee that it is written to permanent storage.
+                            'none' doesn't synchronize data with the drive.
+                            """))
+  var sync: String?
+
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     var vmConfig = try VMConfig(fromURL: vmDir.configURL)
@@ -74,7 +82,11 @@ struct Set: AsyncParsableCommand {
       }
     #endif
 
-    try vmConfig.save(toURL: vmDir.configURL)
+    if sync != nil {
+      vmConfig.sync = VZDiskImageSynchronizationMode(sync ?? "full" ) ?? .full
+    }
+
+    try vmConfig.save(toURL: vmDir.configURL);
 
     if let disk = disk {
       let temporaryDiskURL = try Config().tartTmpDir.appendingPathComponent("set-disk-\(UUID().uuidString)")
