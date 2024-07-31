@@ -1,6 +1,5 @@
 import ArgumentParser
 import Foundation
-import Virtualization
 
 fileprivate struct VMInfo: Encodable {
   let OS: OS
