@@ -12,6 +12,34 @@ var vm: VM?
 struct IPNotFound: Error {
 }
 
+extension VZDiskImageSynchronizationMode : LosslessStringConvertible {
+  public init?(_ description: String) {
+    switch description {
+    case "none":
+      self = .none
+    case "fsync":
+      self = .fsync
+    case "full":
+      self = .full
+    default:
+      return nil
+    }
+  }
+
+  public var description: String {
+    switch self {
+    case .none:
+      return "none"
+    case .fsync:
+      return "fsync"
+    case .full:
+      return "full"
+    @unknown default:
+      return "unknown"
+    }
+  }
+}
+
 struct Run: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Run a VM")
 
@@ -140,6 +168,14 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
 
+  @Option(help: ArgumentHelp("Set the root disk synchronization mode (Linux images only). Possible values: none, fsync, full.",
+                             discussion: """
+                             'full' synchronizes data with the drive and ensures that it is written to permanent storage.
+                             'fsync' synchronizes data with the drive but doesn't guarantee that it is written to permanent storage.
+                             'none' doesn't synchronize data with the drive.
+                             """))
+  var sync: String = "full"
+
   #if arch(arm64)
     @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
   #endif
@@ -195,6 +231,10 @@ struct Run: AsyncParsableCommand {
         throw ValidationError("Seems you have a disk targeting x86 architecture (hence amd64 in the name). Please use an 'arm64' version of the disk.")
       }
     }
+
+    if(VZDiskImageSynchronizationMode(sync) == nil) {
+      throw ValidationError("Invalid disk synchronization mode: \(sync)")
+    }
   }
 
   @MainActor
@@ -247,7 +287,8 @@ struct Run: AsyncParsableCommand {
       serialPorts: serialPorts,
       suspendable: suspendable,
       audio: !noAudio,
-      clipboard: !noClipboard
+      clipboard: !noClipboard,
+      sync: VZDiskImageSynchronizationMode(sync) ?? .full
     )
 
     let vncImpl: VNC? = try {

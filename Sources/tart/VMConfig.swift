@@ -24,7 +24,6 @@ enum CodingKeys: String, CodingKey {
   case memorySize
   case macAddress
   case display
-  case sync
 
   // macOS-specific keys
   case ecid
@@ -42,34 +41,6 @@ extension VMDisplayConfig: CustomStringConvertible {
   }
 }
 
-extension VZDiskImageSynchronizationMode : LosslessStringConvertible {
-  public init?(_ description: String) {
-    switch description {
-    case "none":
-      self = .none
-    case "fsync":
-      self = .fsync
-    case "full":
-      self = .full
-    default:
-      return nil
-    }
-  }
-
-  public var description: String {
-    switch self {
-    case .none:
-      return "none"
-    case .fsync:
-      return "fsync"
-    case .full:
-      return "full"
-    @unknown default:
-      return "unknown"
-    }
-  }
-}
-
 struct VMConfig: Codable {
   var version: Int = 1
   var os: OS
@@ -81,7 +52,6 @@ struct VMConfig: Codable {
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
   var display: VMDisplayConfig = VMDisplayConfig()
-  var sync: VZDiskImageSynchronizationMode = .full
 
   init(
     platform: Platform,
@@ -151,8 +121,6 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
 
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
-
-    sync = VZDiskImageSynchronizationMode(try container.decodeIfPresent(String.self, forKey: .sync) ?? "full") ?? .full
   }
 
   func encode(to encoder: Encoder) throws {
@@ -168,7 +136,6 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
-    try container.encode(sync.description, forKey: .sync)
   }
 
   mutating func setCPU(cpuCount: Int) throws {
