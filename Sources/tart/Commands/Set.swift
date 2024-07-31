@@ -43,11 +43,11 @@ struct Set: AsyncParsableCommand {
   var diskSize: UInt16?
 
   @Option(help: ArgumentHelp("Set the root disk synchronization mode (Linux images only). Possible values: none, fsync, full.",
-                            discussion: """
-                            'full' synchronizes data with the drive and ensures that it is written to permanent storage.
-                            'fsync' synchronizes data with the drive but doesn't guarantee that it is written to permanent storage.
-                            'none' doesn't synchronize data with the drive.
-                            """))
+                             discussion: """
+                             'full' synchronizes data with the drive and ensures that it is written to permanent storage.
+                             'fsync' synchronizes data with the drive but doesn't guarantee that it is written to permanent storage.
+                             'none' doesn't synchronize data with the drive.
+                             """))
   var sync: String?
 
   func run() async throws {
