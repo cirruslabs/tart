@@ -350,7 +350,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Storage
     let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
       // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
-      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: .full) :
+      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: vmConfig.sync) :
       try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
 
     var device: VZStorageDeviceConfiguration
