@@ -17,7 +17,7 @@ service — a drop-in replacement for the standard GitHub-hosted runners, offeri
   </a>
 </p>
 
-Many companies are using Tart in their internal setups. Here are a few of them:
+Many companies are using Tart in their internal setups. Here are just a few of them:
 
 <p align="center">
   <a href="https://atlassian.com/" target=_blank>
@@ -46,6 +46,9 @@ Many companies are using Tart in their internal setups. Here are a few of them:
   </a>
   <a href="https://www.pitsdatarecovery.net/" target=_blank>
     <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/PITSGlobalDataRecoveryServices.png" height="65"/>
+  </a>
+  <a href="https://expo.dev/" target=_blank>
+    <img src="https://github.com/cirruslabs/tart/raw/main/Resources/Users/Expo.png" height="65"/>
   </a>
 </p>
 
