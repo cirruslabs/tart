@@ -85,10 +85,10 @@
       <!-- landing image -->
       <div class="tx-landing__image">
         <dotlottie-player
-          src="/assets/animations/TartLogo.lottie"
-          mode="normal"
-          style="width: 75%; margin: auto"
-          autoplay
+            src="/assets/animations/TartLogo.lottie"
+            mode="normal"
+            style="width: 75%; margin: auto"
+            autoplay
         />
       </div>
 
@@ -114,10 +114,9 @@
       <header class="md-typeset">
         <h1 id="virtualization-and-beyond">
           Virtualization and beyond
-          <a
-            href="#virtualization-and-beyond"
-            class="headerlink"
-            title="Permanent link"
+          <a href="#virtualization-and-beyond"
+             class="headerlink"
+             title="Permanent link"
           >
             ¶
           </a>
@@ -125,12 +124,11 @@
       </header>
       <div class="mdx-spotlight">
         <figure class="mdx-spotlight__feature">
-          <img
-            src="assets/images/spotlight/virtualization-framework.webp"
-            alt="Apple’s native Virtualization.Framework"
-            loading="lazy"
-            width="500"
-            height="212"
+          <img src="assets/images/spotlight/virtualization-framework.webp"
+               alt="Apple’s native Virtualization.Framework"
+               loading="lazy"
+               width="500"
+               height="212"
           />
           <figcaption class="md-typeset">
             <h2>Native performance</h2>
@@ -144,12 +142,11 @@
           </figcaption>
         </figure>
         <figure class="mdx-spotlight__feature">
-          <img
-            src="assets/images/spotlight/supported-registries.webp"
-            alt="OCI-compatible container registries"
-            loading="lazy"
-            width="500"
-            height="160"
+          <img src="assets/images/spotlight/supported-registries.webp"
+               alt="OCI-compatible container registries"
+               loading="lazy"
+               width="500"
+               height="160"
           />
           <figcaption class="md-typeset">
             <h2>Remote storage for Virtual Machines</h2>
@@ -161,39 +158,39 @@
           </figcaption>
         </figure>
         <figure class="mdx-spotlight__feature">
-          <img
-            src="assets/images/spotlight/github-actions-runners.webp"
-            alt="GitHub Actions Runners"
-            loading="lazy"
-            width="500"
-            height="280"
+          <img src="assets/images/spotlight/github-actions-runners.webp"
+               alt="GitHub Actions Runners"
+               loading="lazy"
+               width="500"
+               height="280"
           />
           <figcaption class="md-typeset">
             <h2>Seamless integration with your existing automations</h2>
             <p>
               Tart integrates with many continuous integration systems, including a dedicated
               service of on-demand GitHub Actions Runners. With a single line change, you can cut your
-              CI/CD costs by up to <b>30 times</b> by using <a href="https://cirrus-runners.app/">Cirrus Runners</a>
+              CI/CD costs by up to <b>30 times</b> by using <a href="https://cirrus-runners.app/">Cirrus
+              Runners</a>
               to run your workflows.
             </p>
           </figcaption>
         </figure>
         <figure class="mdx-spotlight__feature">
           <div id="lottie-player">
-            <dotlottie-player
-              src="/assets/animations/Orchard.lottie"
-              mode="normal"
-              style="height: 280px; margin: auto"
-              autoplay
-              loop
+            <dotlottie-player src="/assets/animations/Orchard.lottie"
+                              mode="normal"
+                              style="height: 280px; margin: auto"
+                              autoplay
+                              loop
             />
           </div>
           <figcaption class="md-typeset">
             <h2>Run at scale with <a href="https://github.com/cirruslabs/orchard">Orchard</a></h2>
             <p>
-              Tart toolset includes Orchard Orchestration &mdash; tool to run and manage Tart virtual machines
-              at scale on a cluster of Apple Silicon hosts. An Orchard Cluster exposes a simple REST API to manage
-              thousands virtual machines. Orchard CLI allows accessing remote virtual machines like they run locally.
+              Tart toolset includes Orchard Orchestration &mdash; tool to run and manage Tart virtual
+              machines at scale on a cluster of Apple Silicon hosts. An Orchard Cluster exposes a simple REST API to
+              manage thousands virtual machines. Orchard CLI allows accessing remote virtual machines like they run
+              locally.
             </p>
           </figcaption>
         </figure>
@@ -208,38 +205,38 @@
       <header class="md-typeset">
         <h1 id="powerhouse">
           Automation Powerhouse
-          <a
-            href="#powerhouse"
-            class="headerlink"
-            title="Permanent link"
+          <a href="#powerhouse"
+             class="headerlink"
+             title="Permanent link"
           >
             ¶
           </a>
         </h1>
       </header>
       <script>
-        fetch("https://api.github.com/repos/cirruslabs/tart/releases?per_page=100")
-          .then((response) => response.json())
-          .then((releases) => {
-            let allDownloads = 0;
-            for (let release of releases) {
-              for (let asset of release.assets) {
-                if (asset && asset.content_type === "application/octet-stream") {
-                  allDownloads += asset.download_count || 0
-                }
-              }
-            }
-            let counterElement = document.getElementById('installation-counter');
-            if (counterElement) {
-              // Live installation count is available starting version 1.0.0
-              // Prior Tart was installed a little over 14,000 times, let's count them too
-              let installationPriorV1 = 14
-              counterElement.textContent = (installationPriorV1 + Math.round(allDownloads / 1000)) + ",000"
-            }
-          })
+          fetch("https://api.github.com/repos/cirruslabs/tart/releases?per_page=100")
+              .then((response) => response.json())
+              .then((releases) => {
+                  let allDownloads = 0;
+                  for (let release of releases) {
+                      for (let asset of release.assets) {
+                          if (asset && asset.content_type === "application/octet-stream") {
+                              allDownloads += asset.download_count || 0
+                          }
+                      }
+                  }
+                  let counterElement = document.getElementById('installation-counter');
+                  if (counterElement) {
+                      // Live installation count is available starting version 1.0.0
+                      // Prior Tart was installed a little over 14,000 times, let's count them too
+                      let installationPriorV1 = 14
+                      counterElement.textContent = (installationPriorV1 + Math.round(allDownloads / 1000)) + ",000"
+                  }
+              })
       </script>
       <h2>
-        With more than <strong id="installation-counter">25,000</strong> installations to date, Tart has been adopted for various scenarios.
+        With more than <strong id="installation-counter">25,000</strong> installations to date, Tart has been
+        adopted for various scenarios.
         Its applications range from powering CI/CD pipelines and reproducible local development environments,
         to helping in the testing of device management systems without actual physical devices.
       </h2>
@@ -254,10 +251,9 @@
       <header class="md-typeset">
         <h1 id="what-our-users-say">
           What our users say
-          <a
-            href="#what-our-users-say"
-            class="headerlink"
-            title="Permanent link"
+          <a href="#what-our-users-say"
+             class="headerlink"
+             title="Permanent link"
           >
             ¶
           </a>
@@ -265,70 +261,60 @@
       </header>
       <div class="mdx-users">
         <figure class="mdx-users__testimonial">
-          <img
-            src="assets/images/users/mitchell-hashimoto.webp"
-            alt="Mitchell Hashimoto"
-            loading="lazy"
-            width="200"
-            height="200"
+          <img src="assets/images/users/mikhail-tokarev.webp"
+               alt="Mikhail Tokarev"
+               loading="lazy"
+               width="200"
+               height="200"
           />
           <figcaption class="md-typeset">
-            <h2>Mitchell Hashimoto</h2>
             <h3>
-              <a href="https://www.hashicorp.com/" target="_blank">HashiCorp</a> co-founder
+              Mikhail Tokarev, CTO at <a href="https://codemagic.io/start/" target="_blank">Codemagic</a>
             </h3>
             <hr/>
             <cite>
-              I've been using "Cirrus Runners" since <a href="https://x.com/mitchellh/status/1731071326201561194" target="_blank">that tweet</a> and
-              it has been fantastic. Huge speed increase, huge cost decrease, zero maintenance, exactly what I wanted.
+              Thanks to the minimal overhead of using the Apple Virtualization
+              API, we’ve seen some performance improvements in booting new
+              virtual machines compared with Anka.
             </cite>
           </figcaption>
         </figure>
         <figure class="mdx-users__testimonial">
-          <img
-            src="assets/images/users/seb-jachec.webp"
-            alt="Sebastian Jachec"
-            loading="lazy"
-            width="200"
-            height="200"
+          <img src="assets/images/users/expo.webp"
+               alt="Expo"
+               loading="lazy"
+               width="200"
+               height="200"
           />
           <figcaption class="md-typeset">
-            <h2>Sebastian Jachec</h2>
             <h3>
-              Mobile Engineer at
-              <a href="https://daybridge.com/" target="_blank">Daybridge</a>
+              Infrastructure Team at <a href="https://expo.dev/" target="_blank">Expo</a>
             </h3>
             <hr/>
             <cite>
-              It&rsquo;s been plain-sailing with the
-              <a href="/integrations/github-actions">Cirrus Runners</a>&nbsp;&mdash;
-              they&rsquo;ve been great! They&rsquo;re consistently&nbsp;60+%
-              faster on&nbsp;workflows that we&nbsp;previously used Github
-              Actions&rsquo; macOS runners for.
+              Tart was the practical way for us to use the Virtualization framework. Cirrus Labs’
+              continued maintenance and support gives us confidence, and it is also important for us
+              to be able to read the source code when we need to understand an abstraction layer below.
             </cite>
           </figcaption>
         </figure>
         <figure class="mdx-users__testimonial">
-          <img
-            src="assets/images/users/max-lapides.webp"
-            alt="Max Lapides"
-            loading="lazy"
-            width="200"
-            height="200"
+          <img src="assets/images/users/snowflake.webp"
+               alt="Snowflake"
+               loading="lazy"
+               width="200"
+               height="200"
           />
           <figcaption class="md-typeset">
-            <h2>Max Lapides</h2>
             <h3>
-              Senior Mobile Engineer at
-              <a href="https://www.tonal.com/" target="_blank">Tonal</a>
+              Red Team at <a href="https://www.snowflake.com/" target="_blank">Snowflake</a>
             </h3>
             <hr/>
             <cite>
-              Previously, we were using the GitHub&#8209;hosted macOS runners
-              and our iOS build took ~30&nbsp;minutes. Now with
-              <a href="/integrations/github-actions">Cirrus Runners</a>, the iOS build only
-              takes ~12&nbsp;minutes. That’s a huge boost to our productivity,
-              and for only $150/month per runner it is much less expensive too.
+              The Snowflake Red Team had a need for macOS CI/CD and a segmented macOS development
+              environment. We solved this problem and shared our implementation with macOS EC2 and Tart.
+              We also automated this process with Terraform/Packer to simplify the deployment of our
+              infrastructure and machine images.
             </cite>
           </figcaption>
         </figure>
