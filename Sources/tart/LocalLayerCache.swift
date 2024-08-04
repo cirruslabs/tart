@@ -1,12 +1,17 @@
 import Foundation
 
 struct LocalLayerCache {
+  struct DigestInfo {
+    let range: Range<Data.Index>
+    let uncompressedContentDigest: String?
+  }
+
   let name: String
   let deduplicatedBytes: UInt64
   let diskURL: URL
 
   private let mappedDisk: Data
-  private var digestToRange: [String : Range<Data.Index>] = [:]
+  private var digestToRange: [String : DigestInfo] = [:]
 
   init?(_ name: String, _ deduplicatedBytes: UInt64, _ diskURL: URL, _ manifest: OCIManifest) throws {
     self.name = name
@@ -24,17 +29,20 @@ struct LocalLayerCache {
         return nil
       }
 
-      self.digestToRange[layer.digest] = Int(offset)..<Int(offset+uncompressedSize)
+      self.digestToRange[layer.digest] = DigestInfo(
+        range: Int(offset)..<Int(offset+uncompressedSize),
+        uncompressedContentDigest: layer.uncompressedContentDigest()!
+      )
 
       offset += uncompressedSize
     }
   }
 
-  func find(_ digest: String) -> Data? {
-    guard let foundRange = self.digestToRange[digest] else {
-      return nil
-    }
+  func findInfo(_ digest: String) -> DigestInfo? {
+    return self.digestToRange[digest]
+  }
 
-    return self.mappedDisk.subdata(in: foundRange)
+  func subdata(_ range: Range<Data.Index>) -> Data {
+    return self.mappedDisk.subdata(in: range)
   }
 }
