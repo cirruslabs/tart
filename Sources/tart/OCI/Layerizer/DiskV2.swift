@@ -213,18 +213,10 @@ class DiskV2: Disk {
       // If the local layer cache is used, only write chunks that differ
       // since the base disk can contain anything at any position
       if let rdisk = rdisk {
-        try rdisk.seek(toOffset: offset)
-        let actualContentsOnDisk = try rdisk.read(upToCount: chunk.count)
-
-        if actualContentsOnDisk == chunk {
-          offset += UInt64(chunk.count)
-
-          continue
-        }
-
         // F_PUNCHHOLE requires the holes to be aligned to file system block boundaries
-        let isAlignedForWholePunching = (offset % fsBlockSize) == 0 && (UInt64(chunk.count) % fsBlockSize) == 0
-        if isAlignedForWholePunching && chunk == zeroChunk {
+        let isHoleAligned = (offset % fsBlockSize) == 0 && (UInt64(chunk.count) % fsBlockSize) == 0
+
+        if isHoleAligned && chunk == zeroChunk {
           var arg = fpunchhole_t(fp_flags: 0, reserved: 0, fp_offset: off_t(offset), fp_length: off_t(chunk.count))
 
           if fcntl(disk.fileDescriptor, F_PUNCHHOLE, &arg) == -1 {
@@ -233,8 +225,13 @@ class DiskV2: Disk {
             throw RuntimeError.PullFailed("failed to punch hole: \(details)")
           }
         } else {
-          try disk.seek(toOffset: offset)
-          disk.write(chunk)
+          try rdisk.seek(toOffset: offset)
+          let actualContentsOnDisk = try rdisk.read(upToCount: chunk.count)
+
+          if chunk != actualContentsOnDisk {
+            try disk.seek(toOffset: offset)
+            disk.write(chunk)
+          }
         }
 
         offset += UInt64(chunk.count)
