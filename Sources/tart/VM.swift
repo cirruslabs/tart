@@ -354,7 +354,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
       // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
       try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: sync) :
-      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
+      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .automatic, synchronizationMode: sync)
 
     var device: VZStorageDeviceConfiguration
     if #available(macOS 14, *), vmConfig.os == .linux {
