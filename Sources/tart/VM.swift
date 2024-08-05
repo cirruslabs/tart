@@ -48,7 +48,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        serialPorts: [VZSerialPortConfiguration] = [],
        suspendable: Bool = false,
        audio: Bool = true,
-       clipboard: Bool = true
+       clipboard: Bool = true,
+       sync: VZDiskImageSynchronizationMode = .full
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -66,7 +67,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 serialPorts: serialPorts,
                                                 suspendable: suspendable,
                                                 audio: audio,
-                                                clipboard: clipboard
+                                                clipboard: clipboard,
+                                                sync: sync
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -294,7 +296,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     serialPorts: [VZSerialPortConfiguration],
     suspendable: Bool = false,
     audio: Bool = true,
-    clipboard: Bool = true
+    clipboard: Bool = true,
+    sync: VZDiskImageSynchronizationMode = .full
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -350,7 +353,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Storage
     let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
       // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
-      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: .full) :
+      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: sync) :
       try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false)
 
     var device: VZStorageDeviceConfiguration
