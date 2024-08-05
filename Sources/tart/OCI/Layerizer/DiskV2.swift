@@ -143,13 +143,14 @@ class DiskV2: Disk {
           }
 
           // Check if we already have this layer contents in the local layer cache
-          if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(diskLayer.digest) {
+          if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(digest: diskLayer.digest, offsetHint: diskWritingOffset) {
             // indicates that the locally cloned disk image has the same content at the given offset
             let localHit = localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest
               && localLayerInfo.range.lowerBound == diskWritingOffset
             // doesn't seem that localHit can ever be false if the localLayerCache is not nil
             // but let's just add extra safety here and check it
             if !localHit {
+              print("Local layer cache hit but the content is different \(localLayerInfo.range.lowerBound):\(diskWritingOffset) \(localLayerInfo.uncompressedContentDigest):\(uncompressedLayerContentDigest)")
               // Fulfil the layer contents from the local blob cache
               let data = localLayerCache.subdata(localLayerInfo.range)
               _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
