@@ -17,7 +17,6 @@ extension URL: Prunable {
   func deduplicatedSizeBytes() throws -> Int {
     let values = try resourceValues(forKeys: [.totalFileAllocatedSizeKey, .mayShareFileContentKey])
     // make sure the file's origin file is there and duplication works
-    var dedublicatedSize = 0
     if values.mayShareFileContent == true {
       return Int(deduplicatedBytes())
     }

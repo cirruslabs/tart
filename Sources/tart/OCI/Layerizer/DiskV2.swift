@@ -121,11 +121,14 @@ class DiskV2: Disk {
         // Launch a fetching and decompression task
         group.addTask {
           // No need to fetch and decompress anything if we've already done so
-          if try pullResumed && Digest.hash(diskURL, offset: diskWritingOffset, size: uncompressedLayerSize) == uncompressedLayerContentDigest {
-            // Update the progress
-            progress.completedUnitCount += Int64(diskLayer.size)
+          if pullResumed {
+            // do not check hash in the condition above to make it lazy e.g. only do expensive calculations if needed
+            if try Digest.hash(diskURL, offset: diskWritingOffset, size: uncompressedLayerSize) == uncompressedLayerContentDigest {
+              // Update the progress
+              progress.completedUnitCount += Int64(diskLayer.size)
 
-            return
+              return
+            }
           }
 
           // Open the disk file for writing
@@ -143,7 +146,7 @@ class DiskV2: Disk {
           if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(diskLayer.digest) {
             // indicates that the locally cloned disk image has the same content at the given offset
             let localHit = localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest
-              && localLayerInfo.range.lowerBound == diskWritingOffset
+                && localLayerInfo.range.lowerBound == diskWritingOffset
             // doesn't seem that localHit can ever be false if the localLayerCache is not nil
             // but let's just add extra safety here and check it
             if !localHit {
@@ -221,8 +224,7 @@ class DiskV2: Disk {
 
         // F_PUNCHHOLE requires the holes to be aligned to file system block boundaries
         let isAlignedForWholePunching = (offset % fsBlockSize) == 0 && (UInt64(chunk.count) % fsBlockSize) == 0
-
-        if chunk == zeroChunk {
+        if isAlignedForWholePunching && chunk == zeroChunk {
           var arg = fpunchhole_t(fp_flags: 0, reserved: 0, fp_offset: off_t(offset), fp_length: off_t(chunk.count))
 
           if fcntl(disk.fileDescriptor, F_PUNCHHOLE, &arg) == -1 {
