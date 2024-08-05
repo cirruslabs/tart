@@ -52,8 +52,8 @@ class Fetcher {
     try FileManager.default.removeItem(at: fileURL)
 
     Task {
-      for chunk in (0 ..< mappedFile.count).chunks(ofCount: 64 * 1024 * 1024) {
-        await dataCh.send(mappedFile.subdata(in: chunk))
+      for chunk in mappedFile.subdataChunks(ofCount: 64 * 1024 * 1024) {
+        await dataCh.send(chunk)
       }
 
       dataCh.finish()
