@@ -12,7 +12,7 @@ var vm: VM?
 struct IPNotFound: Error {
 }
 
-extension VZDiskImageSynchronizationMode : LosslessStringConvertible {
+extension VZDiskImageSynchronizationMode {
   public init?(_ description: String) {
     switch description {
     case "none":
@@ -23,19 +23,6 @@ extension VZDiskImageSynchronizationMode : LosslessStringConvertible {
       self = .full
     default:
       return nil
-    }
-  }
-
-  public var description: String {
-    switch self {
-    case .none:
-      return "none"
-    case .fsync:
-      return "fsync"
-    case .full:
-      return "full"
-    @unknown default:
-      return "unknown"
     }
   }
 }
