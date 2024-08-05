@@ -173,13 +173,19 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
 
-  @Option(help: ArgumentHelp("Set the root disk synchronization mode (Linux images only). Possible values: none, fsync, full.",
+  @Option(help: ArgumentHelp("Set the root disk options (e.g. --root-disk-opts=\"ro\" or --root-disk-opts=\"sync=none\")",
                              discussion: """
-                             'full' synchronizes data with the drive and ensures that it is written to permanent storage.
-                             'fsync' synchronizes data with the drive but doesn't guarantee that it is written to permanent storage.
-                             'none' doesn't synchronize data with the drive.
-                             """))
-  var sync: String = "full"
+                             Options are comma-separated and are as follows:
+
+                             * ro — attach the root disk in read-only mode instead of the default read-write (e.g. --root-disk-opts="ro")
+
+                             * sync=none — disable data synchronization with the permanent storage to increase performance at the cost of a higher chance of data loss (e.g. --root-disk-opts="sync=none")
+
+                             * sync=fsync — enable data synchronization with the permanent storage, but don't ensure that it was actually written (e.g. --root-disk-opts="sync=fsync")
+
+                             * sync=full — enable data synchronization with the permanent storage and ensure that it was actually written (e.g. --root-disk-opts="sync=full")
+                             """, valueName: "options"))
+  var rootDiskOpts: String = ""
 
   #if arch(arm64)
     @Flag(help: ArgumentHelp("Disables audio and entropy devices and switches to only Mac-specific input devices.", discussion: "Useful for running a VM that can be suspended via \"tart suspend\"."))
@@ -236,8 +242,6 @@ struct Run: AsyncParsableCommand {
         throw ValidationError("Seems you have a disk targeting x86 architecture (hence amd64 in the name). Please use an 'arm64' version of the disk.")
       }
     }
-
-    _ = try VZDiskImageSynchronizationMode(sync)
   }
 
   @MainActor
@@ -282,6 +286,9 @@ struct Run: AsyncParsableCommand {
       serialPorts.append(createSerialPortConfiguration(tty_read!, tty_write!))
     }
 
+    // Parse root disk options
+    let diskOptions = DiskOptions(rootDiskOpts)
+
     vm = try VM(
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
@@ -291,7 +298,7 @@ struct Run: AsyncParsableCommand {
       suspendable: suspendable,
       audio: !noAudio,
       clipboard: !noClipboard,
-      sync: VZDiskImageSynchronizationMode(sync)
+      sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw)
     )
 
     let vncImpl: VNC? = try {
@@ -818,31 +825,36 @@ struct AdditionalDisk {
 
   static func parseOptions(_ parseFrom: String) -> (String, Bool, String) {
     var arguments = parseFrom.split(separator: ":")
-    let options = arguments.last!.split(separator: ",")
 
-    var readOnly: Bool = false
-    var syncModeRaw: String = ""
+    let options = DiskOptions(String(arguments.last!))
+    if options.foundAtLeastOneOption {
+      arguments.removeLast()
+    }
 
-    var foundAtLeastOneOption: Bool = false
+    return (arguments.joined(separator: ":"), options.readOnly, options.syncModeRaw)
+  }
+}
+
+struct DiskOptions {
+  var readOnly: Bool = false
+  var syncModeRaw: String = ""
+  var foundAtLeastOneOption: Bool = false
+
+  init(_ parseFrom: String) {
+    let options = parseFrom.split(separator: ",")
 
     for option in options {
       switch true {
       case option == "ro":
-        readOnly = true
-        foundAtLeastOneOption = true
+        self.readOnly = true
+        self.foundAtLeastOneOption = true
       case option.hasPrefix("sync="):
-        syncModeRaw = String(option.dropFirst("sync=".count))
-        foundAtLeastOneOption = true
+        self.syncModeRaw = String(option.dropFirst("sync=".count))
+        self.foundAtLeastOneOption = true
       default:
         continue
       }
     }
-
-    if foundAtLeastOneOption {
-      arguments.removeLast()
-    }
-
-    return (arguments.joined(separator: ":"), readOnly, syncModeRaw)
   }
 }
 
