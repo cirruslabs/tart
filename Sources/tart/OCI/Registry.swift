@@ -223,7 +223,7 @@ class Registry {
 
     // chunked upload
     var uploadedBytes = 0
-    let chunks = fromData.subdataChunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
+    let chunks = fromData.chunks(ofCount: chunkSizeMb == 0 ? fromData.count : chunkSizeMb * 1_000_000)
     for (index, chunk) in chunks.enumerated() {
       let lastChunk = index == (chunks.count - 1)
       let (data, response) = try await dataRequest(

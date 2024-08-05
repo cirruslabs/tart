@@ -15,7 +15,7 @@ class DiskV2: Disk {
     // Compress the disk file as multiple individually decompressible streams,
     // each equal ``Self.layerLimitBytes`` bytes or less due to LZ4 compression
     try await withThrowingTaskGroup(of: (Int, OCIManifestLayer).self) { group in
-      for (index, data) in mappedDisk.subdataChunks(ofCount: layerLimitBytes).enumerated() {
+      for (index, data) in mappedDisk.chunks(ofCount: layerLimitBytes).enumerated() {
         // Respect the concurrency limit
         if index >= concurrency {
           if let (index, pushedLayer) = try await group.next() {
@@ -209,7 +209,7 @@ class DiskV2: Disk {
 
     var offset = offset
 
-    for chunk in data.subdataChunks(ofCount: holeGranularityBytes) {
+    for chunk in data.chunks(ofCount: holeGranularityBytes) {
       // If the local layer cache is used, only write chunks that differ
       // since the base disk can contain anything at any position
       if let rdisk = rdisk {
