@@ -150,7 +150,6 @@ class DiskV2: Disk {
             // doesn't seem that localHit can ever be false if the localLayerCache is not nil
             // but let's just add extra safety here and check it
             if !localHit {
-              print("Local layer cache hit but the content is different \(localLayerInfo.range.lowerBound):\(diskWritingOffset) \(localLayerInfo.uncompressedContentDigest):\(uncompressedLayerContentDigest)")
               // Fulfil the layer contents from the local blob cache
               let data = localLayerCache.subdata(localLayerInfo.range)
               _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
