@@ -266,8 +266,6 @@ struct Run: AsyncParsableCommand {
       try Softnet.configureSUIDBitIfNeeded()
     }
 
-    let additionalDiskAttachments = try additionalDiskAttachments()
-
     var serialPorts: [VZSerialPortConfiguration] = []
     if serial {
       let tty_fd = createPTY()
@@ -292,7 +290,7 @@ struct Run: AsyncParsableCommand {
     vm = try VM(
       vmDir: vmDir,
       network: userSpecifiedNetwork(vmDir: vmDir) ?? NetworkShared(),
-      additionalStorageDevices: additionalDiskAttachments,
+      additionalStorageDevices: try additionalDiskAttachments(),
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
       suspendable: suspendable,
@@ -506,15 +504,9 @@ struct Run: AsyncParsableCommand {
   }
 
   func additionalDiskAttachments() throws -> [VZStorageDeviceConfiguration] {
-    var result: [VZStorageDeviceConfiguration] = []
-
-    let expandedDiskPaths = disk.map { NSString(string:$0).expandingTildeInPath }
-
-    for rawDisk in expandedDiskPaths {
-      result.append(try AdditionalDisk(parseFrom: rawDisk).configuration)
+    try disk.map {
+      try AdditionalDisk(parseFrom: $0).configuration
     }
-
-    return result
   }
 
   func directoryShares() throws -> [VZDirectorySharingDeviceConfiguration] {
@@ -760,6 +752,10 @@ struct AdditionalDisk {
 
       return VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment)
     }
+
+    // Expand the tilde (~) since at this point we're dealing with a local path,
+    // and "expandingTildeInPath" seems to corrupt the remote URLs like nbd://
+    let diskPath = NSString(string: diskPath).expandingTildeInPath
 
     let diskFileURL = URL(fileURLWithPath: diskPath)
 
