@@ -297,7 +297,7 @@ class VMStorageOCI: PrunableStorage {
 
     // Now, find the best match based on how many bytes we'll deduplicate
     let choosen = candidates.filter {
-      $0.deduplicatedBytes > 0
+      $0.deduplicatedBytes > 1024 * 1024 * 1024 // save at least 1GB
     }.max { left, right in
       return left.deduplicatedBytes < right.deduplicatedBytes
     }

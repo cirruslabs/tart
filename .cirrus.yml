@@ -8,11 +8,11 @@ task:
       name: dev-mini
     resources:
       tart-vms: 1
+  build_script:
+    - swift build
   test_script:
     - swift test
   integration_test_script:
-    # Build Tart
-    - swift build
     - codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart
     - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
     # Run integration tests

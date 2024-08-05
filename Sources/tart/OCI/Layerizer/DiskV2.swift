@@ -121,11 +121,14 @@ class DiskV2: Disk {
         // Launch a fetching and decompression task
         group.addTask {
           // No need to fetch and decompress anything if we've already done so
-          if try pullResumed && Digest.hash(diskURL, offset: diskWritingOffset, size: uncompressedLayerSize) == uncompressedLayerContentDigest {
-            // Update the progress
-            progress.completedUnitCount += Int64(diskLayer.size)
+          if pullResumed {
+            // do not check hash in the condition above to make it lazy e.g. only do expensive calculations if needed
+            if try Digest.hash(diskURL, offset: diskWritingOffset, size: uncompressedLayerSize) == uncompressedLayerContentDigest {
+              // Update the progress
+              progress.completedUnitCount += Int64(diskLayer.size)
 
-            return
+              return
+            }
           }
 
           // Open the disk file for writing
@@ -140,9 +143,17 @@ class DiskV2: Disk {
           }
 
           // Check if we already have this layer contents in the local layer cache
-          if let localLayerCache = localLayerCache, let data = localLayerCache.find(diskLayer.digest), Digest.hash(data) == uncompressedLayerContentDigest {
-            // Fulfil the layer contents from the local blob cache
-            _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
+          if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(digest: diskLayer.digest, offsetHint: diskWritingOffset) {
+            // indicates that the locally cloned disk image has the same content at the given offset
+            let localHit = localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest
+              && localLayerInfo.range.lowerBound == diskWritingOffset
+            // doesn't seem that localHit can ever be false if the localLayerCache is not nil
+            // but let's just add extra safety here and check it
+            if !localHit {
+              // Fulfil the layer contents from the local blob cache
+              let data = localLayerCache.subdata(localLayerInfo.range)
+              _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
+            }
             try disk.close()
 
             // Update the progress
