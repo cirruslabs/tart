@@ -32,9 +32,9 @@ struct LocalLayerCache {
       }
 
       let info = DigestInfo(
-          range: Int(offset)..<Int(offset + uncompressedSize),
-          compressedDigest: layer.digest,
-          uncompressedContentDigest: layer.uncompressedContentDigest()!
+        range: Int(offset)..<Int(offset + uncompressedSize),
+        compressedDigest: layer.digest,
+        uncompressedContentDigest: layer.uncompressedContentDigest()!
       )
       self.digestToRange[layer.digest] = info
       self.offsetToRange[offset] = info
