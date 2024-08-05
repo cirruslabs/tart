@@ -146,7 +146,7 @@ class DiskV2: Disk {
           if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(diskLayer.digest) {
             // indicates that the locally cloned disk image has the same content at the given offset
             let localHit = localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest
-                && localLayerInfo.range.lowerBound == diskWritingOffset
+              && localLayerInfo.range.lowerBound == diskWritingOffset
             // doesn't seem that localHit can ever be false if the localLayerCache is not nil
             // but let's just add extra safety here and check it
             if !localHit {
