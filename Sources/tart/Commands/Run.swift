@@ -12,8 +12,24 @@ var vm: VM?
 struct IPNotFound: Error {
 }
 
+@available(macOS 14, *)
+extension VZDiskSynchronizationMode {
+  public init(_ description: String) throws {
+    switch description {
+    case "none":
+      self = .none
+    case "full":
+      self = .full
+    case "":
+      self = .full
+    default:
+      throw RuntimeError.VMConfigurationError("unsupported disk synchronization mode: \"\(description)\"")
+    }
+  }
+}
+
 extension VZDiskImageSynchronizationMode {
-  public init?(_ description: String) {
+  public init(_ description: String) throws {
     switch description {
     case "none":
       self = .none
@@ -21,8 +37,10 @@ extension VZDiskImageSynchronizationMode {
       self = .fsync
     case "full":
       self = .full
+    case "":
+      self = .full
     default:
-      return nil
+      throw RuntimeError.VMConfigurationError("unsupported disk image synchronization mode: \"\(description)\"")
     }
   }
 }
@@ -219,9 +237,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    if(VZDiskImageSynchronizationMode(sync) == nil) {
-      throw ValidationError("Invalid disk synchronization mode: \(sync)")
-    }
+    _ = try VZDiskImageSynchronizationMode(sync)
   }
 
   @MainActor
@@ -275,7 +291,7 @@ struct Run: AsyncParsableCommand {
       suspendable: suspendable,
       audio: !noAudio,
       clipboard: !noClipboard,
-      sync: VZDiskImageSynchronizationMode(sync) ?? .full
+      sync: VZDiskImageSynchronizationMode(sync)
     )
 
     let vncImpl: VNC? = try {
@@ -728,13 +744,11 @@ struct AdditionalDisk {
         throw UnsupportedOSError("attaching Network Block Devices", "are")
       }
 
-      let syncMode = try parseSyncMode(syncModeRaw)
-
       let nbdAttachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
         url: diskURL!,
         timeout: 30,
         isForcedReadOnly: diskReadOnly,
-        synchronizationMode: syncMode
+        synchronizationMode: try VZDiskSynchronizationMode(syncModeRaw)
       )
 
       return VZVirtioBlockDeviceConfiguration(attachment: nbdAttachment)
@@ -762,7 +776,7 @@ struct AdditionalDisk {
       }
 
       let blockAttachment = try VZDiskBlockDeviceStorageDeviceAttachment(fileHandle: FileHandle(fileDescriptor: fd, closeOnDealloc: true),
-                                                                         readOnly: diskReadOnly, synchronizationMode: try parseSyncMode(syncModeRaw))
+                                                                         readOnly: diskReadOnly, synchronizationMode: try VZDiskSynchronizationMode(syncModeRaw))
 
       return VZVirtioBlockDeviceConfiguration(attachment: blockAttachment)
     }
@@ -796,7 +810,7 @@ struct AdditionalDisk {
       url: diskFileURL,
       readOnly: diskReadOnly,
       cachingMode: .automatic,
-      synchronizationMode: try Self.parseImageSyncMode(syncModeRaw)
+      synchronizationMode: try VZDiskImageSynchronizationMode(syncModeRaw)
     )
 
     return VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment)
@@ -829,33 +843,6 @@ struct AdditionalDisk {
     }
 
     return (arguments.joined(separator: ":"), readOnly, syncModeRaw)
-  }
-
-  @available(macOS 14, *)
-  static func parseSyncMode(_ parseFrom: String) throws -> VZDiskSynchronizationMode {
-    switch parseFrom {
-    case "none":
-      return .none
-    case "full":
-      return .full
-    case "":
-      return .full
-    default:
-      throw RuntimeError.VMConfigurationError("unsupported disk synchronization mode: \"\(parseFrom)\"")
-    }
-  }
-
-  static func parseImageSyncMode(_ parseFrom: String) throws -> VZDiskImageSynchronizationMode {
-    switch parseFrom {
-    case "none":
-      return .none
-    case "full":
-      return .full
-    case "":
-      return .full
-    default:
-      throw RuntimeError.VMConfigurationError("unsupported disk image synchronization mode: \"\(parseFrom)\"")
-    }
   }
 }
 
