@@ -10,6 +10,7 @@ enum RegistryError: Error {
 }
 
 enum HTTPMethod: String {
+  case HEAD = "HEAD"
   case GET = "GET"
   case POST = "POST"
   case PUT = "PUT"
@@ -21,6 +22,7 @@ enum HTTPCode: Int {
   case Created = 201
   case Accepted = 202
   case Unauthorized = 401
+  case NotFound = 404
 }
 
 extension Data {
@@ -189,7 +191,7 @@ class Registry {
     return URLComponents(url: uploadLocation.absolutize(baseURL), resolvingAgainstBaseURL: true)!
   }
 
-  public func pushBlob(fromData: Data, chunkSizeMb: Int = 0) async throws -> String {
+  public func pushBlob(fromData: Data, chunkSizeMb: Int = 0, digest: String? = nil) async throws -> String {
     // Initiate a blob upload
     let (data, postResponse) = try await dataRequest(.POST, endpointURL("\(namespace)/blobs/uploads/"),
                                                      headers: ["Content-Length": "0"])
@@ -201,7 +203,7 @@ class Registry {
     // Figure out where to upload the blob
     var uploadLocation = try uploadLocationFromResponse(postResponse)
 
-    let digest = Digest.hash(fromData)
+    let digest = digest ?? Digest.hash(fromData)
 
     if chunkSizeMb == 0 {
       // monolithic upload
@@ -247,6 +249,19 @@ class Registry {
     }
 
     return digest
+  }
+
+  public func blobExists(_ digest: String) async throws -> Bool {
+    let (data, response) = try await dataRequest(.HEAD, endpointURL("\(namespace)/blobs/\(digest)"))
+
+    switch response.statusCode {
+    case HTTPCode.Ok.rawValue:
+      return true
+    case HTTPCode.NotFound.rawValue:
+      return false
+    default:
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "checking blob", code: response.statusCode, details: data.asText())
+    }
   }
 
   public func pullBlob(_ digest: String, handler: (Data) async throws -> Void) async throws {
