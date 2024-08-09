@@ -26,8 +26,11 @@ class DiskV2: Disk {
         // Launch a disk layer pushing task
         group.addTask {
           let compressedData = try (data as NSData).compressed(using: .lz4) as Data
+          let compressedDataDigest = Digest.hash(compressedData)
 
-          let layerDigest = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb)
+          if try await !registry.blobExists(compressedDataDigest) {
+            _ = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb, digest: compressedDataDigest)
+          }
 
           // Update progress using a relative value
           progress.completedUnitCount += Int64(data.count)
@@ -35,7 +38,7 @@ class DiskV2: Disk {
           return (index, OCIManifestLayer(
             mediaType: diskV2MediaType,
             size: compressedData.count,
-            digest: layerDigest,
+            digest: compressedDataDigest,
             uncompressedSize: UInt64(data.count),
             uncompressedContentDigest: Digest.hash(data)
           ))
