@@ -34,13 +34,14 @@ class DiskV2: Disk {
               _ = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb, digest: compressedDataDigest)
             }
           } recoverFromFailure: { error in
-            if error is RuntimeError {
-              return .throw
+            if error is URLError {
+              print("Error: \(error.localizedDescription)")
+              print("Attempting to re-try...")
+
+              return .retry
             }
 
-            print("Error \"\(error.localizedDescription)\" while uploading disk layer \(index), attempting to re-try...")
-
-            return .retry
+            return .throw
           }
 
           // Update progress using a relative value

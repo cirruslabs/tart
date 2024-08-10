@@ -208,14 +208,14 @@ class VMStorageOCI: PrunableStorage {
 
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
         } recoverFromFailure: { error in
-          if error is RuntimeError {
-            return .throw
+          if error is Retryable {
+            print("Error: \(error.localizedDescription)")
+            print("Attempting to re-try...")
+
+            return .retry
           }
 
-          print("Error: \(error.localizedDescription)")
-          print("Attempting to re-try...")
-
-          return .retry
+          return .throw
         }
         try move(digestName, from: tmpVMDir)
         transaction.finish()
