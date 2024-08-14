@@ -229,7 +229,7 @@ struct Run: AsyncParsableCommand {
 
     if suspendable {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
-      if (config.platform is Linux) {
+      if !(config.platform is PlatformSuspendable) {
         throw ValidationError("You can only suspend macOS VMs")
       }
       if dir.count > 0 {
