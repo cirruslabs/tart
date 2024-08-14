@@ -8,7 +8,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
 
 #if arch(arm64)
 
-  struct Darwin: Platform {
+  struct Darwin: PlatformSuspendable {
     var ecid: VZMacMachineIdentifier
     var hardwareModel: VZMacHardwareModel
 
@@ -103,18 +103,32 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
     func keyboards() -> [VZKeyboardConfiguration] {
       if #available(macOS 14, *) {
         // Mac keyboard is only supported by guests starting with macOS Ventura
-        return [VZMacKeyboardConfiguration()]
+        return [VZUSBKeyboardConfiguration(), VZMacKeyboardConfiguration()]
       } else {
         return [VZUSBKeyboardConfiguration()]
       }
     }
 
+    func keyboardsSuspendable() -> [VZKeyboardConfiguration] {
+      if #available(macOS 14, *) {
+        return [VZMacKeyboardConfiguration()]
+      } else {
+        // fallback to the regular configuration
+        return keyboards()
+      }
+    }
+
     func pointingDevices() -> [VZPointingDeviceConfiguration] {
-      if #available(macOS 13, *) {
+      // Trackpad is only supported by guests starting with macOS Ventura
+      [VZUSBScreenCoordinatePointingDeviceConfiguration(), VZMacTrackpadConfiguration()]
+    }
+
+    func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration] {
+      if #available(macOS 14, *) {
         return [VZMacTrackpadConfiguration()]
       } else {
         // fallback to the regular configuration
-        return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
+        return pointingDevices()
       }
     }
   }
