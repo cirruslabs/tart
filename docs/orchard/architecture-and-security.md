@@ -16,10 +16,10 @@ Similarly to web-browsers (that rely on the [public key infrastructure](https://
 
 This hybrid approach is needed because the Controller can be configured in two ways:
 
-* *Controller with a self-signed certificate*
-    * configured automatically on first Controller start-up when no `--controller-cert` and `--controller-key` command-line arguments are passed
 * *Controller with a publicly valid certificate*
     * can be configured manually by passing `--controller-cert` and `--controller-key` command-line arguments to `orchard controller run`
+* *Controller with a self-signed certificate*
+    * configured automatically on first Controller start-up when no `--controller-cert` and `--controller-key` command-line arguments are passed
 
 Below we'll explain how Orchard client and Worker secure the connection when accessing these two Controller types.
 
