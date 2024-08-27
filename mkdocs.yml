@@ -91,13 +91,19 @@ nav:
   - "Home": index.md
   - "Quick Start": quick-start.md
   - "Integrations":
-    - "Self-hosted CI": integrations/cirrus-cli.md
-    - "GitHub Actions": https://cirrus-runners.app/
-    - "GitLab Runner": integrations/gitlab-runner.md
-    - "Buildkite": integrations/buildkite.md
-    - "Managing VMs": integrations/vm-management.md
+      - "Self-hosted CI": integrations/cirrus-cli.md
+      - "GitHub Actions": https://cirrus-runners.app/
+      - "GitLab Runner": integrations/gitlab-runner.md
+      - "Buildkite": integrations/buildkite.md
+      - "Managing VMs": integrations/vm-management.md
   - "Support & Licensing": licensing.md
-  - "Orchestration": https://github.com/cirruslabs/orchard
+  - "Orchestration":
+      - "Quick Start": orchard/quick-start.md
+      - "Architecture and Security": orchard/architecture-and-security.md
+      - "Deploying Controller": orchard/deploying-controller.md
+      - "Deploying Workers": orchard/deploying-workers.md
+      - "Managing the Cluster": orchard/managing-cluster.md
+      - "Integrating with the API": orchard/integration-guide.md
   - "FAQ": faq.md
   - "Legal":
       - 'Terms of Service': legal/terms.md
