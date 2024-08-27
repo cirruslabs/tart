@@ -10,7 +10,7 @@ Normally you deploy a single Controller that needs to be accessible to both the 
 
 ## Security
 
-When an Orchard Client or a Worker connects to the Controller, they need to establish trust and verify that they're talking to the right Controller, so that no [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) is be possible.
+When an Orchard Client or a Worker connects to the Controller, they need to establish trust and verify that they're talking to the right Controller, so that no [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) is possible.
 
 Similarly to web-browsers (that rely on the [public key infrastructure](https://en.wikipedia.org/wiki/Public_key_infrastructure)) and SSH (which relies on semi-automated fingerprint verification), Orchard combines these two traits in a hybrid approach by defaulting to automatic PKI verification (can be disabled by [`--no-pki`](#--no-pki-override)) and falling-back to a manual verification for self-signed certificates.
 
