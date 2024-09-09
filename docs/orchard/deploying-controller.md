@@ -1,25 +1,24 @@
 ## Introduction
 
-Compared to Worker, which needs to be deployed on a macOS machine, Controller can be deployed on Linux too.
+Compared to Worker, which can only be deployed on a macOS machine, Controller can be also deployed on Linux.
 
 In fact, we've made a [container image](https://github.com/cirruslabs/orchard/pkgs/container/orchard) to ease deploying the Controller in container-native environments such as Kubernetes.
 
-Orchard API is secured by default: all requests must be authenticated with credentials of a service account.
-When you first run Orchard Controller, you can specify `ORCHARD_BOOTSTRAP_ADMIN_TOKEN` which will automatically
-create a service account named `bootstrap-admin` with all privileges. Let's first generate `ORCHARD_BOOTSTRAP_ADMIN_TOKEN`:
+Another thing to keep in mind that Orchard API is secured by default: all requests must be authenticated with the credentials of a service account. When you first run Orchard Controller, a `bootstrap-admin` service account will be created automatically and credentials will be printed to the standard output.
+
+If you already have a token in mind that you want to use for the `bootstrap-admin` service account, or you've got locked out and want this service account with a well-known password back, you can set the `ORCHARD_BOOTSTRAP_ADMIN_TOKEN` when running the controller.
+
+For example to use a secure, random value:
 
 ```bash
-export ORCHARD_BOOTSTRAP_ADMIN_TOKEN=$(openssl rand -hex 32)
+ORCHARD_BOOTSTRAP_ADMIN_TOKEN=$(openssl rand -hex 32) orchard controller run
 ```
 
 ## Deployment Methods
 
-While you can always run `orchard controller run` manually with the required arguments, this method of deploying the Controller is not recommended.
+While you can always start `orchard controller run` manually with the required arguments, this method is not recommended due to lack of persistence.
 
-Instead, we've listed a more persistent methods of a Controller deployment below.
-
-Now you can run Orchard Controller on a server of your choice. In the following sections you'll find several examples of
-how to run Orchard Controller in various environments. Feel free to submit PRs with more examples.
+In the following sections you'll find several examples of how to run Orchard Controller in various environments in a more persistent way. Feel free to submit PRs with more examples.
 
 ### Google Compute Engine
 
@@ -62,3 +61,135 @@ And select it as the default context:
 ```bash
 orchard context default production
 ```
+
+### Kubernetes (GKE, EKS, etc.)
+
+The easiest way to run Orchard Controller on Kubernetes is to expose it through the `LoadBalancer` service.
+
+This way no fiddling with the TLS certificates and HTTP proxying is needed, and most cloud providers will allocate a ready-to-use IP-address that can directly used in `orchard context create` and `orchard worker run` commands, or additionally assigned to a DNS domain name for a more memorable hostname.
+
+Do deploy on Kubernetes, only three resources are needed:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: orchard-controller
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # Uncomment this when deploying on Amazon's EKS and
+  # change to the desired storage class name if needed
+  # storageClassName: gp2
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orchard-controller
+spec:
+  serviceName: orchard-controller
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchard-controller
+  template:
+    metadata:
+      labels:
+        app: orchard-controller
+    spec:
+      containers:
+        - name: orchard-controller
+          image: ghcr.io/cirruslabs/orchard:latest
+          volumeMounts:
+            - mountPath: /data
+              name: orchard-controller
+      volumes:
+        - name: orchard-controller
+          persistentVolumeClaim:
+            claimName: orchard-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchard-controller
+spec:
+  selector:
+    app: orchard-controller
+  ports:
+    - protocol: TCP
+      port: 6120
+      targetPort: 6120
+  type: LoadBalancer
+```
+
+Once deployed, the bootstrap credentials will be printed to the standard output. You can inspect them by running `kubectl logs deployment/orchard-controller`.
+
+The resources above ensure that Controller's database is stored in a persistent storage and survives restats.
+
+You can further allocate a static IP address and use it by adding annotations to the `Service` resource. Here's how to do that:
+
+* on Google's GKE: <https://cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters#spd-static-ip>
+* on Amazon's EKS: <https://kubernetes.io/docs/reference/labels-annotations-taints/#service-beta-kubernetes-io-aws-load-balancer-eip-allocations>
+
+### systemd service on Debian-based distributions
+
+This should work for most Debian-based distributions like Debian, Ubuntu, etc.
+
+Firstly, make sure that the APT transport for downloading packages via HTTPS and common X.509 certificates are installed:
+
+```shell
+sudo apt-get update && sudo apt-get -y install apt-transport-https ca-certificates
+```
+
+Then, add the Cirrus Labs repository:
+
+```shell
+echo "deb [trusted=yes] https://apt.fury.io/cirruslabs/ /" | sudo tee /etc/apt/sources.list.d/cirruslabs.list
+```
+
+Update the package index files and install the Orchard Controller:
+
+```shell
+sudo apt-get update && sudo apt-get -y install orchard-controller
+```
+
+Finally, enable and start the Orchard Controller systemd service:
+
+```shell
+sudo systemctl enable orchard-controller
+sudo systemctl start orchard-controller
+```
+
+The bootstrap credentials will be printed to the standard output. You can inspect them by running `sudo systemctl status orhcard-controller` or `journalctl -u orchard-controller`.
+
+### systemd service on RPM-based distributions
+
+This should work for most RPM-based distributions like Fedora, CentOS, etc.
+
+First, create a `/etc/yum.repos.d/cirruslabs.repo` file with the following contents:
+
+```ini
+[cirruslabs]
+name=Cirrus Labs Repo
+baseurl=https://yum.fury.io/cirruslabs/
+enabled=1
+gpgcheck=0
+```
+
+Then, install the Orchard Controller:
+
+```shell
+sudo yum -y install orchard-controller
+```
+
+Finally, enable and start the Orchard Controller systemd service:
+
+```shell
+systemctl enable orchard-controller
+systemctl start orchard-controller
+```
+
+The bootstrap credentials will be printed to the standard output. You can inspect them by running `sudo systemctl status orhcard-controller` or `journalctl -u orchard-controller`.

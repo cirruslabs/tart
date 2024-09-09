@@ -2,7 +2,7 @@
 
 In order to backup the Orchard Controller, simply copy its `ORCHARD_HOME` (which defaults to `~/.orchard/`) directory somewhere safe and restore it when needed.
 
-This directory contains the BadgerDB database <>.
+This directory contains a BadgerDB database that Controller uses to store state and an X.509 certificate with key.
 
 ## Upgrades
 
