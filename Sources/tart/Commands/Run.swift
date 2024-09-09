@@ -346,7 +346,35 @@ struct Run: AsyncParsableCommand {
           }
         #endif
 
-        try await vm!.start(recovery: recovery, resume: resume)
+        do {
+          try await vm!.start(recovery: recovery, resume: resume)
+        } catch let error as VZError {
+          if error.code == .virtualMachineLimitExceeded {
+            var hint = ""
+
+            do {
+              let runningVMs: [String] = try localStorage.list().compactMap { (name, vmDir) in
+                if try !vmDir.running() {
+                  return nil
+                }
+
+                return name
+              }
+
+              if !runningVMs.isEmpty {
+                let runningVMsJoined = runningVMs.joined(separator: ", ")
+
+                hint = " (other running VMs: \(runningVMsJoined))"
+              }
+            } catch {
+              // we can't provide any hint
+            }
+
+            throw RuntimeError.VirtualMachineLimitExceeded(hint)
+          }
+
+          throw error
+        }
 
         if let vncImpl = vncImpl {
           let vncURL = try await vncImpl.waitForURL(netBridged: !netBridged.isEmpty)
