@@ -71,6 +71,7 @@ enum RuntimeError : Error {
   case OCIUnsupportedDiskFormat(_ format: String)
   case SuspendFailed(_ message: String)
   case PullFailed(_ message: String)
+  case VirtualMachineLimitExceeded(_ hint: String)
 }
 
 protocol HasExitCode {
@@ -128,6 +129,8 @@ extension RuntimeError : CustomStringConvertible {
       return "Failed to suspend the VM: \(message)"
     case .PullFailed(let message):
       return message
+    case .VirtualMachineLimitExceeded(let hint):
+      return "The number of VMs exceeds the system limit\(hint)"
     }
   }
 }
