@@ -317,15 +317,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Audio
     let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
 
-    let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
-    let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
-
     if audio && !suspendable {
+      let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
+      let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
+
       inputAudioStreamConfiguration.source = VZHostAudioInputStreamSource()
       outputAudioStreamConfiguration.sink = VZHostAudioOutputStreamSink()
+
+      soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
+    } else {
+      // just a null speaker
+      soundDeviceConfiguration.streams = [VZVirtioSoundDeviceOutputStreamConfiguration()]
     }
 
-    soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
     configuration.audioDevices = [soundDeviceConfiguration]
 
     // Keyboard and mouse
