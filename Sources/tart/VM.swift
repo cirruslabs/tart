@@ -315,9 +315,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
 
     // Audio
-    if audio && !suspendable {
-      let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
+    let soundDeviceConfiguration = VZVirtioSoundDeviceConfiguration()
 
+    if audio && !suspendable {
       let inputAudioStreamConfiguration = VZVirtioSoundDeviceInputStreamConfiguration()
       let outputAudioStreamConfiguration = VZVirtioSoundDeviceOutputStreamConfiguration()
 
@@ -325,8 +325,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       outputAudioStreamConfiguration.sink = VZHostAudioOutputStreamSink()
 
       soundDeviceConfiguration.streams = [inputAudioStreamConfiguration, outputAudioStreamConfiguration]
-      configuration.audioDevices = [soundDeviceConfiguration]
+    } else {
+      // just a null speaker
+      soundDeviceConfiguration.streams = [VZVirtioSoundDeviceOutputStreamConfiguration()]
     }
+
+    configuration.audioDevices = [soundDeviceConfiguration]
 
     // Keyboard and mouse
     if suspendable, let platformSuspendable = vmConfig.platform.self as? PlatformSuspendable {

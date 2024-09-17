@@ -70,7 +70,7 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Force open a UI window, even when VNC is enabled.", visibility: .private))
   var graphics: Bool = false
 
-  @Flag(help: "Do not configure audio device.")
+  @Flag(help: "Disable audio pass-through to host.")
   var noAudio: Bool = false
 
   @Flag(help: ArgumentHelp(
