@@ -1,13 +1,13 @@
 {
-  "originHash" : "a10a6363a6d2cd2761653d1587b81f5e3d55b1f981b7d6a2964b34da91addf13",
+  "originHash" : "6a15657d8cb1d3e2b447f31aff5b47d6a9655d2262e48ca76476ba525435269b",
   "pins" : [
     {
       "identity" : "antlr4",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/antlr/antlr4",
       "state" : {
-        "branch" : "dev",
-        "revision" : "2a7904a595479954ccfb1c78124fc3d7f5bebcb1"
+        "revision" : "cc82115a4e7f53d71d9d905caa2c2dfa4da58899",
+        "version" : "4.13.2"
       }
     },
     {

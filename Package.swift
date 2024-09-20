@@ -15,7 +15,7 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0"),
     .package(url: "https://github.com/apple/swift-async-algorithms", branch: "main"),
     .package(url: "https://github.com/malcommac/SwiftDate", from: "7.0.0"),
-    .package(url: "https://github.com/antlr/antlr4", branch: "dev"),
+    .package(url: "https://github.com/antlr/antlr4", exact: "4.13.2"),
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.2.0")),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.6"),
     .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.36.0"),
