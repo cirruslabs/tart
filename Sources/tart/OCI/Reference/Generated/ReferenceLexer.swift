@@ -1,4 +1,4 @@
-// Generated from java-escape by ANTLR 4.11.1
+// Generated from Reference.g4 by ANTLR 4.13.2
 import Antlr4
 
 open class ReferenceLexer: Lexer {
@@ -49,7 +49,7 @@ open class ReferenceLexer: Lexer {
 
 	public
 	required init(_ input: CharStream) {
-	    RuntimeMetaData.checkVersion("4.11.1", RuntimeMetaData.VERSION)
+	    RuntimeMetaData.checkVersion("4.13.2", RuntimeMetaData.VERSION)
 		super.init(input)
 		_interp = LexerATNSimulator(self, ReferenceLexer._ATN, ReferenceLexer._decisionToDFA, ReferenceLexer._sharedContextCache)
 	}

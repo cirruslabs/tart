@@ -1,4 +1,4 @@
-// Generated from java-escape by ANTLR 4.11.1
+// Generated from Reference.g4 by ANTLR 4.13.2
 import Antlr4
 
 open class ReferenceParser: Parser {
@@ -41,7 +41,7 @@ open class ReferenceParser: Parser {
 	static let VOCABULARY = Vocabulary(_LITERAL_NAMES, _SYMBOLIC_NAMES)
 
 	override open
-	func getGrammarFileName() -> String { return "java-escape" }
+	func getGrammarFileName() -> String { return "Reference.g4" }
 
 	override open
 	func getRuleNames() -> [String] { return ReferenceParser.ruleNames }
@@ -60,7 +60,7 @@ open class ReferenceParser: Parser {
 
 	override public
 	init(_ input:TokenStream) throws {
-	    RuntimeMetaData.checkVersion("4.11.1", RuntimeMetaData.VERSION)
+	    RuntimeMetaData.checkVersion("4.13.2", RuntimeMetaData.VERSION)
 		try super.init(input)
 		_interp = ParserATNSimulator(self,ReferenceParser._ATN,ReferenceParser._decisionToDFA, ReferenceParser._sharedContextCache)
 	}
@@ -460,7 +460,7 @@ open class ReferenceParser: Parser {
 		 		setState(63)
 		 		try _errHandler.sync(self)
 		 		_la = try _input.LA(1)
-		 		if ((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0) {
+		 		if (((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0)) {
 		 			setState(62)
 		 			try separator()
 
@@ -611,7 +611,7 @@ open class ReferenceParser: Parser {
 		 	setState(84)
 		 	try _errHandler.sync(self)
 		 	_la = try _input.LA(1)
-		 	while ((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0) {
+		 	while (((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0)) {
 		 		setState(79)
 		 		try separator()
 		 		setState(80)
@@ -664,7 +664,7 @@ open class ReferenceParser: Parser {
 		 	try enterOuterAlt(_localctx, 1)
 		 	setState(87)
 		 	_la = try _input.LA(1)
-		 	if (!((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0)) {
+		 	if (!(((Int64(_la) & ~0x3f) == 0 && ((Int64(1) << _la) & 88) != 0))) {
 		 	try _errHandler.recoverInline(self)
 		 	}
 		 	else {
