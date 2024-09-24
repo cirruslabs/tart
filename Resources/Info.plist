@@ -2,22 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key>
-    <string>tart</string>
-    <key>CFBundleIdentifier</key>
-    <string>org.cirruslabs.tart</string>
-    <key>CFBundleExecutable</key>
-    <string>tart</string>
-    <key>LSBackgroundOnly</key>
-    <string>1</string>
-    <key>CFBundleIconFiles</key>
-    <array>
-        <string>AppIcon.png</string>
-    </array>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
+	<key>CFBundleName</key>
+	<string>Tart</string>
+	<key>CFBundleDisplayName</key>
+	<string>Tart</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.cirruslabs.tart</string>
+	<key>CFBundleExecutable</key>
+	<string>tart</string>
+	<key>LSBackgroundOnly</key>
+	<string>1</string>
+	<key>CFBundleIconFiles</key>
+	<array>
+		<string>AppIcon.png</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
