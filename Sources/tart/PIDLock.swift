@@ -11,7 +11,7 @@ class PIDLock {
     if fd == -1 {
       let details = Errno(rawValue: CInt(errno))
 
-      throw RuntimeError.PIDLockFailed("failed to open lock file \(url): \(details)")
+      throw RuntimeError.PIDLockMissing("failed to open lock file \(url): \(details)")
     }
   }
 
