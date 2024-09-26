@@ -24,6 +24,8 @@ class VMStorageHelper {
   private static func missingVMWrap<R: Any>(_ name: String, closure: () throws -> R) throws -> R {
     do {
       return try closure()
+    } catch RuntimeError.PIDLockMissing {
+      throw RuntimeError.VMDoesNotExist(name: name)
     } catch {
       if error.isFileNotFound() {
         throw RuntimeError.VMDoesNotExist(name: name)
@@ -59,6 +61,7 @@ enum RuntimeError : Error {
   case InvalidDiskSize(_ message: String)
   case FailedToUpdateAccessDate(_ message: String)
   case PIDLockFailed(_ message: String)
+  case PIDLockMissing(_ message: String)
   case FailedToParseRemoteName(_ message: String)
   case VMTerminationFailed(_ message: String)
   case ImproperlyFormattedHost(_ host: String, _ hint: String)
@@ -104,6 +107,8 @@ extension RuntimeError : CustomStringConvertible {
     case .FailedToUpdateAccessDate(let message):
       return message
     case .PIDLockFailed(let message):
+      return message
+    case .PIDLockMissing(let message):
       return message
     case .FailedToParseRemoteName(let cause):
       return "failed to parse remote name: \(cause)"
