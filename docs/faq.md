@@ -90,3 +90,21 @@ Instead of Anka Registry, Tart can work with any OCI-compatible container regist
 and scalable experience for distributing virtual machines.
 
 Tart doesn't yet have an analogue of Anka Controller for managing long living VMs but [soon will be](https://github.com/cirruslabs/tart/issues/372).
+
+## Automatic pruning
+
+`tart pull` and `tart clone` commands check the remaining space available on the volume associated with `TART_HOME` directory (defaults to `~/.tart`) before pulling or cloning anything.
+
+In case there's not enough space to fit the newly pulled or cloned VM image, Tart will remove the least recently accessed VMs from OCI cache and `.ipsw` files from IPSW cache until enough free space is available.
+
+To disable this functionality, set the `TART_NO_AUTO_PRUNE` environment variable either globally:
+
+```shell
+export TART_NO_AUTO_PRUNE=
+```
+
+...or per `tart pull` and `tart clone` invocation as follows:
+
+```shell
+TART_NO_AUTO_PRUNE= tart pull ...
+```
