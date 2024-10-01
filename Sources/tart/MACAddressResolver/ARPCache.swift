@@ -41,7 +41,7 @@ struct ARPCacheInternalError: Error, CustomStringConvertible {
 struct ARPCache {
   let arpCommandOutput: Data
 
-  init() throws {
+  init() async throws {
     let process = Process.init()
     process.executableURL = URL.init(fileURLWithPath: "/usr/sbin/arp")
     process.arguments = ["-an"]
@@ -52,7 +52,12 @@ struct ARPCache {
     process.standardInput = FileHandle.nullDevice
 
     try process.run()
-    process.waitUntilExit()
+    while process.isRunning {
+      if Task.isCancelled {
+        process.terminate()
+      }
+      try await Task.sleep(nanoseconds: 1_000_000_000)
+    }
 
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {
       throw ARPCommandFailedError(

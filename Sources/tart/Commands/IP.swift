@@ -57,7 +57,7 @@ struct IP: AsyncParsableCommand {
     repeat {
       switch resolutionStrategy {
       case .arp:
-        if let ip = try ARPCache().ResolveMACAddress(macAddress: vmMACAddress) {
+        if let ip = try await ARPCache().ResolveMACAddress(macAddress: vmMACAddress) {
           return ip
         }
       case .dhcp:
