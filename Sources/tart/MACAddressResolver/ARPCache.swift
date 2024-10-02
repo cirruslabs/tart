@@ -52,16 +52,17 @@ struct ARPCache {
     process.standardInput = FileHandle.nullDevice
 
     try process.run()
+
+    guard let arpCommandOutput = try pipe.fileHandleForReading.readToEnd() else {
+      throw ARPCommandYieldedInvalidOutputError(explanation: "empty output")
+    }
+
     process.waitUntilExit()
 
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {
       throw ARPCommandFailedError(
         terminationReason: process.terminationReason,
         terminationStatus: process.terminationStatus)
-    }
-
-    guard let arpCommandOutput = try pipe.fileHandleForReading.readToEnd() else {
-      throw ARPCommandYieldedInvalidOutputError(explanation: "empty output")
     }
 
     self.arpCommandOutput = arpCommandOutput
