@@ -39,9 +39,10 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     inPipe.fileHandleForWriting.write("\(host)\n".data(using: .utf8)!)
     inPipe.fileHandleForWriting.closeFile()
 
+    let outputData = try outPipe.fileHandleForReading.readToEnd()
+
     process.waitUntilExit()
 
-    let outputData = try outPipe.fileHandleForReading.readToEnd()
     if !(process.terminationReason == .exit && process.terminationStatus == 0) {
       if let outputData = outputData {
         print(String(decoding: outputData, as: UTF8.self))
