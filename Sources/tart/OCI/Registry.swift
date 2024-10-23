@@ -327,12 +327,12 @@ class Registry {
       request.httpBody = body
     }
 
-    var (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile)
+    var (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile, doAuth: doAuth)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
       _ = try await channel.asData()
       try await auth(response: response)
-      (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile)
+      (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile, doAuth: doAuth)
     }
 
     return (channel, response)
@@ -413,11 +413,13 @@ class Registry {
     return nil
   }
 
-  private func authAwareRequest(request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private func authAwareRequest(request: URLRequest, viaFile: Bool = false, doAuth: Bool) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
     var request = request
 
-    if let (name, value) = await authenticationKeeper.header() {
-      request.addValue(value, forHTTPHeaderField: name)
+    if doAuth {
+      if let (name, value) = await authenticationKeeper.header() {
+        request.addValue(value, forHTTPHeaderField: name)
+      }
     }
 
     request.setValue("Tart/\(CI.version) (\(DeviceInfo.os); \(DeviceInfo.model))",
