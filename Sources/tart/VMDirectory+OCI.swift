@@ -11,7 +11,7 @@ enum OCIError: Error {
 }
 
 extension VMDirectory {
-  func pullFromRegistry(registry: Registry, manifest: OCIManifest, concurrency: UInt, localLayerCache: LocalLayerCache?) async throws {
+  func pullFromRegistry(registry: Registry, manifest: OCIManifest, concurrency: UInt, localLayerCache: LocalLayerCache?, deduplicate: Bool) async throws {
     // Pull VM's config file layer and re-serialize it into a config file
     let configLayers = manifest.layers.filter {
       $0.mediaType == configMediaType
@@ -54,12 +54,13 @@ extension VMDirectory {
     do {
       try await diskImplType.pull(registry: registry, diskLayers: layers, diskURL: diskURL,
                                   concurrency: concurrency, progress: progress,
-                                  localLayerCache: localLayerCache)
+                                  localLayerCache: localLayerCache,
+                                  deduplicate: deduplicate)
     } catch let error where error is FilterError {
       throw RuntimeError.PullFailed("failed to decompress disk: \(error.localizedDescription)")
     }
 
-    if let llc = localLayerCache {
+    if deduplicate, let llc = localLayerCache {
       // set custom attribute to remember deduplicated bytes
       diskURL.setDeduplicatedBytes(llc.deduplicatedBytes)
     }
