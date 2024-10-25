@@ -23,6 +23,9 @@ struct Pull: AsyncParsableCommand {
   @Option(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
   var concurrency: UInt = 4
 
+  @Flag(help: .hidden)
+  var deduplicate: Bool = false
+
   func validate() throws {
     if concurrency < 1 {
       throw ValidationError("network concurrency cannot be less than 1")
@@ -43,6 +46,6 @@ struct Pull: AsyncParsableCommand {
 
     defaultLogger.appendNewLine("pulling \(remoteName)...")
 
-    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency)
+    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate)
   }
 }

@@ -28,6 +28,9 @@ struct Clone: AsyncParsableCommand {
   @Option(help: "network concurrency to use when pulling a remote VM from the OCI-compatible registry")
   var concurrency: UInt = 4
 
+  @Flag(help: .hidden)
+  var deduplicate: Bool = false
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -45,7 +48,7 @@ struct Clone: AsyncParsableCommand {
     if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet
       let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
-      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency)
+      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate)
     }
 
     let sourceVM = try VMStorageHelper.open(sourceName)

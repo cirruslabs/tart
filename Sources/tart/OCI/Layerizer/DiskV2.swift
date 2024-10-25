@@ -69,12 +69,12 @@ class DiskV2: Disk {
     }
   }
 
-  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil) async throws {
+  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil, deduplicate: Bool = false) async throws {
     // Support resumable pulls
     let pullResumed = FileManager.default.fileExists(atPath: diskURL.path)
 
     if !pullResumed {
-      if let localLayerCache = localLayerCache {
+      if deduplicate, let localLayerCache = localLayerCache {
         // Clone the local layer cache's disk and use it as a base, potentially
         // reducing the space usage since some blocks won't be written at all
         try FileManager.default.copyItem(at: localLayerCache.diskURL, to: diskURL)
@@ -151,25 +151,30 @@ class DiskV2: Disk {
 
           // Also open the disk file for reading and verifying
           // its contents in case the local layer cache is used
-          let rdisk: FileHandle? = if localLayerCache != nil {
+          let rdisk: FileHandle? = if deduplicate && localLayerCache != nil {
             try FileHandle(forReadingFrom: diskURL)
           } else {
             nil
           }
 
-          // Check if we already have this layer contents in the local layer cache
-          if let localLayerCache = localLayerCache, let localLayerInfo = localLayerCache.findInfo(digest: diskLayer.digest, offsetHint: diskWritingOffset) {
-            // indicates that the locally cloned disk image has the same content at the given offset
-            let localHit = localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest
-              && localLayerInfo.range.lowerBound == diskWritingOffset
-            // doesn't seem that localHit can ever be false if the localLayerCache is not nil
-            // but let's just add extra safety here and check it
-            if !localHit {
+          // Check if we already have this layer contents in the local layer cache,
+          // or perhaps even on the cloned disk (when the deduplication is enabled)
+          if let localLayerCache = localLayerCache,
+             let localLayerInfo = localLayerCache.findInfo(digest: diskLayer.digest, offsetHint: diskWritingOffset),
+             localLayerInfo.uncompressedContentDigest == uncompressedLayerContentDigest {
+            if deduplicate && localLayerInfo.range.lowerBound == diskWritingOffset {
+              // Do nothing, because the data is already on the disk that we've inherited from
+            } else {
               // Fulfil the layer contents from the local blob cache
               let data = localLayerCache.subdata(localLayerInfo.range)
               _ = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
             }
+
             try disk.close()
+
+            if let rdisk = rdisk {
+              try rdisk.close()
+            }
 
             // Update the progress
             progress.completedUnitCount += Int64(diskLayer.size)
@@ -198,6 +203,10 @@ class DiskV2: Disk {
           try filter.finalize()
 
           try disk.close()
+
+          if let rdisk = rdisk {
+            try rdisk.close()
+          }
         }
 
         globalDiskWritingOffset += uncompressedLayerSize

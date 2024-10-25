@@ -140,7 +140,7 @@ class VMStorageOCI: PrunableStorage {
     try list().filter { (_, _, isSymlink) in !isSymlink }.map { (_, vmDir, _) in vmDir }
   }
 
-  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt) async throws {
+  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, deduplicate: Bool) async throws {
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["imageName": name.description], key: "OCI")
     }
@@ -203,10 +203,14 @@ class VMStorageOCI: PrunableStorage {
           if let llc = localLayerCache {
             let deduplicatedHuman = ByteCountFormatter.string(fromByteCount: Int64(llc.deduplicatedBytes), countStyle: .file)
 
-            defaultLogger.appendNewLine("found an image \(llc.name) that will allow us to deduplicate \(deduplicatedHuman), using it as a base...")
+            if deduplicate {
+              defaultLogger.appendNewLine("found an image \(llc.name) that will allow us to deduplicate \(deduplicatedHuman), using it as a base...")
+            } else {
+              defaultLogger.appendNewLine("found an image \(llc.name) that will allow us to avoid fetching \(deduplicatedHuman), will try use it...")
+            }
           }
 
-          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache)
+          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache, deduplicate: deduplicate)
         } recoverFromFailure: { error in
           if error is Retryable {
             print("Error: \(error.localizedDescription)")
