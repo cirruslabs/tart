@@ -47,5 +47,8 @@ struct Pull: AsyncParsableCommand {
     defaultLogger.appendNewLine("pulling \(remoteName)...")
 
     try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate)
+
+    // to explicitly set the image as being accessed so it won't get pruned immediately
+    _ = try VMStorageOCI().open(remoteName)
   }
 }
