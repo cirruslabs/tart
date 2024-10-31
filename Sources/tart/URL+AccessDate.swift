@@ -1,4 +1,5 @@
 import Foundation
+import System
 
 extension URL {
   func accessDate() throws -> Date {
@@ -13,7 +14,9 @@ extension URL {
     let times = [accessDate.asTimeval(), modificationDate.asTimeval()]
     let ret = utimes(path, times)
     if ret != 0 {
-      throw RuntimeError.FailedToUpdateAccessDate("utimes(2) failed: \(ret.explanation())")
+      let details = Errno(rawValue: CInt(errno))
+
+      throw RuntimeError.FailedToUpdateAccessDate("utimes(2) failed: \(details)")
     }
   }
 }
