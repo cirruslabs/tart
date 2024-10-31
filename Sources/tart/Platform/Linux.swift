@@ -15,7 +15,15 @@ struct Linux: Platform {
   }
 
   func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
-    VZGenericPlatformConfiguration()
+    let result: VZGenericPlatformConfiguration = VZGenericPlatformConfiguration()
+
+    if #available(macOS 15.0, *) {
+      if VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
+        result.isNestedVirtualizationEnabled = true
+      }
+    }
+
+    return result
   }
 
   func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration {
