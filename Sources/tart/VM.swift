@@ -365,13 +365,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: sync) :
       try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .automatic, synchronizationMode: sync)
 
-    var device: VZStorageDeviceConfiguration
-    if #available(macOS 14, *), vmConfig.os == .linux {
-      device = VZNVMExpressControllerDeviceConfiguration(attachment: attachment)
-    } else {
-      device = VZVirtioBlockDeviceConfiguration(attachment: attachment)
-    }
-    var devices: [VZStorageDeviceConfiguration] = [device]
+    var devices: [VZStorageDeviceConfiguration] = [VZVirtioBlockDeviceConfiguration(attachment: attachment)]
     devices.append(contentsOf: additionalStorageDevices)
     configuration.storageDevices = devices
 
