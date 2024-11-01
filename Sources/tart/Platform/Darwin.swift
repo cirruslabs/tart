@@ -58,7 +58,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
       VZMacOSBootLoader()
     }
 
-    func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
+    func platform(nvramURL: URL, enableNestedVirtualization: Bool) throws -> VZPlatformConfiguration {
       let result = VZMacPlatformConfiguration()
 
       result.machineIdentifier = ecid

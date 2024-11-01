@@ -17,6 +17,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
+  @Flag(help: ArgumentHelp("Enable nested virtualization for the VM if supported."))
+  var nestedVirtualization: Bool = false
+
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
 
@@ -73,6 +76,10 @@ struct Set: AsyncParsableCommand {
         vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
       }
     #endif
+
+    if nestedVirtualization {
+      try vmConfig.enableNestedVirtualisation()
+    }
 
     try vmConfig.save(toURL: vmDir.configURL)
 

@@ -142,6 +142,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       vmDir: VMDirectory,
       ipswURL: URL,
       diskSizeGB: UInt16,
+      nestedVirtualization: Bool = false,
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
@@ -231,7 +232,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try vmDir.resizeDisk(diskSizeGB)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 1, memorySizeMin: 512 * 1024 * 1024)
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)
@@ -309,7 +310,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.memorySize = vmConfig.memorySize
 
     // Platform
-    configuration.platform = try vmConfig.platform.platform(nvramURL: nvramURL)
+    configuration.platform = try vmConfig.platform.platform(nvramURL: nvramURL, enableNestedVirtualization: vmConfig.nestedVirtualization)
 
     // Display
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]

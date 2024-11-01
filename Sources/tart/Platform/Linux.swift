@@ -2,6 +2,7 @@ import Virtualization
 
 @available(macOS 13, *)
 struct Linux: Platform {
+
   func os() -> OS {
     .linux
   }
@@ -14,12 +15,12 @@ struct Linux: Platform {
     return result
   }
 
-  func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
+  func platform(nvramURL: URL, enableNestedVirtualization: Bool) throws -> VZPlatformConfiguration {
     let result: VZGenericPlatformConfiguration = VZGenericPlatformConfiguration()
 
     if #available(macOS 15.0, *) {
       if VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
-        result.isNestedVirtualizationEnabled = true
+        result.isNestedVirtualizationEnabled = enableNestedVirtualization
       }
     }
 
