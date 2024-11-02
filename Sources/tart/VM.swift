@@ -142,7 +142,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       vmDir: VMDirectory,
       ipswURL: URL,
       diskSizeGB: UInt16,
-      nestedVirtualization: Bool = false,
+      nestedVirtualization: Bool = isNestedVirtualizationSupported(),
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
@@ -182,7 +182,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       config = VMConfig(
         platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
         cpuCountMin: requirements.minimumSupportedCPUCount,
-        memorySizeMin: requirements.minimumSupportedMemorySize
+        memorySizeMin: requirements.minimumSupportedMemorySize,
+        nestedVirtualization: nestedVirtualization
       )
       // allocate at least 4 CPUs because otherwise VMs are frequently freezing
       try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
@@ -232,7 +233,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     try vmDir.resizeDisk(diskSizeGB)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 1, memorySizeMin: 512 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 1, memorySizeMin: 512 * 1024 * 1024, nestedVirtualization: isNestedVirtualizationSupported())
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)

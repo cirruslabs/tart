@@ -17,8 +17,8 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
-  @Flag(help: ArgumentHelp("Enable nested virtualization for the VM if supported."))
-  var nestedVirtualization: Bool = false
+  @Flag(help: ArgumentHelp("Enable nested virtualization for the VM if supported. Enabled by default if supported"))
+  var nestedVirtualization: Bool = isNestedVirtualizationSupported()
 
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
@@ -77,9 +77,7 @@ struct Set: AsyncParsableCommand {
       }
     #endif
 
-    if nestedVirtualization {
-      try vmConfig.enableNestedVirtualisation()
-    }
+    try vmConfig.enableNestedVirtualisation(enable: nestedVirtualization)
 
     try vmConfig.save(toURL: vmDir.configURL)
 

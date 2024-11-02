@@ -73,6 +73,7 @@ struct VMConfig: Codable {
     platform: Platform,
     cpuCountMin: Int,
     memorySizeMin: UInt64,
+    nestedVirtualization : Bool,
     macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
   ) {
     self.os = platform.os()
@@ -81,7 +82,7 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
     self.cpuCountMin = cpuCountMin
     self.memorySizeMin = memorySizeMin
-    nestedVirtualization = false
+    self.nestedVirtualization = nestedVirtualization
     cpuCount = cpuCountMin
     memorySize = memorySizeMin
   }
@@ -137,7 +138,13 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
     
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
-    nestedVirtualization = try container.decodeIfPresent(Bool.self, forKey: .nestedVirtualization) ?? false
+
+    // From config.json, ignore nestedVirtualization if unsupported
+    if isNestedVirtualizationSupported() {
+      nestedVirtualization = try container.decodeIfPresent(Bool.self, forKey: .nestedVirtualization) ?? true
+    } else {
+      nestedVirtualization = false
+    }
   }
   
   func encode(to encoder: Encoder) throws {
@@ -184,18 +191,18 @@ struct VMConfig: Codable {
     self.memorySize = memorySize
   }
   
-  mutating func enableNestedVirtualisation() throws {
-    if os == .darwin && nestedVirtualization {
-      throw UnsupportedNestedVirtualizationError("Nested virtualization is not supported for MacOS virtual machines")
-    }
-
-    if #available(macOS 15.0, *) {
-      if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
-        throw UnsupportedNestedVirtualizationError("Nested virtualization is not supported on this hardware")
+  mutating func enableNestedVirtualisation(enable: Bool) throws {
+    if enable == false{
+      self.nestedVirtualization = false
+    } else if os == .linux {
+      if #available(macOS 15.0, *) {
+        if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
+          throw UnsupportedNestedVirtualizationError("Nested virtualization is not supported on this hardware")
+        }
+        self.nestedVirtualization = true
+      } else {
+        throw UnsupportedNestedVirtualizationError("Nested virtualization requires macOS 15.0 or later")
       }
-      self.nestedVirtualization = true
-    } else {
-      throw UnsupportedNestedVirtualizationError("Nested virtualization requires macOS 15.0 or later")
     }
   }
 }
