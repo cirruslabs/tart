@@ -239,6 +239,9 @@ class VMStorageOCI: PrunableStorage {
       // are excluded from garbage collection
       VMDirectory(baseURL: vmURL(name)).markExplicitlyPulled()
     }
+
+    // to explicitly set the image as being accessed so it won't get pruned immediately
+    _ = try VMStorageOCI().open(name)
   }
 
   func linked(from: RemoteName, to: RemoteName) -> Bool {
