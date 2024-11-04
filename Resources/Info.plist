@@ -10,8 +10,6 @@
 	<string>org.cirruslabs.tart</string>
 	<key>CFBundleExecutable</key>
 	<string>tart</string>
-	<key>LSBackgroundOnly</key>
-	<string>1</string>
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>AppIcon.png</string>
