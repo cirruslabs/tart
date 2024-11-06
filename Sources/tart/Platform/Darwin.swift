@@ -6,12 +6,6 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
   }
 }
 
-struct UnsupportedNestedVirtualization: Error, CustomStringConvertible {
-  var description: String {
-    "error: macOS virtual machines do not support nested virtualization"
-  }
-}
-
 #if arch(arm64)
 
   struct Darwin: PlatformSuspendable {
@@ -66,7 +60,7 @@ struct UnsupportedNestedVirtualization: Error, CustomStringConvertible {
 
     func platform(nvramURL: URL, needsNestedVirtualization: Bool) throws -> VZPlatformConfiguration {
       if needsNestedVirtualization {
-        throw UnsupportedNestedVirtualization()
+        throw RuntimeError.VMConfigurationError("macOS virtual machines do not support nested virtualization")
       }
 
       let result = VZMacPlatformConfiguration()
