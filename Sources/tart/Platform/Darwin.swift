@@ -58,7 +58,11 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
       VZMacOSBootLoader()
     }
 
-    func platform(nvramURL: URL) throws -> VZPlatformConfiguration {
+    func platform(nvramURL: URL, needsNestedVirtualization: Bool) throws -> VZPlatformConfiguration {
+      if needsNestedVirtualization {
+        throw RuntimeError.VMConfigurationError("macOS virtual machines do not support nested virtualization")
+      }
+
       let result = VZMacPlatformConfiguration()
 
       result.machineIdentifier = ecid

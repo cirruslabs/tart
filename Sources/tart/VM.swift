@@ -47,6 +47,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
        suspendable: Bool = false,
+       nested: Bool = false,
        audio: Bool = true,
        clipboard: Bool = true,
        sync: VZDiskImageSynchronizationMode = .full
@@ -66,6 +67,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
                                                 suspendable: suspendable,
+                                                nested: nested,
                                                 audio: audio,
                                                 clipboard: clipboard,
                                                 sync: sync
@@ -295,6 +297,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
     suspendable: Bool = false,
+    nested: Bool = false,
     audio: Bool = true,
     clipboard: Bool = true,
     sync: VZDiskImageSynchronizationMode = .full
@@ -309,7 +312,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     configuration.memorySize = vmConfig.memorySize
 
     // Platform
-    configuration.platform = try vmConfig.platform.platform(nvramURL: nvramURL)
+    configuration.platform = try vmConfig.platform.platform(nvramURL: nvramURL, needsNestedVirtualization: nested)
 
     // Display
     configuration.graphicsDevices = [vmConfig.platform.graphicsDevice(vmConfig: vmConfig)]
