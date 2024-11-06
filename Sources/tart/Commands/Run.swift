@@ -156,6 +156,9 @@ struct Run: AsyncParsableCommand {
   """, valueName: "[name:]path[:options]"))
   var dir: [String] = []
 
+  @Flag(help: ArgumentHelp("Enable nested virtualization if possible"))
+  var nested: Bool = false
+
   @Option(help: ArgumentHelp("""
   Use bridged networking instead of the default shared (NAT) networking \n(e.g. --net-bridged=en0 or --net-bridged=\"Wi-Fi\")
   """, discussion: """
@@ -219,6 +222,14 @@ struct Run: AsyncParsableCommand {
 
     if (noGraphics || vnc || vncExperimental) && captureSystemKeys {
       throw ValidationError("--captures-system-keys can only be used with the default VM view")
+    }
+
+    if nested {
+      if #unavailable(macOS 15) {
+        throw ValidationError("Nested virtualization is supported on hosts starting with macOS 15 (Sequia), and later.")
+      } else if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
+        throw ValidationError("Nested virtualization is available for Mac with the M3 chip, and later.")
+      }
     }
 
     let localStorage = VMStorageLocal()
@@ -294,6 +305,7 @@ struct Run: AsyncParsableCommand {
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
       suspendable: suspendable,
+      nested: nested,
       audio: !noAudio,
       clipboard: !noClipboard,
       sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw)
