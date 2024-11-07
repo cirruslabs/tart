@@ -10,6 +10,8 @@
 	<string>org.cirruslabs.tart</string>
 	<key>CFBundleExecutable</key>
 	<string>tart</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.developer-tools</string>
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>AppIcon.png</string>
