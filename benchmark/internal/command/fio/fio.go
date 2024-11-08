@@ -15,6 +15,7 @@ import (
 )
 
 var debug bool
+var image string
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -24,6 +25,7 @@ func NewCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
+	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-base:latest", "image to use for testing")
 
 	return cmd
 }
@@ -111,7 +113,7 @@ func initializeExecutors(ctx context.Context, logger *zap.Logger) ([]executor.Ex
 
 	logger.Info("initializing Tart executor")
 
-	tart, err := tart.New(ctx, logger)
+	tart, err := tart.New(ctx, image, logger)
 	if err != nil {
 		return nil, err
 	}

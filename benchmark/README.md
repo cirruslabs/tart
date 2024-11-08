@@ -5,7 +5,7 @@ Tart comes with a Golang-based benchmarking utility that allows one to easily co
 Currently, only Flexible I/O tester workloads are supported. To run them, [install Golang](https://go.dev/) and run the following command from this (`benchmark/`) directory:
 
 ```shell
-go run cmd/main.go fio
+go run cmd/main.go fio --image ghcr.io/cirruslabs/macos-sonoma-base:latest
 ```
 
 You can also enable the debugging output to diagnose issues:

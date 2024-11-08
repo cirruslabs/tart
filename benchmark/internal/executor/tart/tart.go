@@ -14,8 +14,6 @@ import (
 	"time"
 )
 
-const baseImage = "ghcr.io/cirruslabs/macos-sonoma-base:latest"
-
 type Tart struct {
 	vmRunCancel context.CancelFunc
 	vmName      string
@@ -23,17 +21,17 @@ type Tart struct {
 	logger      *zap.Logger
 }
 
-func New(ctx context.Context, logger *zap.Logger) (*Tart, error) {
+func New(ctx context.Context, image string, logger *zap.Logger) (*Tart, error) {
 	tart := &Tart{
 		vmName: fmt.Sprintf("tart-benchmark-%s", uuid.NewString()),
 		logger: logger,
 	}
 
-	if err := Cmd(ctx, tart.logger, "pull", baseImage); err != nil {
+	if err := Cmd(ctx, tart.logger, "pull", image); err != nil {
 		return nil, err
 	}
 
-	if err := Cmd(ctx, tart.logger, "clone", baseImage, tart.vmName); err != nil {
+	if err := Cmd(ctx, tart.logger, "clone", image, tart.vmName); err != nil {
 		return nil, err
 	}
 
