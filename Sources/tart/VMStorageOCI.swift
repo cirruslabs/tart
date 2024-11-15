@@ -212,7 +212,7 @@ class VMStorageOCI: PrunableStorage {
 
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache, deduplicate: deduplicate)
         } recoverFromFailure: { error in
-          if error is Retryable {
+          if error is URLError {
             print("Error: \(error.localizedDescription)")
             print("Attempting to re-try...")
 
