@@ -24,6 +24,7 @@ enum CodingKeys: String, CodingKey {
   case memorySize
   case macAddress
   case display
+  case automaticallyReconfiguresDisplay
 
   // macOS-specific keys
   case ecid
@@ -52,6 +53,7 @@ struct VMConfig: Codable {
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
   var display: VMDisplayConfig = VMDisplayConfig()
+  var automaticallyReconfiguresDisplay: Bool = false
 
   init(
     platform: Platform,
@@ -121,6 +123,7 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
 
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
+    automaticallyReconfiguresDisplay = try container.decodeIfPresent(Bool.self, forKey: .automaticallyReconfiguresDisplay) ?? false
   }
 
   func encode(to encoder: Encoder) throws {
@@ -136,6 +139,7 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
+    try container.encode(automaticallyReconfiguresDisplay, forKey: .automaticallyReconfiguresDisplay)
   }
 
   mutating func setCPU(cpuCount: Int) throws {

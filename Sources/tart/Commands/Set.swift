@@ -17,6 +17,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
+  @Flag(name: [.customLong("allows-reconfigure-display")], help: ArgumentHelp("Allow to reconfigure display when window is resized for linux VM"))
+  var automaticallyReconfiguresDisplay: Bool = false
+
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
 
@@ -73,6 +76,8 @@ struct Set: AsyncParsableCommand {
         vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
       }
     #endif
+
+    vmConfig.automaticallyReconfiguresDisplay = automaticallyReconfiguresDisplay
 
     try vmConfig.save(toURL: vmDir.configURL)
 

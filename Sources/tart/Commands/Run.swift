@@ -201,9 +201,6 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
-  @Flag(name: [.customLong("allows-reconfigure-display")], help: ArgumentHelp("Allow to reconfigure display when window is resized for linux VM"))
-  var automaticallyReconfiguresDisplay: Bool = false
-
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -481,7 +478,7 @@ struct Run: AsyncParsableCommand {
 
       NSApplication.shared.run()
     } else {
-      runUI(suspendable, captureSystemKeys, vm?.config.os == .darwin || automaticallyReconfiguresDisplay)
+      runUI(suspendable, captureSystemKeys, vm?.config.os == .darwin || vm?.config.automaticallyReconfiguresDisplay ?? false)
     }
   }
 
