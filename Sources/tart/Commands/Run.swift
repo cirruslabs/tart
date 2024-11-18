@@ -201,6 +201,9 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
+  @Flag(name: [.customLong("allows-reconfigure-display")], help: ArgumentHelp("Allow to reconfigure display when window is resized for linux VM"))
+  var automaticallyReconfiguresDisplay: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -478,7 +481,7 @@ struct Run: AsyncParsableCommand {
 
       NSApplication.shared.run()
     } else {
-      runUI(suspendable, captureSystemKeys)
+      runUI(suspendable, captureSystemKeys, vm?.config.os == .darwin || automaticallyReconfiguresDisplay)
     }
   }
 
@@ -620,9 +623,10 @@ struct Run: AsyncParsableCommand {
     #endif
   }
 
-  private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool) {
+  private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool, _ automaticallyReconfiguresDisplay: Bool) {
     MainApp.suspendable = suspendable
     MainApp.capturesSystemKeys = captureSystemKeys
+    MainApp.automaticallyReconfiguresDisplay = automaticallyReconfiguresDisplay
     MainApp.main()
   }
 }
@@ -630,13 +634,14 @@ struct Run: AsyncParsableCommand {
 struct MainApp: App {
   static var suspendable: Bool = false
   static var capturesSystemKeys: Bool = false
+  static var automaticallyReconfiguresDisplay: Bool = false
 
   @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
 
   var body: some Scene {
     WindowGroup(vm!.name) {
       Group {
-        VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys).onAppear {
+        VMView(vm: vm!, capturesSystemKeys: MainApp.capturesSystemKeys, automaticallyReconfiguresDisplay: MainApp.automaticallyReconfiguresDisplay).onAppear {
           NSWindow.allowsAutomaticWindowTabbing = false
         }.onDisappear {
           let ret = kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT)
@@ -734,6 +739,7 @@ struct VMView: NSViewRepresentable {
 
   @ObservedObject var vm: VM
   var capturesSystemKeys: Bool
+  var automaticallyReconfiguresDisplay: Bool
 
   func makeNSView(context: Context) -> NSViewType {
     let machineView = VZVirtualMachineView()
@@ -745,8 +751,8 @@ struct VMView: NSViewRepresentable {
     //
     // This is disabled for Linux because of poor HiDPI
     // support, which manifests in fonts being too small
-    if #available(macOS 14.0, *), vm.config.os != .linux {
-      machineView.automaticallyReconfiguresDisplay = true
+    if #available(macOS 14.0, *) {
+      machineView.automaticallyReconfiguresDisplay = automaticallyReconfiguresDisplay
     }
 
     return machineView
