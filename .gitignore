@@ -19,3 +19,6 @@ dist/
 
 # mkdocs-material
 site
+
+DerivedData
+.vscode
