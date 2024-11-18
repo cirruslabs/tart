@@ -631,7 +631,7 @@ struct MainApp: App {
   static var suspendable: Bool = false
   static var capturesSystemKeys: Bool = false
 
-  @NSApplicationDelegateAdaptor private var appDelegate: MinimalMenuAppDelegate
+  @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
 
   var body: some Scene {
     WindowGroup(vm!.name) {
@@ -687,18 +687,7 @@ struct MainApp: App {
   }
 }
 
-// The only way to fully remove Edit menu item.
-class MinimalMenuAppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
-  let indexOfEditMenu = 2
-
-  func applicationDidFinishLaunching(_ : Notification) {
-    NSApplication.shared.mainMenu?.removeItem(at: indexOfEditMenu)
-
-    let nsApp = NSApplication.shared
-    nsApp.setActivationPolicy(.regular)
-    nsApp.activate(ignoringOtherApps: true)
-  }
-
+class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
     if (kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT) == 0) {
       return .terminateLater
