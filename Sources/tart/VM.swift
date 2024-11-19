@@ -50,7 +50,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        nested: Bool = false,
        audio: Bool = true,
        clipboard: Bool = true,
-       sync: VZDiskImageSynchronizationMode = .full
+       sync: VZDiskImageSynchronizationMode = .full,
+       caching: VZDiskImageCachingMode? = nil
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -70,7 +71,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 nested: nested,
                                                 audio: audio,
                                                 clipboard: clipboard,
-                                                sync: sync
+                                                sync: sync,
+                                                caching: caching
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -300,7 +302,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     nested: Bool = false,
     audio: Bool = true,
     clipboard: Bool = true,
-    sync: VZDiskImageSynchronizationMode = .full
+    sync: VZDiskImageSynchronizationMode = .full,
+    caching: VZDiskImageCachingMode? = nil
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -363,10 +366,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    let attachment: VZDiskImageStorageDeviceAttachment = vmConfig.os == .linux ?
-      // Use "cached" caching mode for virtio drive to prevent fs corruption on linux
-      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .cached, synchronizationMode: sync) :
-      try VZDiskImageStorageDeviceAttachment(url: diskURL, readOnly: false, cachingMode: .automatic, synchronizationMode: sync)
+    let attachment: VZDiskImageStorageDeviceAttachment =  try VZDiskImageStorageDeviceAttachment(
+      url: diskURL,
+      readOnly: false,
+      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
+      //
+      // [1]: https://github.com/cirruslabs/tart/pull/675
+      cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
+      synchronizationMode: sync
+    )
 
     var devices: [VZStorageDeviceConfiguration] = [VZVirtioBlockDeviceConfiguration(attachment: attachment)]
     devices.append(contentsOf: additionalStorageDevices)

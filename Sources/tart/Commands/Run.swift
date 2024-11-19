@@ -45,6 +45,23 @@ extension VZDiskImageSynchronizationMode {
   }
 }
 
+extension VZDiskImageCachingMode {
+  public init?(_ description: String) throws {
+    switch description {
+    case "automatic":
+      self = .automatic
+    case "cached":
+      self = .cached
+    case "uncached":
+      self = .uncached
+    case "":
+      return nil
+    default:
+      throw RuntimeError.VMConfigurationError("unsupported disk image caching mode: \"\(description)\"")
+    }
+  }
+}
+
 struct Run: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Run a VM")
 
@@ -176,7 +193,7 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
 
-  @Option(help: ArgumentHelp("Set the root disk options (e.g. --root-disk-opts=\"ro\" or --root-disk-opts=\"sync=none\")",
+  @Option(help: ArgumentHelp("Set the root disk options (e.g. --root-disk-opts=\"ro\" or --root-disk-opts=\"caching=cached,sync=none\")",
                              discussion: """
                              Options are comma-separated and are as follows:
 
@@ -187,6 +204,12 @@ struct Run: AsyncParsableCommand {
                              * sync=fsync — enable data synchronization with the permanent storage, but don't ensure that it was actually written (e.g. --root-disk-opts="sync=fsync")
 
                              * sync=full — enable data synchronization with the permanent storage and ensure that it was actually written (e.g. --root-disk-opts="sync=full")
+
+                             * caching=automatic — allows the virtualization framework to automatically determine whether to enable data caching
+
+                             * caching=cached — enabled data caching
+
+                             * caching=uncached — disables data caching
                              """, valueName: "options"))
   var rootDiskOpts: String = ""
 
@@ -308,7 +331,8 @@ struct Run: AsyncParsableCommand {
       nested: nested,
       audio: !noAudio,
       clipboard: !noClipboard,
-      sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw)
+      sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw),
+      caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw)
     )
 
     let vncImpl: VNC? = try {
@@ -761,12 +785,12 @@ struct AdditionalDisk {
   let configuration: VZStorageDeviceConfiguration
 
   init(parseFrom: String) throws {
-    let (diskPath, readOnly, syncModeRaw) = Self.parseOptions(parseFrom)
+    let (diskPath, readOnly, syncModeRaw, cachingModeRaw) = Self.parseOptions(parseFrom)
 
-    self.configuration = try Self.craft(diskPath, readOnly: readOnly, syncModeRaw: syncModeRaw)
+    self.configuration = try Self.craft(diskPath, readOnly: readOnly, syncModeRaw: syncModeRaw, cachingModeRaw: cachingModeRaw)
   }
 
-  static func craft(_ diskPath: String, readOnly diskReadOnly: Bool, syncModeRaw: String) throws -> VZStorageDeviceConfiguration {
+  static func craft(_ diskPath: String, readOnly diskReadOnly: Bool, syncModeRaw: String, cachingModeRaw: String) throws -> VZStorageDeviceConfiguration {
     let diskURL = URL(string: diskPath)
 
     if (["nbd", "nbds", "nbd+unix", "nbds+unix"].contains(diskURL?.scheme)) {
@@ -843,14 +867,14 @@ struct AdditionalDisk {
     let diskImageAttachment = try VZDiskImageStorageDeviceAttachment(
       url: diskFileURL,
       readOnly: diskReadOnly,
-      cachingMode: .automatic,
+      cachingMode: try VZDiskImageCachingMode(cachingModeRaw) ?? .automatic,
       synchronizationMode: try VZDiskImageSynchronizationMode(syncModeRaw)
     )
 
     return VZVirtioBlockDeviceConfiguration(attachment: diskImageAttachment)
   }
 
-  static func parseOptions(_ parseFrom: String) -> (String, Bool, String) {
+  static func parseOptions(_ parseFrom: String) -> (String, Bool, String, String) {
     var arguments = parseFrom.split(separator: ":")
 
     let options = DiskOptions(String(arguments.last!))
@@ -858,13 +882,14 @@ struct AdditionalDisk {
       arguments.removeLast()
     }
 
-    return (arguments.joined(separator: ":"), options.readOnly, options.syncModeRaw)
+    return (arguments.joined(separator: ":"), options.readOnly, options.syncModeRaw, options.cachingModeRaw)
   }
 }
 
 struct DiskOptions {
   var readOnly: Bool = false
   var syncModeRaw: String = ""
+  var cachingModeRaw: String = ""
   var foundAtLeastOneOption: Bool = false
 
   init(_ parseFrom: String) {
@@ -877,6 +902,9 @@ struct DiskOptions {
         self.foundAtLeastOneOption = true
       case option.hasPrefix("sync="):
         self.syncModeRaw = String(option.dropFirst("sync=".count))
+        self.foundAtLeastOneOption = true
+      case option.hasPrefix("caching="):
+        self.cachingModeRaw = String(option.dropFirst("caching=".count))
         self.foundAtLeastOneOption = true
       default:
         continue
