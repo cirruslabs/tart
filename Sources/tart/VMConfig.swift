@@ -23,7 +23,6 @@ enum CodingKeys: String, CodingKey {
   case memorySizeMin
   case memorySize
   case macAddress
-
   case display
   case displayAutoReconfigure
 
@@ -53,7 +52,6 @@ struct VMConfig: Codable {
   var memorySizeMin: UInt64
   private(set) var memorySize: UInt64
   var macAddress: VZMACAddress
-
   var display: VMDisplayConfig = VMDisplayConfig()
   var displayAutoReconfigure: Bool?
 
