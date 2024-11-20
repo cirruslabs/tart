@@ -18,7 +18,7 @@ struct Set: AsyncParsableCommand {
   var display: VMDisplayConfig?
 
   @Flag(inversion: .prefixedNo, help: ArgumentHelp("Whether to automatically reconfigure the VM's display to fit the window"))
-  var displayAutoReconfigure: Bool? = nil
+  var displayRefit: Bool? = nil
 
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
@@ -66,7 +66,7 @@ struct Set: AsyncParsableCommand {
       }
     }
 
-    vmConfig.displayAutoReconfigure = displayAutoReconfigure
+    vmConfig.displayRefit = displayRefit
 
     if randomMAC {
       vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()

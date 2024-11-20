@@ -745,7 +745,7 @@ struct VMView: NSViewRepresentable {
     //
     // This is disabled for Linux because of poor HiDPI
     // support, which manifests in fonts being too small
-    if #available(macOS 14.0, *), vm.config.displayAutoReconfigure ?? (vm.config.os != .linux) {
+    if #available(macOS 14.0, *), vm.config.displayRefit ?? (vm.config.os != .linux) {
       machineView.automaticallyReconfiguresDisplay = true
     }
 
