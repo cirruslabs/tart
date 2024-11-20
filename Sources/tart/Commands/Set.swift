@@ -17,6 +17,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
+  @Flag(inversion: .prefixedNo, help: ArgumentHelp("Whether to automatically reconfigure the VM's display to fit the window"))
+  var displayRefit: Bool? = nil
+
   @Flag(help: ArgumentHelp("Generate a new random MAC address for the VM."))
   var randomMAC: Bool = false
 
@@ -62,6 +65,8 @@ struct Set: AsyncParsableCommand {
         vmConfig.display.height = display.height
       }
     }
+
+    vmConfig.displayRefit = displayRefit
 
     if randomMAC {
       vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
