@@ -31,7 +31,7 @@ class RegistryRunner {
 
   init() async throws {
     // Start container
-    let container = try Self.dockerCmd("run", "-d", "--rm", "-p", "5000", "registry:2")
+    let container = try Self.dockerCmd("run", "-d", "--rm", "-p", "127.0.0.1:0:5000", "registry:2")
       .trimmingCharacters(in: CharacterSet.newlines)
     containerID = container
 
