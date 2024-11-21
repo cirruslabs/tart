@@ -57,7 +57,15 @@ This issue is worked around automatically [when using Softnet](http://github.com
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.InternetSharing.default.plist bootpd -dict DHCPLeaseTimeSecs -int 600
 ```
 
-Note that this tweak persists across reboots, so normally you'll only need to do it once per new host.
+This tweak persists across reboots, so normally you'll only need to do it once per new host.
+
+If that doesn't help after starting a new VM, it's possible that the `/var/db/dhcpd_leases` file is already overfilled with 86,400-second leases. You can remove it with the following command and try starting a new VM again:
+
+```shell
+sudo rm /var/db/dhcpd_leases
+```
+
+And no worries, this file will be re-created on the next `tart run`.
 
 ## Running login/clone/pull/push commands over SSH
 
