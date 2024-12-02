@@ -8,7 +8,9 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapio"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -21,7 +23,7 @@ type Tart struct {
 	logger      *zap.Logger
 }
 
-func New(ctx context.Context, image string, logger *zap.Logger) (*Tart, error) {
+func New(ctx context.Context, image string, runArgsExtra []string, logger *zap.Logger) (*Tart, error) {
 	tart := &Tart{
 		vmName: fmt.Sprintf("tart-benchmark-%s", uuid.NewString()),
 		logger: logger,
@@ -39,7 +41,11 @@ func New(ctx context.Context, image string, logger *zap.Logger) (*Tart, error) {
 	tart.vmRunCancel = vmRunCancel
 
 	go func() {
-		_ = Cmd(vmRunCtx, tart.logger, "run", "--no-graphics", tart.vmName)
+		runArgs := []string{"run", "--no-graphics", tart.vmName}
+
+		runArgs = append(runArgs, runArgsExtra...)
+
+		_ = Cmd(vmRunCtx, tart.logger, runArgs...)
 	}()
 
 	ip, err := CmdWithOutput(ctx, tart.logger, "ip", "--wait", "60", tart.vmName)
@@ -103,10 +109,12 @@ func (tart *Tart) Run(ctx context.Context, command string) ([]byte, error) {
 	}()
 	defer monitorCancel()
 
+	loggerWriter := &zapio.Writer{Log: tart.logger, Level: zap.DebugLevel}
 	stdoutBuf := &bytes.Buffer{}
 
 	sshSession.Stdin = bytes.NewBufferString(command)
-	sshSession.Stdout = stdoutBuf
+	sshSession.Stdout = io.MultiWriter(stdoutBuf, loggerWriter)
+	sshSession.Stderr = loggerWriter
 
 	if err := sshSession.Shell(); err != nil {
 		return nil, err

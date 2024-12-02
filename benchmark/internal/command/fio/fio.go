@@ -1,21 +1,23 @@
 package fio
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/cirruslabs/tart/benchmark/internal/executor"
+	executorpkg "github.com/cirruslabs/tart/benchmark/internal/executor"
 	"github.com/cirruslabs/tart/benchmark/internal/executor/local"
 	"github.com/cirruslabs/tart/benchmark/internal/executor/tart"
 	"github.com/dustin/go-humanize"
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapio"
+	"os"
+	"os/exec"
 )
 
 var debug bool
 var image string
+var prepare string
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,6 +28,7 @@ func NewCommand() *cobra.Command {
 
 	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
 	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-base:latest", "image to use for testing")
+	cmd.Flags().StringVar(&prepare, "prepare", "", "command to run before running each benchmark")
 
 	return cmd
 }
@@ -43,28 +46,95 @@ func run(cmd *cobra.Command, args []string) error {
 		_ = logger.Sync()
 	}()
 
-	executors, err := initializeExecutors(cmd.Context(), logger)
-	if err != nil {
-		return err
+	var executorInitializers = []struct {
+		Name string
+		Fn   func() (executorpkg.Executor, error)
+	}{
+		{
+			Name: "local",
+			Fn: func() (executorpkg.Executor, error) {
+				return local.New(logger)
+			},
+		},
+		{
+			Name: "Tart",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, nil, logger)
+			},
+		},
+		{
+			Name: "Tart (--root-disk-opts=\"sync=none\")",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, []string{
+					"--root-disk-opts",
+					"sync=none",
+				}, logger)
+			},
+		},
+		{
+			Name: "Tart (--root-disk-opts=\"caching=cached\")",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, []string{
+					"--root-disk-opts",
+					"caching=cached",
+				}, logger)
+			},
+		},
+		{
+			Name: "Tart (--root-disk-opts=\"sync=none,caching=cached\")",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, []string{
+					"--root-disk-opts",
+					"sync=none,caching=cached",
+				}, logger)
+			},
+		},
 	}
-	defer func() {
-		errs := []error{err}
-
-		for _, executor := range executors {
-			if err := executor.Close(); err != nil {
-				errs = append(errs, fmt.Errorf("failed to close executor %s: %w", executor.Name(), err))
-			}
-		}
-
-		err = errors.Join(errs...)
-	}()
 
 	table := uitable.New()
-	table.AddRow("Name", "Executor", "Bandwidth", "I/O operations")
+	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)",
+		"Latency (read)", "Latency (write)", "Latency (sync)")
 
 	for _, benchmark := range benchmarks {
-		for _, executor := range executors {
-			logger.Sugar().Infof("running benchmark %q on %s executor", benchmark.Name, executor.Name())
+		for _, executorInitializer := range executorInitializers {
+			if prepare != "" {
+				shell := "/bin/sh"
+
+				if shellFromEnv, ok := os.LookupEnv("SHELL"); ok {
+					shell = shellFromEnv
+				}
+
+				logger.Sugar().Infof("running prepare command %q using shell %q",
+					prepare, shell)
+
+				cmd := exec.CommandContext(cmd.Context(), shell, "-c", prepare)
+
+				loggerWriter := &zapio.Writer{Log: logger, Level: zap.DebugLevel}
+
+				cmd.Stdout = loggerWriter
+				cmd.Stderr = loggerWriter
+
+				if err := cmd.Run(); err != nil {
+					return fmt.Errorf("failed to run prepare command %q: %v", prepare, err)
+				}
+			}
+
+			logger.Sugar().Infof("initializing executor %s", executorInitializer.Name)
+
+			executor, err := executorInitializer.Fn()
+			if err != nil {
+				return err
+			}
+
+			logger.Sugar().Infof("installing Flexible I/O tester (fio) on executor %s",
+				executorInitializer.Name)
+
+			if _, err := executor.Run(cmd.Context(), "brew install fio"); err != nil {
+				return err
+			}
+
+			logger.Sugar().Infof("running benchmark %q on %s executor", benchmark.Name,
+				executorInitializer.Name)
 
 			stdout, err := executor.Run(cmd.Context(), benchmark.Command)
 			if err != nil {
@@ -84,50 +154,32 @@ func run(cmd *cobra.Command, args []string) error {
 
 			job := fioResult.Jobs[0]
 
+			readBandwidth := humanize.Bytes(uint64(job.Read.BW)*humanize.KByte) + "/s"
+			readIOPS := humanize.SIWithDigits(job.Read.IOPS, 2, "IOPS")
+
+			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s, read latency: %s",
+				readBandwidth, readIOPS, job.Read.LatencyNS.String())
+
 			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
 			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
 
-			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s\n", writeBandwidth, writeIOPS)
+			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s, write latency: %s",
+				writeBandwidth, writeIOPS, job.Write.LatencyNS.String())
 
-			table.AddRow(benchmark.Name, executor.Name(), writeBandwidth, writeIOPS)
+			logger.Sugar().Infof("sync latency: %s", job.Sync.LatencyNS.String())
+
+			table.AddRow(benchmark.Name, executorInitializer.Name, readBandwidth, writeBandwidth,
+				readIOPS, writeIOPS, job.Read.LatencyNS.String(), job.Write.LatencyNS.String(),
+				job.Sync.LatencyNS.String())
+
+			if err := executor.Close(); err != nil {
+				return fmt.Errorf("failed to close executor %s: %w",
+					executorInitializer.Name, err)
+			}
 		}
 	}
 
 	fmt.Println(table.String())
 
 	return nil
-}
-
-func initializeExecutors(ctx context.Context, logger *zap.Logger) ([]executor.Executor, error) {
-	var result []executor.Executor
-
-	logger.Info("initializing local executor")
-
-	local, err := local.New(logger)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, local)
-
-	logger.Info("local executor initialized")
-
-	logger.Info("initializing Tart executor")
-
-	tart, err := tart.New(ctx, image, logger)
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, tart)
-
-	logger.Info("Tart executor initialized")
-
-	for _, executor := range result {
-		logger.Sugar().Infof("installing Flexible I/O tester (fio) on %s executor", executor.Name())
-
-		if _, err := executor.Run(ctx, "brew install fio"); err != nil {
-			return nil, err
-		}
-	}
-
-	return result, nil
 }
