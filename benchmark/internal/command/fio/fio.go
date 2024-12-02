@@ -10,10 +10,14 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapio"
+	"os"
+	"os/exec"
 )
 
 var debug bool
 var image string
+var prepare string
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -24,6 +28,7 @@ func NewCommand() *cobra.Command {
 
 	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
 	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-base:latest", "image to use for testing")
+	cmd.Flags().StringVar(&prepare, "prepare", "", "command to run before running each benchmark")
 
 	return cmd
 }
@@ -82,6 +87,28 @@ func run(cmd *cobra.Command, args []string) error {
 
 	for _, benchmark := range benchmarks {
 		for _, executorInitializer := range executorInitializers {
+			if prepare != "" {
+				shell := "/bin/sh"
+
+				if shellFromEnv, ok := os.LookupEnv("SHELL"); ok {
+					shell = shellFromEnv
+				}
+
+				logger.Sugar().Infof("running prepare command %q using shell %q",
+					prepare, shell)
+
+				cmd := exec.CommandContext(cmd.Context(), shell, "-c", prepare)
+
+				loggerWriter := &zapio.Writer{Log: logger, Level: zap.DebugLevel}
+
+				cmd.Stdout = loggerWriter
+				cmd.Stderr = loggerWriter
+
+				if err := cmd.Run(); err != nil {
+					return fmt.Errorf("failed to run prepare command %q: %v", prepare, err)
+				}
+			}
+
 			logger.Sugar().Infof("initializing executor %s", executorInitializer.Name)
 
 			executor, err := executorInitializer.Fn()
