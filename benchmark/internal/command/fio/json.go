@@ -11,6 +11,12 @@ type Job struct {
 }
 
 type Stats struct {
-	BW   float64 `json:"bw"`
-	IOPS float64 `json:"iops"`
+	BW        float64 `json:"bw"`
+	IOPS      float64 `json:"iops"`
+	LatencyNS Latency `json:"lat_ns"`
+}
+
+type Latency struct {
+	Mean   float64 `json:"mean"`
+	Stddev float64 `json:"stddev"`
 }

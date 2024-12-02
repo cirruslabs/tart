@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap/zapio"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var debug bool
@@ -92,7 +93,8 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	table := uitable.New()
-	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)")
+	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)",
+		"Latency (read)", "Latency (write)")
 
 	for _, benchmark := range benchmarks {
 		for _, executorInitializer := range executorInitializers {
@@ -155,13 +157,19 @@ func run(cmd *cobra.Command, args []string) error {
 
 			readBandwidth := humanize.Bytes(uint64(job.Read.BW)*humanize.KByte) + "/s"
 			readIOPS := humanize.SIWithDigits(job.Read.IOPS, 2, "IOPS")
+			readLatencyMean := time.Duration(job.Read.LatencyNS.Mean) * time.Nanosecond
+			readLatencyStddev := time.Duration(job.Read.LatencyNS.Stddev) * time.Nanosecond
 
-			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s\n", readBandwidth, readIOPS)
+			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s, read latency: %v ± %v",
+				readBandwidth, readIOPS, readLatencyMean, readLatencyStddev)
 
 			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
 			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
+			writeLatencyMean := time.Duration(job.Write.LatencyNS.Mean) * time.Nanosecond
+			writeLatencyStddev := time.Duration(job.Write.LatencyNS.Stddev) * time.Nanosecond
 
-			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s\n", writeBandwidth, writeIOPS)
+			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s, write latency: %v ± %v",
+				writeBandwidth, writeIOPS, writeLatencyMean, writeLatencyStddev)
 
 			table.AddRow(benchmark.Name, executorInitializer.Name, readBandwidth, writeBandwidth,
 				readIOPS, writeIOPS)
