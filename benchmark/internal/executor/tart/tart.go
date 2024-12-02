@@ -8,7 +8,9 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapio"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -107,10 +109,12 @@ func (tart *Tart) Run(ctx context.Context, command string) ([]byte, error) {
 	}()
 	defer monitorCancel()
 
+	loggerWriter := &zapio.Writer{Log: tart.logger, Level: zap.DebugLevel}
 	stdoutBuf := &bytes.Buffer{}
 
 	sshSession.Stdin = bytes.NewBufferString(command)
-	sshSession.Stdout = stdoutBuf
+	sshSession.Stdout = io.MultiWriter(stdoutBuf, loggerWriter)
+	sshSession.Stderr = loggerWriter
 
 	if err := sshSession.Shell(); err != nil {
 		return nil, err
