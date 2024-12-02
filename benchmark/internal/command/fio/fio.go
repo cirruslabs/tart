@@ -13,7 +13,6 @@ import (
 	"go.uber.org/zap/zapio"
 	"os"
 	"os/exec"
-	"time"
 )
 
 var debug bool
@@ -94,7 +93,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	table := uitable.New()
 	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)",
-		"Latency (read)", "Latency (write)")
+		"Latency (read)", "Latency (write)", "Latency (sync)")
 
 	for _, benchmark := range benchmarks {
 		for _, executorInitializer := range executorInitializers {
@@ -157,22 +156,21 @@ func run(cmd *cobra.Command, args []string) error {
 
 			readBandwidth := humanize.Bytes(uint64(job.Read.BW)*humanize.KByte) + "/s"
 			readIOPS := humanize.SIWithDigits(job.Read.IOPS, 2, "IOPS")
-			readLatencyMean := time.Duration(job.Read.LatencyNS.Mean) * time.Nanosecond
-			readLatencyStddev := time.Duration(job.Read.LatencyNS.Stddev) * time.Nanosecond
 
-			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s, read latency: %v ± %v",
-				readBandwidth, readIOPS, readLatencyMean, readLatencyStddev)
+			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s, read latency: %s",
+				readBandwidth, readIOPS, job.Read.LatencyNS.String())
 
 			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
 			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
-			writeLatencyMean := time.Duration(job.Write.LatencyNS.Mean) * time.Nanosecond
-			writeLatencyStddev := time.Duration(job.Write.LatencyNS.Stddev) * time.Nanosecond
 
-			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s, write latency: %v ± %v",
-				writeBandwidth, writeIOPS, writeLatencyMean, writeLatencyStddev)
+			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s, write latency: %s",
+				writeBandwidth, writeIOPS, job.Write.LatencyNS.String())
+
+			logger.Sugar().Infof("sync latency: %s", job.Sync.LatencyNS.String())
 
 			table.AddRow(benchmark.Name, executorInitializer.Name, readBandwidth, writeBandwidth,
-				readIOPS, writeIOPS)
+				readIOPS, writeIOPS, job.Read.LatencyNS.String(), job.Write.LatencyNS.String(),
+				job.Sync.LatencyNS.String())
 
 			if err := executor.Close(); err != nil {
 				return fmt.Errorf("failed to close executor %s: %w",

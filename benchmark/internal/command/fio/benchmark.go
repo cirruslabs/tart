@@ -57,4 +57,13 @@ var benchmarks = []Benchmark{
 		Command: "fio --name=benchmark --size=2GB --direct=1 --rw=randrw --bs=64k --ioengine=posixaio --iodepth=64 --runtime=120 --numjobs=4 --time_based --group_reporting" +
 			" --output-format json --unlink 1",
 	},
+	{
+		// RedHat's "How can I test to see if my environment is fast enough for etcd"[1]
+		// with custom name
+		//
+		// [1]: https://access.redhat.com/solutions/5726511
+		Name: "sync test",
+		Command: "mkdir -p test-data && fio --name=benchmark --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300" +
+			" --output-format json --unlink 1",
+	},
 }
