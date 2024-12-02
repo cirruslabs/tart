@@ -38,7 +38,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
         throw DecodingError.dataCorruptedError(forKey: .hardwareModel, in: container, debugDescription: "")
       }
       guard let hardwareModel = VZMacHardwareModel.init(dataRepresentation: data) else {
-        throw DecodingError.dataCorruptedError(forKey: .hardwareModel, in: container, debugDescription: "")
+        throw UnsupportedHostOSError()
       }
       self.hardwareModel = hardwareModel
     }
