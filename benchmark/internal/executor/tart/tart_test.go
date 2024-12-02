@@ -11,7 +11,7 @@ import (
 func TestTart(t *testing.T) {
 	ctx := context.Background()
 
-	tart, err := tart.New(ctx, "ghcr.io/cirruslabs/macos-sonoma-base:latest", zap.NewNop())
+	tart, err := tart.New(ctx, "ghcr.io/cirruslabs/macos-sonoma-base:latest", nil, zap.NewNop())
 	require.NoError(t, err)
 
 	output, err := tart.Run(ctx, "echo \"this is a test\"")
