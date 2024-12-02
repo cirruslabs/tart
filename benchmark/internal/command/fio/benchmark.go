@@ -12,7 +12,7 @@ var benchmarks = []Benchmark{
 		//
 		// [1]: https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-open-source-way-with-fio/
 		Name: "Single 4KiB random write process",
-		Command: "fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=4k --size=4g --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1" +
+		Command: "fio --name=benchmark --ioengine=posixaio --rw=randwrite --bs=4k --size=4g --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1" +
 			" --output-format json --unlink 1",
 	},
 	{
@@ -22,7 +22,7 @@ var benchmarks = []Benchmark{
 		//
 		// [1]: https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-open-source-way-with-fio/
 		Name: "16 parallel 64KiB random write processes",
-		Command: "fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=64k --size=256m --numjobs=16 --iodepth=16 --runtime=60 --time_based --end_fsync=1" +
+		Command: "fio --name=benchmark --ioengine=posixaio --rw=randwrite --bs=64k --size=256m --numjobs=16 --iodepth=16 --runtime=60 --time_based --end_fsync=1" +
 			" --output-format json --unlink 1 --group_reporting",
 	},
 	{
@@ -32,7 +32,29 @@ var benchmarks = []Benchmark{
 		//
 		// [1]: https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-open-source-way-with-fio/
 		Name: "Single 1MiB random write process",
-		Command: "fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=1m --size=10g --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1" +
+		Command: "fio --name=benchmark --ioengine=posixaio --rw=randwrite --bs=1m --size=10g --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1" +
+			" --output-format json --unlink 1",
+	},
+	{
+		// Oracle's "Test random read/writes" (in IOPS Performance Tests[1]) category
+		// with JSON output, created file cleanup, without ETA newline, without custom
+		// file path, with file I/O size reduced from 500GB to 2GB to prevent
+		// "No space left on device" and with posixaio instead of libaio.
+		//
+		// [1]: https://docs.oracle.com/en-us/iaas/Content/Block/References/samplefiocommandslinux.htm#FIO_Commands
+		Name: "Random reads/writes (4k)",
+		Command: "fio --name=benchmark --size=2GB --direct=1 --rw=randrw --bs=4k --ioengine=posixaio --iodepth=256 --runtime=120 --numjobs=4 --time_based --group_reporting" +
+			" --output-format json --unlink 1",
+	},
+	{
+		// Oracle's "Test random read/writes" (in Throughput Performance Tests[1]) category
+		// with JSON output, created file cleanup, without ETA newline, without custom
+		// file path, with file I/O size reduced from 500GB to 2GB to prevent
+		// "No space left on device" and with posixaio instead of libaio.
+		//
+		// [1]: https://docs.oracle.com/en-us/iaas/Content/Block/References/samplefiocommandslinux.htm#Throughput_Performance_Tests
+		Name: "Random reads/writes (64k)",
+		Command: "fio --name=benchmark --size=2GB --direct=1 --rw=randrw --bs=64k --ioengine=posixaio --iodepth=64 --runtime=120 --numjobs=4 --time_based --group_reporting" +
 			" --output-format json --unlink 1",
 	},
 }

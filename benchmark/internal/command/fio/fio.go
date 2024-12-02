@@ -92,7 +92,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	table := uitable.New()
-	table.AddRow("Name", "Executor", "Bandwidth", "I/O operations")
+	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)")
 
 	for _, benchmark := range benchmarks {
 		for _, executorInitializer := range executorInitializers {
@@ -153,12 +153,18 @@ func run(cmd *cobra.Command, args []string) error {
 
 			job := fioResult.Jobs[0]
 
+			readBandwidth := humanize.Bytes(uint64(job.Read.BW)*humanize.KByte) + "/s"
+			readIOPS := humanize.SIWithDigits(job.Read.IOPS, 2, "IOPS")
+
+			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s\n", readBandwidth, readIOPS)
+
 			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
 			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
 
 			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s\n", writeBandwidth, writeIOPS)
 
-			table.AddRow(benchmark.Name, executorInitializer.Name, writeBandwidth, writeIOPS)
+			table.AddRow(benchmark.Name, executorInitializer.Name, readBandwidth, writeBandwidth,
+				readIOPS, writeIOPS)
 
 			if err := executor.Close(); err != nil {
 				return fmt.Errorf("failed to close executor %s: %w",

@@ -6,10 +6,11 @@ type Result struct {
 
 type Job struct {
 	Name  string `json:"jobname"`
-	Write Write  `json:"write"`
+	Read  Stats  `json:"read"`
+	Write Stats  `json:"write"`
 }
 
-type Write struct {
+type Stats struct {
 	BW   float64 `json:"bw"`
 	IOPS float64 `json:"iops"`
 }
