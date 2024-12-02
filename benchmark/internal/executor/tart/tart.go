@@ -21,7 +21,7 @@ type Tart struct {
 	logger      *zap.Logger
 }
 
-func New(ctx context.Context, image string, logger *zap.Logger) (*Tart, error) {
+func New(ctx context.Context, image string, runArgsExtra []string, logger *zap.Logger) (*Tart, error) {
 	tart := &Tart{
 		vmName: fmt.Sprintf("tart-benchmark-%s", uuid.NewString()),
 		logger: logger,
@@ -39,7 +39,11 @@ func New(ctx context.Context, image string, logger *zap.Logger) (*Tart, error) {
 	tart.vmRunCancel = vmRunCancel
 
 	go func() {
-		_ = Cmd(vmRunCtx, tart.logger, "run", "--no-graphics", tart.vmName)
+		runArgs := []string{"run", "--no-graphics", tart.vmName}
+
+		runArgs = append(runArgs, runArgsExtra...)
+
+		_ = Cmd(vmRunCtx, tart.logger, runArgs...)
 	}()
 
 	ip, err := CmdWithOutput(ctx, tart.logger, "ip", "--wait", "60", tart.vmName)

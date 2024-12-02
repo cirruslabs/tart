@@ -54,7 +54,25 @@ func run(cmd *cobra.Command, args []string) error {
 		{
 			Name: "Tart",
 			Fn: func() (executorpkg.Executor, error) {
-				return tart.New(cmd.Context(), image, logger)
+				return tart.New(cmd.Context(), image, nil, logger)
+			},
+		},
+		{
+			Name: "Tart (--root-disk-opts=\"sync=none\")",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, []string{
+					"--root-disk-opts",
+					"sync=none",
+				}, logger)
+			},
+		},
+		{
+			Name: "Tart (--root-disk-opts=\"sync=none,caching=cached\")",
+			Fn: func() (executorpkg.Executor, error) {
+				return tart.New(cmd.Context(), image, []string{
+					"--root-disk-opts",
+					"sync=none,caching=cached",
+				}, logger)
 			},
 		},
 	}
