@@ -98,7 +98,7 @@ sync test                               	Tart (--root-disk-opts="sync=none,cachi
 
 Host:
 
-* AWS instance: `mac2.metal`
+* AWS instance: `mac2.metal` + `gp3` EBS volume
 * Hardware: Mac mini (Apple M1, 4 performance and 4 efficiency cores, 16 GB RAM, `Macmini9,1`)
 * OS: macOS Sequoia 15.0
 
@@ -143,7 +143,7 @@ sync test                               	Tart (--root-disk-opts="sync=none,cachi
 
 Host:
 
-* AWS instance: `mac2.metal`
+* AWS instance: `mac2.metal` + `gp3` EBS volume
 * Hardware: Mac mini (Apple M1, 4 performance and 4 efficiency cores, 16 GB RAM, `Macmini9,1`)
 * OS: macOS Sequoia 15.0
 
