@@ -1,6 +1,5 @@
 import Foundation
 import Algorithms
-import AsyncAlgorithms
 
 enum RegistryError: Error {
   case UnexpectedHTTPStatusCode(when: String, code: Int, details: String = "")
@@ -31,7 +30,7 @@ extension Data {
   }
 }
 
-extension AsyncThrowingChannel<Data, Error> {
+extension AsyncThrowingStream<Data, Error> {
   func asData() async throws -> Data {
     var result = Data()
 
@@ -307,7 +306,7 @@ class Registry {
     body: Data? = nil,
     doAuth: Bool = true,
     viaFile: Bool = false
-  ) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  ) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
     var urlComponents = urlComponents
 
     if urlComponents.queryItems == nil && !parameters.isEmpty {
@@ -413,7 +412,7 @@ class Registry {
     return nil
   }
 
-  private func authAwareRequest(request: URLRequest, viaFile: Bool = false, doAuth: Bool) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
+  private func authAwareRequest(request: URLRequest, viaFile: Bool = false, doAuth: Bool) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
     var request = request
 
     if doAuth {
