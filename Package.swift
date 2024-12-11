@@ -13,7 +13,6 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.1"),
     .package(url: "https://github.com/mhdhejazi/Dynamic", branch: "master"),
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0"),
-    .package(url: "https://github.com/apple/swift-async-algorithms", branch: "main"),
     .package(url: "https://github.com/malcommac/SwiftDate", from: "7.0.0"),
     .package(url: "https://github.com/antlr/antlr4", exact: "4.13.2"),
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.2.0")),
@@ -29,7 +28,6 @@ let package = Package(
   targets: [
     .executableTarget(name: "tart", dependencies: [
       .product(name: "Algorithms", package: "swift-algorithms"),
-      .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
       .product(name: "ArgumentParser", package: "swift-argument-parser"),
       .product(name: "Dynamic", package: "Dynamic"),
       .product(name: "SwiftDate", package: "SwiftDate"),

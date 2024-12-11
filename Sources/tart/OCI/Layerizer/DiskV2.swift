@@ -7,6 +7,21 @@ class DiskV2: Disk {
   private static let bufferSizeBytes = 4 * 1024 * 1024
   private static let layerLimitBytes = 512 * 1024 * 1024
 
+  // A zero chunk for faster than byte-by-byte comparisons
+  //
+  // Assumes that the other Data(...) is equal in size, but it's fine to get a false-negative
+  // on the last block since it costs only 4 MiB of excess data per 512 MiB layer.
+  //
+  // Some simple benchmarks ("sync && sudo purge" command was used to negate the disk caching effects):
+  // +--------------------------------------+---------------------------------------------------+
+  // | Operation                            | time(1) result                                    |
+  // +--------------------------------------+---------------------------------------------------+
+  // | Data(...) == zeroChunk               | 2.16s user 11.71s system 73% cpu 18.928 total     |
+  // | Data(...).contains(where: {$0 != 0}) | 603.68s user 12.97s system 99% cpu 10:22.85 total |
+  // +--------------------------------------+---------------------------------------------------+
+  private static let holeGranularityBytes = 4 * 1024 * 1024
+  private static let zeroChunk = Data(count: holeGranularityBytes)
+
   static func push(diskURL: URL, registry: Registry, chunkSizeMb: Int, concurrency: UInt, progress: Progress) async throws -> [OCIManifestLayer] {
     var pushedLayers: [(index: Int, pushedLayer: OCIManifestLayer)] = []
 
@@ -215,22 +230,6 @@ class DiskV2: Disk {
   }
 
   private static func zeroSkippingWrite(_ disk: FileHandle, _ rdisk: FileHandle?, _ fsBlockSize: UInt64, _ offset: UInt64, _ data: Data) throws -> UInt64 {
-    let holeGranularityBytes = 64 * 1024
-
-    // A zero chunk for faster than byte-by-byte comparisons
-    //
-    // Assumes that the other Data(...) is equal in size, but it's fine to get a false-negative
-    // on the last block since it costs only 64 KiB of excess data per 500 MB layer.
-    //
-    // Some simple benchmarks ("sync && sudo purge" command was used to negate the disk caching effects):
-    // +--------------------------------------+---------------------------------------------------+
-    // | Operation                            | time(1) result                                    |
-    // +--------------------------------------+---------------------------------------------------+
-    // | Data(...) == zeroChunk               | 2.16s user 11.71s system 73% cpu 18.928 total     |
-    // | Data(...).contains(where: {$0 != 0}) | 603.68s user 12.97s system 99% cpu 10:22.85 total |
-    // +--------------------------------------+---------------------------------------------------+
-    let zeroChunk = Data(count: holeGranularityBytes)
-
     var offset = offset
 
     for chunk in data.chunks(ofCount: holeGranularityBytes) {

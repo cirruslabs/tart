@@ -1,69 +1,6 @@
 import Foundation
-import AsyncAlgorithms
 
-fileprivate let urlSession = createURLSession()
-
-class DownloadDelegate: NSObject, URLSessionTaskDelegate {
-  let progress: Progress
-  init(_ progress: Progress) throws {
-    self.progress = progress
-  }
-
-  func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
-    self.progress.addChild(task.progress, withPendingUnitCount: self.progress.totalUnitCount)
-  }
-}
-
-class Fetcher {
-  static func fetch(_ request: URLRequest, viaFile: Bool = false, progress: Progress? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
-    let delegate = progress != nil ? try DownloadDelegate(progress!) : nil
-
-    if viaFile {
-      return try await fetchViaFile(request, delegate: delegate)
-    }
-
-    return try await fetchViaMemory(request, delegate: delegate)
-  }
-
-  private static func fetchViaMemory(_ request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
-    let dataCh = AsyncThrowingChannel<Data, Error>()
-
-    let (data, response) = try await urlSession.data(for: request, delegate: delegate)
-
-    Task {
-      await dataCh.send(data)
-
-      dataCh.finish()
-    }
-
-    return (dataCh, response as! HTTPURLResponse)
-  }
-
-  private static func fetchViaFile(_ request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (AsyncThrowingChannel<Data, Error>, HTTPURLResponse) {
-    let dataCh = AsyncThrowingChannel<Data, Error>()
-
-    let (fileURL, response) = try await urlSession.download(for: request, delegate: delegate)
-
-    // Acquire a handle to the downloaded file and then remove it.
-    //
-    // This keeps a working reference to that file, yet we don't
-    // have to deal with the cleanup any more.
-    let mappedFile = try Data(contentsOf: fileURL, options: [.alwaysMapped])
-    try FileManager.default.removeItem(at: fileURL)
-
-    Task {
-      for chunk in (0 ..< mappedFile.count).chunks(ofCount: 64 * 1024 * 1024) {
-        await dataCh.send(mappedFile.subdata(in: chunk))
-      }
-
-      dataCh.finish()
-    }
-
-    return (dataCh, response as! HTTPURLResponse)
-  }
-}
-
-fileprivate func createURLSession() -> URLSession {
+fileprivate var urlSessionConfiguration: URLSessionConfiguration {
   let config = URLSessionConfiguration.default
 
   // Harbor expects a CSRF token to be present if the HTTP client
@@ -76,5 +13,78 @@ fileprivate func createURLSession() -> URLSession {
   // [2]: https://github.com/cirruslabs/tart/issues/295
   config.httpShouldSetCookies = false
 
-  return URLSession(configuration: config)
+  return config
+}
+
+class Fetcher {
+  static func fetch(_ request: URLRequest, viaFile: Bool = false, progress: Progress? = nil) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
+    let delegate = Delegate()
+    let session = URLSession(configuration: urlSessionConfiguration, delegate: delegate, delegateQueue: nil)
+    let task = session.dataTask(with: request)
+
+    let stream = AsyncThrowingStream<Data, Error> { continuation in
+      delegate.streamContinuation = continuation
+    }
+
+    let response = try await withCheckedThrowingContinuation { continuation in
+      delegate.responseContinuation = continuation
+      task.resume()
+    }
+
+    return (stream, response as! HTTPURLResponse)
+  }
+}
+
+fileprivate class Delegate: NSObject, URLSessionDataDelegate {
+  var responseContinuation: CheckedContinuation<URLResponse, Error>?
+  var streamContinuation: AsyncThrowingStream<Data, Error>.Continuation?
+
+  private var buffer: Data = Data()
+  private let bufferFlushSize = 16 * 1024 * 1024
+
+  func urlSession(
+    _ session: URLSession,
+    dataTask: URLSessionDataTask,
+    didReceive response: URLResponse,
+    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
+  ) {
+    // Soft-limit for the maximum buffer capacity
+    let capacity = min(response.expectedContentLength, Int64(bufferFlushSize))
+
+    // Pre-initialize buffer as we now know the capacity
+    buffer = Data(capacity: Int(capacity))
+
+    responseContinuation?.resume(returning: response)
+    completionHandler(.allow)
+  }
+
+  func urlSession(
+    _ session: URLSession,
+    dataTask: URLSessionDataTask,
+    didReceive data: Data
+  ) {
+    buffer.append(data)
+
+    if buffer.count >= bufferFlushSize {
+      streamContinuation?.yield(buffer)
+      buffer.removeAll(keepingCapacity: true)
+    }
+  }
+
+  func urlSession(
+    _ session: URLSession,
+    task: URLSessionTask,
+    didCompleteWithError error: Error?
+  ) {
+    if !buffer.isEmpty {
+      streamContinuation?.yield(buffer)
+      buffer.removeAll(keepingCapacity: true)
+    }
+
+    if let error = error {
+      streamContinuation?.finish(throwing: error)
+    } else {
+      streamContinuation?.finish()
+    }
+  }
 }

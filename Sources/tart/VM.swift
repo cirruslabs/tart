@@ -1,6 +1,5 @@
 import Foundation
 import Virtualization
-import AsyncAlgorithms
 import Semaphore
 
 struct UnsupportedRestoreImageError: Error {
