@@ -71,10 +71,14 @@ struct Clone: AsyncParsableCommand {
 
       try lock.unlock()
 
-      // APFS is doing copy-on-write so the above cloning operation (just copying files on disk)
+      // APFS is doing copy-on-write, so the above cloning operation (just copying files on disk)
       // is not actually claiming new space until the VM is started and it writes something to disk.
-      // So once we clone the VM let's try to claim a little bit of space for the VM to run.
-      try Prune.reclaimIfNeeded(UInt64(sourceVM.allocatedSizeBytes()), sourceVM)
+      //
+      // So, once we clone the VM let's try to claim the rest of space for the VM to run without errors.
+      let unallocatedBytes = try sourceVM.sizeBytes() - sourceVM.allocatedSizeBytes()
+      if unallocatedBytes > 0 {
+        try Prune.reclaimIfNeeded(UInt64(), sourceVM)
+      }
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
     })
