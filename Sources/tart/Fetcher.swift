@@ -55,6 +55,7 @@ fileprivate class Delegate: NSObject, URLSessionDataDelegate {
     buffer = Data(capacity: Int(capacity))
 
     responseContinuation?.resume(returning: response)
+    responseContinuation = nil
     completionHandler(.allow)
   }
 
@@ -76,15 +77,20 @@ fileprivate class Delegate: NSObject, URLSessionDataDelegate {
     task: URLSessionTask,
     didCompleteWithError error: Error?
   ) {
-    if !buffer.isEmpty {
-      streamContinuation?.yield(buffer)
-      buffer.removeAll(keepingCapacity: true)
-    }
-
     if let error = error {
+      responseContinuation?.resume(throwing: error)
+      responseContinuation = nil
+
       streamContinuation?.finish(throwing: error)
+      streamContinuation = nil
     } else {
+      if !buffer.isEmpty {
+        streamContinuation?.yield(buffer)
+        buffer.removeAll(keepingCapacity: true)
+      }
+
       streamContinuation?.finish()
+      streamContinuation = nil
     }
   }
 }
