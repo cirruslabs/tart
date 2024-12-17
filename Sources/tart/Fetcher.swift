@@ -1,6 +1,6 @@
 import Foundation
 
-fileprivate var urlSessionConfiguration: URLSessionConfiguration {
+fileprivate var urlSession: URLSession = {
   let config = URLSessionConfiguration.default
 
   // Harbor expects a CSRF token to be present if the HTTP client
@@ -13,14 +13,15 @@ fileprivate var urlSessionConfiguration: URLSessionConfiguration {
   // [2]: https://github.com/cirruslabs/tart/issues/295
   config.httpShouldSetCookies = false
 
-  return config
-}
+  return URLSession(configuration: config)
+}()
 
 class Fetcher {
   static func fetch(_ request: URLRequest, viaFile: Bool = false, progress: Progress? = nil) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
+    let task = urlSession.dataTask(with: request)
+
     let delegate = Delegate()
-    let session = URLSession(configuration: urlSessionConfiguration, delegate: delegate, delegateQueue: nil)
-    let task = session.dataTask(with: request)
+    task.delegate = delegate
 
     let stream = AsyncThrowingStream<Data, Error> { continuation in
       delegate.streamContinuation = continuation
