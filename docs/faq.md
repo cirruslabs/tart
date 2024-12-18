@@ -13,7 +13,7 @@ Remote images are pulled into `~/.tart/cache/OCIs/`.
 ## Nested virtualization support?
 
 Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
-doesn't support nested virtualization.
+support nested virtualization only with M3 chip or M4 running on MacOS 15. By default it's disabled, see `tart run --help` for more information.
 
 ## Connecting to a service running on host
 
