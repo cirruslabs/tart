@@ -392,7 +392,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Version console device
     //
-    // A dummy console device useful for implementing
+    // A console device useful for implementing
     // host feature checks in the guest agent software.
     if !suspendable {
       let consoleURL: URL = URL(fileURLWithPath: "tart-agent.sock", isDirectory: false, relativeTo: diskURL).absoluteURL
