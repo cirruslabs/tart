@@ -395,9 +395,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // A dummy console device useful for implementing
     // host feature checks in the guest agent software.
     if !suspendable {
+      let consoleURL: URL = URL(fileURLWithPath: "tart-agent.sock", isDirectory: false, relativeTo: diskURL).absoluteURL
       let consolePort = VZVirtioConsolePortConfiguration()
-      consolePort.name = "tart-version-\(CI.version)"
 
+      if FileManager.default.fileExists(atPath: consoleURL.absoluteURL.path()) == false {
+        FileManager.default.createFile(atPath: consoleURL.absoluteURL.path(), contents: nil)
+      }
+
+      consolePort.name = "tart-agent"
+      consolePort.attachment = VZFileHandleSerialPortAttachment(fileHandleForReading: try FileHandle(forReadingFrom: consoleURL), fileHandleForWriting: try FileHandle(forWritingTo: consoleURL))
+      
       let consoleDevice = VZVirtioConsoleDeviceConfiguration()
       consoleDevice.ports[0] = consolePort
 
