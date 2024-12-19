@@ -20,6 +20,7 @@ enum HTTPCode: Int {
   case Ok = 200
   case Created = 201
   case Accepted = 202
+  case PartialContent = 206
   case Unauthorized = 401
   case NotFound = 404
 }
@@ -263,9 +264,21 @@ class Registry {
     }
   }
 
-  public func pullBlob(_ digest: String, handler: (Data) async throws -> Void) async throws {
-    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), viaFile: true)
-    if response.statusCode != HTTPCode.Ok.rawValue {
+  public func pullBlob(_ digest: String, rangeStart: Int64 = 0, handler: (Data) async throws -> Void) async throws {
+    var expectedStatusCode = HTTPCode.Ok
+    var headers: [String: String] = [:]
+
+    // Send Range header and expect HTTP 206 in return
+    //
+    // However, do not send Range header at all when rangeStart is 0,
+    // because it makes no sense and we might get HTTP 200 in return
+    if rangeStart != 0 {
+      expectedStatusCode = HTTPCode.PartialContent
+      headers["Range"] = "bytes=\(rangeStart)-"
+    }
+
+    let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), headers: headers, viaFile: true)
+    if response.statusCode != expectedStatusCode.rawValue {
       let body = try await channel.asData().asText()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
                                                    details: body)
