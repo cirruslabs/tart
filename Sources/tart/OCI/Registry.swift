@@ -29,14 +29,26 @@ extension Data {
   func asText() -> String {
     String(decoding: self, as: UTF8.self)
   }
+
+  func asTextPreview(limit: Int = 1000) -> String {
+    guard count > limit else {
+      return asText()
+    }
+
+    return "\(asText().prefix(limit))..."
+  }
 }
 
 extension AsyncThrowingStream<Data, Error> {
-  func asData() async throws -> Data {
+  func asData(limitBytes: Int64? = nil) async throws -> Data {
     var result = Data()
 
     for try await chunk in self {
       result += chunk
+
+      if let limitBytes, result.count > limitBytes {
+        return result
+      }
     }
 
     return result
@@ -160,7 +172,7 @@ class Registry {
                                                  body: manifestJSON)
     if response.statusCode != HTTPCode.Created.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing manifest", code: response.statusCode,
-                                                   details: data.asText())
+                                                   details: data.asTextPreview())
     }
 
     return Digest.hash(manifestJSON)
@@ -171,7 +183,7 @@ class Registry {
                                                  headers: ["Accept": ociManifestMediaType])
     if response.statusCode != HTTPCode.Ok.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling manifest", code: response.statusCode,
-                                                   details: data.asText())
+                                                   details: data.asTextPreview())
     }
 
     let manifest = try OCIManifest(fromJSON: data)
@@ -197,7 +209,7 @@ class Registry {
                                                      headers: ["Content-Length": "0"])
     if postResponse.statusCode != HTTPCode.Accepted.rawValue {
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (POST)", code: postResponse.statusCode,
-                                                   details: data.asText())
+                                                   details: data.asTextPreview())
     }
 
     // Figure out where to upload the blob
@@ -218,7 +230,7 @@ class Registry {
       )
       if response.statusCode != HTTPCode.Created.rawValue {
         throw RegistryError.UnexpectedHTTPStatusCode(when: "pushing blob (PUT) to \(uploadLocation)",
-                                                     code: response.statusCode, details: data.asText())
+                                                     code: response.statusCode, details: data.asTextPreview())
       }
       return digest
     }
@@ -241,7 +253,7 @@ class Registry {
       // always accept both statuses since AWS ECR is not following specification
       if response.statusCode != HTTPCode.Created.rawValue && response.statusCode != HTTPCode.Accepted.rawValue {
         throw RegistryError.UnexpectedHTTPStatusCode(when: "streaming blob to \(uploadLocation)",
-                                                     code: response.statusCode, details: data.asText())
+                                                     code: response.statusCode, details: data.asTextPreview())
       }
       uploadedBytes += chunk.count
       // Update location for the next chunk
@@ -260,7 +272,7 @@ class Registry {
     case HTTPCode.NotFound.rawValue:
       return false
     default:
-      throw RegistryError.UnexpectedHTTPStatusCode(when: "checking blob", code: response.statusCode, details: data.asText())
+      throw RegistryError.UnexpectedHTTPStatusCode(when: "checking blob", code: response.statusCode, details: data.asTextPreview())
     }
   }
 
@@ -279,7 +291,7 @@ class Registry {
 
     let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), headers: headers, viaFile: true)
     if response.statusCode != expectedStatusCode.rawValue {
-      let body = try await channel.asData().asText()
+      let body = try await channel.asData(limitBytes: 4096).asTextPreview()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
                                                    details: body)
     }
@@ -342,7 +354,6 @@ class Registry {
     var (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile, doAuth: doAuth)
 
     if doAuth && response.statusCode == HTTPCode.Unauthorized.rawValue {
-      _ = try await channel.asData()
       try await auth(response: response)
       (channel, response) = try await authAwareRequest(request: request, viaFile: viaFile, doAuth: doAuth)
     }
@@ -404,7 +415,7 @@ class Registry {
     let (data, response) = try await dataRequest(.GET, authenticateURL, headers: headers, doAuth: false)
     if response.statusCode != HTTPCode.Ok.rawValue {
       throw RegistryError.AuthFailed(why: "received unexpected HTTP status code \(response.statusCode) "
-        + "while retrieving an authentication token", details: data.asText())
+        + "while retrieving an authentication token", details: data.asTextPreview())
     }
 
     await authenticationKeeper.set(try TokenResponse.parse(fromData: data))

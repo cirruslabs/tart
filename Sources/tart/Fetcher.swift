@@ -17,7 +17,7 @@ fileprivate var urlSession: URLSession = {
 }()
 
 class Fetcher {
-  static func fetch(_ request: URLRequest, viaFile: Bool = false, progress: Progress? = nil) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
+  static func fetch(_ request: URLRequest, viaFile: Bool = false) async throws -> (AsyncThrowingStream<Data, Error>, HTTPURLResponse) {
     let task = urlSession.dataTask(with: request)
 
     let delegate = Delegate()
