@@ -196,7 +196,7 @@ class VMStorageOCI: PrunableStorage {
       }
 
       try await withTaskCancellationHandler(operation: {
-        try await retry(maxAttempts: 5, backoff: .exponentialWithFullJitter(baseDelay: .seconds(5), maxDelay: .seconds(60))) {
+        try await retry(maxAttempts: 5) {
           // Choose the best base image which has the most deduplication ratio
           let localLayerCache = try await chooseLocalLayerCache(name, manifest, registry)
 
@@ -213,8 +213,7 @@ class VMStorageOCI: PrunableStorage {
           try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache, deduplicate: deduplicate)
         } recoverFromFailure: { error in
           if error is URLError {
-            print("Error: \(error.localizedDescription)")
-            print("Attempting to re-try...")
+            print("Error pulling image: \"\(error.localizedDescription)\", attempting to re-try...")
 
             return .retry
           }

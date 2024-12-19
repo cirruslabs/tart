@@ -44,7 +44,7 @@ class DiskV2: Disk {
           let compressedData = try (data as NSData).compressed(using: .lz4) as Data
           let compressedDataDigest = Digest.hash(compressedData)
 
-          try await retry(maxAttempts: 5, backoff: .exponentialWithFullJitter(baseDelay: .seconds(5), maxDelay: .seconds(60))) {
+          try await retry(maxAttempts: 5) {
             if try await !registry.blobExists(compressedDataDigest) {
               _ = try await registry.pushBlob(fromData: compressedData, chunkSizeMb: chunkSizeMb, digest: compressedDataDigest)
             }
@@ -208,11 +208,26 @@ class DiskV2: Disk {
             diskWritingOffset = try zeroSkippingWrite(disk, rdisk, fsBlockSize, diskWritingOffset, data)
           }
 
-          try await registry.pullBlob(diskLayer.digest) { data in
-            try filter.write(data)
+          var rangeStart: Int64 = 0
 
-            // Update the progress
-            progress.completedUnitCount += Int64(data.count)
+          try await retry(maxAttempts: 5) {
+            try await registry.pullBlob(diskLayer.digest, rangeStart: rangeStart) { data in
+              try filter.write(data)
+
+              // Update the progress
+              progress.completedUnitCount += Int64(data.count)
+
+              // Update the current range start
+              rangeStart += Int64(data.count)
+            }
+          } recoverFromFailure: { error in
+            if error is URLError {
+              print("Error pulling disk layer \(index + 1): \"\(error.localizedDescription)\", attempting to re-try...")
+
+              return .retry
+            }
+
+            return .throw
           }
 
           try filter.finalize()
