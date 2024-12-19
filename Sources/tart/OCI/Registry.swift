@@ -264,7 +264,7 @@ class Registry {
     }
   }
 
-  public func pullBlob(_ digest: String, rangeStart: Int64? = nil, handler: (Data) async throws -> Void) async throws {
+  public func pullBlob(_ digest: String, rangeStart: Int64 = 0, handler: (Data) async throws -> Void) async throws {
     var expectedStatusCode = HTTPCode.Ok
     var headers: [String: String] = [:]
 
@@ -272,7 +272,7 @@ class Registry {
     //
     // However, do not send Range header at all when rangeStart is 0,
     // because it makes no sense and we might get HTTP 200 in return
-    if let rangeStart = rangeStart, rangeStart != 0 {
+    if rangeStart != 0 {
       expectedStatusCode = HTTPCode.PartialContent
       headers["Range"] = "bytes=\(rangeStart)-"
     }
