@@ -40,11 +40,15 @@ extension Data {
 }
 
 extension AsyncThrowingStream<Data, Error> {
-  func asData() async throws -> Data {
+  func asData(limitBytes: Int64? = nil) async throws -> Data {
     var result = Data()
 
     for try await chunk in self {
       result += chunk
+
+      if let limitBytes, result.count > limitBytes {
+        return result
+      }
     }
 
     return result
@@ -287,7 +291,7 @@ class Registry {
 
     let (channel, response) = try await channelRequest(.GET, endpointURL("\(namespace)/blobs/\(digest)"), headers: headers, viaFile: true)
     if response.statusCode != expectedStatusCode.rawValue {
-      let body = try await channel.asData().asTextPreview()
+      let body = try await channel.asData(limitBytes: 4096).asTextPreview()
       throw RegistryError.UnexpectedHTTPStatusCode(when: "pulling blob", code: response.statusCode,
                                                    details: body)
     }
