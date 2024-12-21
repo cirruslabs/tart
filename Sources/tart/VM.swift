@@ -404,7 +404,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
       consolePort.name = "tart-agent"
       consolePort.attachment = VZFileHandleSerialPortAttachment(fileHandleForReading: try FileHandle(forReadingFrom: consoleURL), fileHandleForWriting: try FileHandle(forWritingTo: consoleURL))
-      
+
       let consoleDevice = VZVirtioConsoleDeviceConfiguration()
       consoleDevice.ports[0] = consolePort
 
