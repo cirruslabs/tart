@@ -13,12 +13,12 @@ Remote images are pulled into `~/.tart/cache/OCIs/`.
 ## Nested virtualization support?
 
 Tart is limited by functionality of Apple's `Virtualization.Framework`. At the moment `Virtualization.Framework`
-doesn't support nested virtualization.
+supports nested virtualization only on M3 or M4 chips running macOS 15 (Sequoia). By default, it is disabled, but can be enabled by passing the `--nested` flag to `tart run`.
 
 ## Connecting to a service running on host
 
 To connect from within a virtual machine to a service running on the host machine
-please first make sure that the service is binded to `0.0.0.0`.
+please first make sure that the service is bound to `0.0.0.0`.
 
 Then from within a virtual machine you can access the service using the router's IP address that you can get either from `Preferences -> Network`
 or by running the following command in the Terminal:
@@ -29,7 +29,7 @@ netstat -nr | grep default | head -n 1 | awk '{print $2}'
 
 Note: that accessing host is only possible with the default NAT network. If you are running your virtual machines with
 [Softnet](https://github.com/cirruslabs/softnet) (via `tart run --net-softnet <VM NAME>)`, then the network isolation
-is stricter and it's not only possible to access the host.
+is stricter and it's not possible to access the host.
 
 ## Changing the default NAT subnet
 
@@ -97,7 +97,7 @@ or features supported. If there is some feature missing please don't hesitate to
 Instead of Anka Registry, Tart can work with any OCI-compatible container registry. This provides a much more consistent
 and scalable experience for distributing virtual machines.
 
-Tart doesn't yet have an analogue of Anka Controller for managing long living VMs but [soon will be](https://github.com/cirruslabs/tart/issues/372).
+Tart does have an analogue of Anka Controller for managing VMs across a cluster of Mac hosts called [Orchard](orchard/quick-start.md).
 
 ## Automatic pruning
 
