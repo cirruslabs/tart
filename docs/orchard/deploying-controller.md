@@ -31,7 +31,13 @@ gcloud compute addresses create orchard-ip --region=us-central1
 export ORCHARD_IP=$(gcloud compute addresses describe orchard-ip --format='value(address)' --region=us-central1)
 ```
 
-Once we have the IP address, we can create a new instance with Orchard Controller running inside a container:
+Then, ensure that there exist a firewall rule targeting `https-server` tag and allowing access to TCP port 443. If that's not the case, create one:
+
+```shell
+gcloud compute firewall-rules create default-allow-https --direction=INGRESS --priority=1000 --network=default --action=ALLOW --rules=tcp:443 --source-ranges=0.0.0.0/0 --target-tags=https-server
+```
+
+Once we have the IP address and the firewall rule set up, we can create a new instance with Orchard Controller running inside a container:
 
 ```bash
 gcloud compute instances create-with-container orchard-controller \
