@@ -1,0 +1,96 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"env": {
+				"TART_HOME": "${env:HOME}/.cake"
+			},
+			"args": [
+				"run",
+				"noble-cloud-image",
+				"--nested",
+				"--disk=${env:HOME}/.cake/vms/noble-cloud-image/cloud-init.iso",
+				"--no-graphics",
+				"--no-audio",
+				"--vsock=connect://vsock:9999${env:HOME}/.tart/noble-cloud-image.sock"
+			],
+			"cwd": "${workspaceFolder:tart}",
+			"name": "tart run noble-cloud-image vsock connect",
+			"program": "${workspaceFolder:tart}/.build/debug/tart",
+			"preLaunchTask": "Build signed tart"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"env": {
+				"TART_HOME": "${env:HOME}/.cake"
+			},
+			"args": [
+				"run",
+				"noble-cloud-image",
+				"--nested",
+				"--disk=${env:HOME}/.cake/vms/noble-cloud-image/cloud-init.iso",
+				"--no-graphics",
+				"--no-audio",
+				"--vsock=bind://vsock:9999${env:HOME}/.tart/noble-cloud-image.sock"
+			],
+			"cwd": "${workspaceFolder:tart}",
+			"name": "tart run noble-cloud-image vsock bind",
+			"program": "${workspaceFolder:tart}/.build/debug/tart",
+			"preLaunchTask": "Build signed tart"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"env": {
+				"TART_HOME": "${env:HOME}/.cake"
+			},
+			"args": [
+				"run",
+				"noble-cloud-image",
+				"--nested",
+				"--disk=${env:HOME}/.cake/vms/noble-cloud-image/cloud-init.iso",
+				"--no-graphics",
+				"--no-audio",
+				"--console=fd://0,1",
+				"--vsock=fd://0,1:9999"
+			],
+			"cwd": "${workspaceFolder:tart}",
+			"name": "tart run noble-cloud-image console fd",
+			"program": "${workspaceFolder:tart}/.build/debug/tart",
+			"preLaunchTask": "Build signed tart"
+		},
+		{
+			"type": "lldb",
+			"name": "Attach runnng",
+			"request": "attach",
+			"sourceLanguages": [
+				"swift"
+			],
+			"pid": "${command:pickMyProcess}",
+			"targetCreateCommands": [
+				"python3 local/virtio/debug_pipe.py"
+			]
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:tart}",
+			"name": "Debug tart",
+			"program": "${workspaceFolder:tart}/.build/debug/tart",
+			"preLaunchTask": "swift: Build Debug tart"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:tart}",
+			"name": "Release tart",
+			"program": "${workspaceFolder:tart}/.build/release/tart",
+			"preLaunchTask": "swift: Build Release tart"
+		}
+	]
+}

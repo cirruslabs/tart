@@ -1,0 +1,17 @@
+{
+	"java.project.resourceFilters": [
+		"node_modules",
+		"\\.git",
+		".build",
+		"DerivedData",
+		".swiftpm",
+	],
+	"files.exclude": {
+		"**/.build": true
+	},
+	"python.testing.pytestArgs": [
+		"integration-tests"
+	],
+	"python.testing.unittestEnabled": false,
+	"python.testing.pytestEnabled": true
+}

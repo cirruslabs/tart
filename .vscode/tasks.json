@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Build signed tart",
+			"group": "build",
+			"command": "${workspaceFolder:tart}/.vscode/taskes/build-signed.sh",
+			"args": [
+				"${workspaceFolder:tart}"
+			]
+		}
+	]
+}
