@@ -1,6 +1,8 @@
 import Foundation
 import Virtualization
 import Semaphore
+import NIOCore
+import NIOPosix
 
 struct UnsupportedRestoreImageError: Error {
 }
@@ -40,11 +42,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
   var network: Network
 
+  var communicationDevices: CommunicationDevices?
+
   init(vmDir: VMDirectory,
        network: Network = NetworkShared(),
        additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
        directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
        serialPorts: [VZSerialPortConfiguration] = [],
+       socketDevices: [SocketDevice] = [],
+       consoleURL: URL? = nil,
        suspendable: Bool = false,
        nested: Bool = false,
        audio: Bool = true,
@@ -61,11 +67,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Initialize the virtual machine and its configuration
     self.network = network
-    configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL,
+    (configuration, communicationDevices) = try Self.craftConfiguration(diskURL: vmDir.diskURL,
                                                 nvramURL: vmDir.nvramURL, vmConfig: config,
                                                 network: network, additionalStorageDevices: additionalStorageDevices,
                                                 directorySharingDevices: directorySharingDevices,
                                                 serialPorts: serialPorts,
+                                                socketDevices: socketDevices,
+                                                consoleURL: consoleURL,
                                                 suspendable: suspendable,
                                                 nested: nested,
                                                 audio: audio,
@@ -76,6 +84,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
     super.init()
+
+    if let communicationDevices {
+      communicationDevices.connect(virtualMachine: virtualMachine)
+    }
+
     virtualMachine.delegate = self
   }
 
@@ -144,7 +157,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
-      serialPorts: [VZSerialPortConfiguration] = []
+      serialPorts: [VZSerialPortConfiguration] = [],
+      socketDevices: [SocketDevice] = [],
+      consoleURL: URL? = nil
     ) async throws {
       var ipswURL = ipswURL
 
@@ -188,15 +203,22 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
       // Initialize the virtual machine and its configuration
       self.network = network
-      configuration = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
+      (configuration, communicationDevices) = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
                                                   vmConfig: config, network: network,
                                                   additionalStorageDevices: additionalStorageDevices,
                                                   directorySharingDevices: directorySharingDevices,
-                                                  serialPorts: serialPorts
+                                                  serialPorts: serialPorts,
+                                                  socketDevices: socketDevices,
+                                                  consoleURL: consoleURL
       )
       virtualMachine = VZVirtualMachine(configuration: configuration)
 
       super.init()
+
+      if let communicationDevices {
+        communicationDevices.connect(virtualMachine: virtualMachine)
+      }
+
       virtualMachine.delegate = self
 
       // Run automated installation
@@ -261,6 +283,10 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       }
     }
 
+    if let communicationDevices {
+      communicationDevices.close()
+    }
+
     try await network.stop()
   }
 
@@ -293,14 +319,17 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     additionalStorageDevices: [VZStorageDeviceConfiguration],
     directorySharingDevices: [VZDirectorySharingDeviceConfiguration],
     serialPorts: [VZSerialPortConfiguration],
+    socketDevices: [SocketDevice] = [],
+    consoleURL: URL? = nil,
     suspendable: Bool = false,
     nested: Bool = false,
     audio: Bool = true,
     clipboard: Bool = true,
     sync: VZDiskImageSynchronizationMode = .full,
     caching: VZDiskImageCachingMode? = nil
-  ) throws -> VZVirtualMachineConfiguration {
+  ) throws -> (VZVirtualMachineConfiguration, CommunicationDevices?) {
     let configuration = VZVirtualMachineConfiguration()
+    var communicationDevices: CommunicationDevices? = nil
 
     // Boot loader
     configuration.bootLoader = try vmConfig.platform.bootLoader(nvramURL: nvramURL)
@@ -386,23 +415,23 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Serial Port
     configuration.serialPorts = serialPorts
 
-    // Version console device
-    //
-    // A dummy console device useful for implementing
+    // Create console device useful for implementing and socketDevices
     // host feature checks in the guest agent software.
     if !suspendable {
-      let consolePort = VZVirtioConsolePortConfiguration()
-      consolePort.name = "tart-version-\(CI.version)"
+      let console: URL
+      
+      if let consoleURL = consoleURL  {
+        console = consoleURL.absoluteURL
+      } else {
+        console = URL(fileURLWithPath: "console.sock", relativeTo: diskURL).absoluteURL
+      }
 
-      let consoleDevice = VZVirtioConsoleDeviceConfiguration()
-      consoleDevice.ports[0] = consolePort
-
-      configuration.consoleDevices.append(consoleDevice)
+      communicationDevices = try CommunicationDevices.setup(configuration: configuration, consoleURL: console, sockets: socketDevices)
     }
 
     try configuration.validate()
 
-    return configuration
+    return (configuration, communicationDevices)
   }
 
   func guestDidStop(_ virtualMachine: VZVirtualMachine) {

@@ -224,6 +224,22 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
+  @Option(name: [.customLong("vsock")], help: ArgumentHelp("Allow to create virtio socket between guest and host, format like url: <bind|connect|tcp|udp>://<address>:<port number>/<file for unix socket>, eg. bind://dummy:1234/tmp/vsock.sock",
+                              discussion: """
+                              The vsock option allows to create a virtio socket between the guest and the host. the port number to use for the connection must be greater than 1023.
+                              The mode is as follows:
+                              - bind: creates a socket file on the host and listens for connections eg. bind://vsock:1234/tmp/unix_socket. The VM must listen the vsock port number.
+                              - connect: uses an existing socket file on the host, eg. connect://vsock:1234/tmp/unix_socket. The VM must connect on vsock port number.
+                              - tcp: listen TCP on address. The VM must listen on the same port number, eg. tcp://127.0.0.1:1234, tcp://[::1]:1234.
+                              - udp: listen UDP on address. The VM must listen on the same port number,  eg. udp://127.0.0.1:1234, udp://[::1]:1234
+                              - fd: use file descriptor. The VM must connect on the same port number,  eg. fd://24:1234, fd://24,25:1234. 24 = file descriptor for read or read/write if alone, 25 = file descriptor for write.
+                              """))
+
+  var vsocks: [String] = []
+
+  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\")", valueName: "url"))
+  var consoleURL: String?
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -274,6 +290,38 @@ struct Run: AsyncParsableCommand {
     for disk in disk {
       if disk.hasSuffix("-amd64.iso") {
         throw ValidationError("Seems you have a disk targeting x86 architecture (hence amd64 in the name). Please use an 'arm64' version of the disk.")
+      }
+    }
+
+    if let consoleURL = consoleURL {
+      guard let u = URL(string: consoleURL) else {
+        throw ValidationError("Invalid serial console URL")
+      }
+
+      if u.scheme != "unix" && u.scheme != "fd" {
+        throw ValidationError("Invalid serial console URL scheme")
+      }
+
+      if u.scheme == "fd" {
+        let host = u.host?.split(separator: ",")
+        
+        if host == nil || host!.count == 0 {
+          throw ValidationError("Invalid console URL")
+        }
+
+        for fd in host! {
+          if Int(fd) == nil {
+            throw ValidationError("Invalid console URL")
+          }
+        }
+      } else if u.scheme == "unix" {
+        if u.path == "" {
+          throw ValidationError("Invalid console URL")
+        }
+
+        if u.path.utf8.count > 103 {
+            throw ValidationError("The path of the console URL is too long")
+        }
       }
     }
   }
@@ -327,6 +375,8 @@ struct Run: AsyncParsableCommand {
       additionalStorageDevices: try additionalDiskAttachments(),
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
+      socketDevices: try socketDeviceAttachments(),
+      consoleURL: consoleURL != nil ? URL(string: consoleURL!) : nil,
       suspendable: suspendable,
       nested: nested,
       audio: !noAudio,
@@ -566,6 +616,12 @@ struct Run: AsyncParsableCommand {
       }
 
       return bridgeDescription
+    }
+  }
+
+  func socketDeviceAttachments() throws -> [SocketDevice] {
+    try vsocks.map {
+      try SocketDevice(description: $0)
     }
   }
 
