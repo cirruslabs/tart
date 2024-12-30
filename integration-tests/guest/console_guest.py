@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import time
 
 
 def readmessage(fd):
@@ -39,5 +40,5 @@ with open("/dev/virtio-ports/tart-agent", "rb") as pipe:
 
 with open("/dev/virtio-ports/tart-agent", "wb") as pipe:
     writemessage(pipe, message)
-    user_input = input("Enter your message: ")
+    time.sleep(1)
     pipe.close()
