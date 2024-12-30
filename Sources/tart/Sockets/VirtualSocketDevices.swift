@@ -19,7 +19,7 @@ struct SocketDevice: Codable {
 
 extension SocketDevice: CustomStringConvertible {
   var description: String {
-    
+
     if mode == .bind || mode == .connect {
       return "\(mode)://vsock:\(port)\(bind)"
     }
@@ -57,7 +57,7 @@ extension SocketDevice: CustomStringConvertible {
 
     if mode == .fd {
       let fds = host.split(separator: ",")
-      
+
       if fds.count == 0 {
         throw RuntimeError.VMConfigurationError("Invalid file descriptor")
       }
@@ -81,7 +81,7 @@ extension SocketDevice: CustomStringConvertible {
       }
 
       if url.path.utf8.count > 103 {
-          throw RuntimeError.VMConfigurationError("The socket path is too long")
+        throw RuntimeError.VMConfigurationError("The socket path is too long")
       }
 
       self.bind = url.path
@@ -369,8 +369,8 @@ class VirtioSocketDevices: NSObject, VZVirtioSocketListenerDelegate, CatchRemote
               .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
               .childChannelInitializer(channelInitializer)
 
-              // Bind tcp socket to the port
-              channel = bootstrap.bind(host: socket.bind, port: port)
+            // Bind tcp socket to the port
+            channel = bootstrap.bind(host: socket.bind, port: port)
           } else {
             // Start listening on unix socket
             let bootstrap = ServerBootstrap(group: mainGroup)
@@ -378,9 +378,9 @@ class VirtioSocketDevices: NSObject, VZVirtioSocketListenerDelegate, CatchRemote
               .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
               .childChannelInitializer(channelInitializer)
 
-              // Bind the unix socket device to the port
-              // ??? We need to unlink the unix socket before binding the socket ???
-              channel = bootstrap.bind(unixDomainSocketPath: socket.bind, cleanupExistingSocketFile: true)
+            // Bind the unix socket device to the port
+            // ??? We need to unlink the unix socket before binding the socket ???
+            channel = bootstrap.bind(unixDomainSocketPath: socket.bind, cleanupExistingSocketFile: true)
           }
 
           // Get the channel to be ready
@@ -460,7 +460,7 @@ class VirtioSocketDevices: NSObject, VZVirtioSocketListenerDelegate, CatchRemote
         defaultLogger.appendNewLine("Failed to connect the socket device on \(socket.description), \(error)")
         return false
       }
-    
+
     }
 
     // Assume the connection is possible in bind mode

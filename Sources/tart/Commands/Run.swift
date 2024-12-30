@@ -225,15 +225,15 @@ struct Run: AsyncParsableCommand {
   var captureSystemKeys: Bool = false
 
   @Option(name: [.customLong("vsock")], help: ArgumentHelp("Allow to create virtio socket between guest and host, format like url: <bind|connect|tcp|udp>://<address>:<port number>/<file for unix socket>, eg. bind://dummy:1234/tmp/vsock.sock",
-                              discussion: """
-                              The vsock option allows to create a virtio socket between the guest and the host. the port number to use for the connection must be greater than 1023.
-                              The mode is as follows:
-                              - bind: creates a socket file on the host and listens for connections eg. bind://vsock:1234/tmp/unix_socket. The VM must listen the vsock port number.
-                              - connect: uses an existing socket file on the host, eg. connect://vsock:1234/tmp/unix_socket. The VM must connect on vsock port number.
-                              - tcp: listen TCP on address. The VM must listen on the same port number, eg. tcp://127.0.0.1:1234, tcp://[::1]:1234.
-                              - udp: listen UDP on address. The VM must listen on the same port number,  eg. udp://127.0.0.1:1234, udp://[::1]:1234
-                              - fd: use file descriptor. The VM must connect on the same port number,  eg. fd://24:1234, fd://24,25:1234. 24 = file descriptor for read or read/write if alone, 25 = file descriptor for write.
-                              """))
+                                                           discussion: """
+                                                           The vsock option allows to create a virtio socket between the guest and the host. the port number to use for the connection must be greater than 1023.
+                                                           The mode is as follows:
+                                                           - bind: creates a socket file on the host and listens for connections eg. bind://vsock:1234/tmp/unix_socket. The VM must listen the vsock port number.
+                                                           - connect: uses an existing socket file on the host, eg. connect://vsock:1234/tmp/unix_socket. The VM must connect on vsock port number.
+                                                           - tcp: listen TCP on address. The VM must listen on the same port number, eg. tcp://127.0.0.1:1234, tcp://[::1]:1234.
+                                                           - udp: listen UDP on address. The VM must listen on the same port number,  eg. udp://127.0.0.1:1234, udp://[::1]:1234
+                                                           - fd: use file descriptor. The VM must connect on the same port number,  eg. fd://24:1234, fd://24,25:1234. 24 = file descriptor for read or read/write if alone, 25 = file descriptor for write.
+                                                           """))
 
   var vsocks: [String] = []
 
@@ -304,7 +304,7 @@ struct Run: AsyncParsableCommand {
 
       if u.scheme == "fd" {
         let host = u.host?.split(separator: ",")
-        
+
         if host == nil || host!.count == 0 {
           throw ValidationError("Invalid console URL")
         }
@@ -320,7 +320,7 @@ struct Run: AsyncParsableCommand {
         }
 
         if u.path.utf8.count > 103 {
-            throw ValidationError("The path of the console URL is too long")
+          throw ValidationError("The path of the console URL is too long")
         }
       }
     }

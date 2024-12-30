@@ -19,7 +19,7 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
   private func setChannel(_ channel: any NIOCore.Channel) {
     self.channel = channel
   }
-  
+
   private func createUnixConsole() -> (FileHandle, FileHandle){
     let inputPipe = Pipe()
     let outputPipe = Pipe()
@@ -70,7 +70,7 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
     let consoleDevice: VZVirtioConsoleDeviceConfiguration = VZVirtioConsoleDeviceConfiguration()
     let fileHandleForReading: FileHandle
     let fileHandleForWriting: FileHandle
-    
+
     if self.consoleURL.scheme == "unix" || self.consoleURL.isFileURL {
       (fileHandleForReading, fileHandleForWriting) = createUnixConsole()
     } else if let host = self.consoleURL.host(), self.consoleURL.scheme == "fd" {

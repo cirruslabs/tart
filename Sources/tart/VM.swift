@@ -68,18 +68,18 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Initialize the virtual machine and its configuration
     self.network = network
     (configuration, communicationDevices) = try Self.craftConfiguration(diskURL: vmDir.diskURL,
-                                                nvramURL: vmDir.nvramURL, vmConfig: config,
-                                                network: network, additionalStorageDevices: additionalStorageDevices,
-                                                directorySharingDevices: directorySharingDevices,
-                                                serialPorts: serialPorts,
-                                                socketDevices: socketDevices,
-                                                consoleURL: consoleURL,
-                                                suspendable: suspendable,
-                                                nested: nested,
-                                                audio: audio,
-                                                clipboard: clipboard,
-                                                sync: sync,
-                                                caching: caching
+                                                                        nvramURL: vmDir.nvramURL, vmConfig: config,
+                                                                        network: network, additionalStorageDevices: additionalStorageDevices,
+                                                                        directorySharingDevices: directorySharingDevices,
+                                                                        serialPorts: serialPorts,
+                                                                        socketDevices: socketDevices,
+                                                                        consoleURL: consoleURL,
+                                                                        suspendable: suspendable,
+                                                                        nested: nested,
+                                                                        audio: audio,
+                                                                        clipboard: clipboard,
+                                                                        sync: sync,
+                                                                        caching: caching
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -204,12 +204,12 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       // Initialize the virtual machine and its configuration
       self.network = network
       (configuration, communicationDevices) = try Self.craftConfiguration(diskURL: vmDir.diskURL, nvramURL: vmDir.nvramURL,
-                                                  vmConfig: config, network: network,
-                                                  additionalStorageDevices: additionalStorageDevices,
-                                                  directorySharingDevices: directorySharingDevices,
-                                                  serialPorts: serialPorts,
-                                                  socketDevices: socketDevices,
-                                                  consoleURL: consoleURL
+                                                                          vmConfig: config, network: network,
+                                                                          additionalStorageDevices: additionalStorageDevices,
+                                                                          directorySharingDevices: directorySharingDevices,
+                                                                          serialPorts: serialPorts,
+                                                                          socketDevices: socketDevices,
+                                                                          consoleURL: consoleURL
       )
       virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -419,7 +419,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // host feature checks in the guest agent software.
     if !suspendable {
       let console: URL
-      
+
       if let consoleURL = consoleURL  {
         console = consoleURL.absoluteURL
       } else {
