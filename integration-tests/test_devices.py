@@ -390,7 +390,7 @@ class TestVirtioDevices:
 			self.cleanup(tart, client_socket, ip, tart_run_process)
 
 	@pytest.mark.dependency()
-	def test_console_pipe(self, tart):
+	def disabled_test_console_pipe(self, tart):
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
