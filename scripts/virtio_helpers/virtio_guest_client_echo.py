@@ -17,6 +17,7 @@ print("Connected.")
 message = virtio.sock_read(conn)
 virtio.sock_send(conn, message)
 
+conn.recv(3)
 conn.close()
 
 print("Disconnected.")

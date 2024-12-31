@@ -43,5 +43,7 @@ print("Connected.")
 message = sock_read(conn)
 sock_send(conn, message)
 
+conn.recv(3)
+
 conn.close()
 print("Disconnected.")

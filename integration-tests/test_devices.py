@@ -117,16 +117,20 @@ class TestVirtioDevices:
 		# Read echo
 		response = self.read_message(fd_in)
 
+		os.write(fd_out, "end".encode(encoding='ascii'))
+
 		response_sha256_hash = hashlib.sha256(response).hexdigest()
 
 		if response_sha256_hash == content_sha256_hash:
 			log.info("Data received successfully")
-			return True
+			result = True
 		else:
 			log.info("Hashes are not equal")
 			log.info("Expected: ", content_sha256_hash)
 			log.info("Received: ", response_sha256_hash)
-			return False
+			result = False
+
+		return result
 
 	def sock_send(self, conn, message):
 		length = len(message).to_bytes(8, "big")
@@ -161,6 +165,8 @@ class TestVirtioDevices:
 		# Read echo
 		response = self.sock_read(conn)
 
+		conn.sendall("end".encode(encoding='ascii'))
+
 		response_sha256_hash = hashlib.sha256(response).hexdigest()
 
 		if response_sha256_hash == content_sha256_hash:
@@ -172,7 +178,7 @@ class TestVirtioDevices:
 			log.info("Received: ", response_sha256_hash)
 			return False
 
-	def cleanup(self, tart, conn, ip, tart_run_process):
+	def cleanup(self, tart, conn, ip, tart_run_process, vmname=vm_name):
 		if conn:
 			conn.close()
 
@@ -185,38 +191,36 @@ class TestVirtioDevices:
 
 		# Delete the VM
 		log.info("Deleting the VM")
-		tart.run(["delete", vm_name])
+		tart.run(["delete", vmname])
 
-	def create_vm(self, tart, vsock_argument=None, pass_fds=()):
+	def create_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
-		if vm_name in stdout:
-			log.info(f"VM {vm_name} already exists, deleting it.")
+		if vmname in stdout:
+			log.info(f"VM {vmname} already exists, deleting it.")
 			try:
-				tart.run(["stop", vm_name])
+				tart.run(["stop", vmname])
 			except Exception:
 				pass
-			tart.run(["delete", vm_name])
+			tart.run(["delete", vmname])
 
 
-		tart.run(["clone", "ghcr.io/cirruslabs/ubuntu:latest", vm_name])
-		tart.run(["set", vm_name, "--disk-size", "20"])
+		tart.run(["clone", "ghcr.io/cirruslabs/ubuntu:latest", vmname])
+		tart.run(["set", vmname, "--disk-size", "20"])
 
+		args = ["run", vmname, "--no-graphics", "--no-audio"]
+
+		if vsock_argument:
+			args.append(vsock_argument)
+
+		if console_argument:
+			args.append(console_argument)
 
 		# Run the VM asynchronously
-		if vsock_argument:
-			tart_run_process = tart.run_async(["run", vm_name,
-										"--no-graphics",
-										"--no-audio",
-										"--console=unix:{0}".format(console_socket_path),
-										vsock_argument], pass_fds=pass_fds)
-		else:
-			tart_run_process = tart.run_async(["run", vm_name,
-										"--no-graphics",
-										"--no-audio",
-										"--console=unix:{0}".format(console_socket_path)], pass_fds=pass_fds)		
+		tart_run_process = tart.run_async(args, pass_fds=pass_fds)
+
 		# Obtain the VM's IP
-		stdout, _ = tart.run(["ip", vm_name, "--wait", "120"])
+		stdout, _ = tart.run(["ip", vmname, "--wait", "120"])
 		ip = stdout.strip()
 
 		# Repeat until the VM is reachable via SSH
@@ -243,7 +247,7 @@ class TestVirtioDevices:
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_vm(tart, "--vsock=bind://vsock:9999{0}".format(unix_socket_path))
+		tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=bind://vsock:9999{0}".format(unix_socket_path))
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -255,7 +259,7 @@ class TestVirtioDevices:
 
 			# Connect to the VM over vsock
 			client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-			client_socket.settimeout(5)
+			client_socket.settimeout(30)
 			client_socket.connect(unix_socket_path)
 
 			log.info("Connected to socket.")
@@ -287,7 +291,7 @@ class TestVirtioDevices:
 			server.listen(1)
 
 			# Create a Linux VM
-			tart_run_process, ip = self.create_vm(tart, "--vsock=connect://vsock:9999{0}".format(unix_socket_path))
+			tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=connect://vsock:9999{0}".format(unix_socket_path))
 
 			# Copy test file to the VM and run the echo client in background
 			echo = GuestEcho(ip, 5, "{0}/guest/vsock_echo_client.py".format(curdir))
@@ -323,7 +327,7 @@ class TestVirtioDevices:
 			host_in_fd, vm_write_fd = os.pipe()
 			
 			# Create a Linux VM
-			tart_run_process, ip = self.create_vm(tart, "--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd))
+			tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd))
 
 			# Copy test file to the VM and run the echo client in background
 			echo = GuestEcho(ip, 5, "{0}/guest/vsock_echo_client.py".format(curdir))
@@ -361,8 +365,7 @@ class TestVirtioDevices:
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_vm(tart)
-		vm_home = "{0}/vms/{1}".format(tart.home, vm_name)
+		tart_run_process, ip = self.create_vm(tart, console_argument="--console=unix:{0}".format(console_socket_path))
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -373,7 +376,7 @@ class TestVirtioDevices:
 			sleep(5)
 
 			client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-			client_socket.settimeout(5)
+			client_socket.settimeout(30)
 			client_socket.connect(console_socket_path)
 
 			log.info("Connected to socket.")
@@ -390,7 +393,7 @@ class TestVirtioDevices:
 			self.cleanup(tart, client_socket, ip, tart_run_process)
 
 	@pytest.mark.dependency()
-	def disabled_test_console_pipe(self, tart):
+	def test_console_pipe(self, tart):
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -398,14 +401,15 @@ class TestVirtioDevices:
 		tart_run_process = None
 		ip = None
 
-		# Create a Linux VM
-		tart_run_process, ip = self.create_vm(tart)
-		vm_home = "{0}/vms/{1}".format(tart.home, vm_name)
-
 		try:
 			# Create named pipe for input
 			vm_read_fd, host_out_fd = os.pipe()
 			host_in_fd, vm_write_fd = os.pipe()
+
+			# Create a Linux VM
+			tart_run_process, ip = self.create_vm(tart,
+											console_argument="--console=fd://{0},{1}".format(vm_read_fd, vm_write_fd),
+											pass_fds=(vm_read_fd, vm_write_fd))
 
 			# Copy test file to the VM and run the echo client in background
 			echo = GuestEcho(ip, 5, "{0}/guest/console_guest.py".format(curdir))

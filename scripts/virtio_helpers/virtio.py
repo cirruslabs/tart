@@ -2,8 +2,10 @@ import hashlib
 import os
 
 home_dir = os.path.expanduser("~")
-unix_socket_path = os.path.join(home_dir, ".tart/noble-cloud-image.sock")
-tart_agent_path = os.path.join(home_dir, ".tart/vms/noble-cloud-image/tart-agent.sock")
+unix_socket_path = os.path.join(home_dir, ".tart", "cache", "unix_socket.sock")
+console_socket_path = os.path.join(home_dir, ".tart", "cache", "console.sock")
+vm_name = "integration-test-devices"
+curdir = os.path.abspath(os.path.dirname(__file__))
 
 def sock_send(conn, message):
 	length = len(message).to_bytes(8, "big")
@@ -38,6 +40,8 @@ def sock_echo(conn, message):
 	sock_send(conn, message)
 	# Read echo
 	response = sock_read(conn)
+
+	conn.sendall("end".encode(encoding='ascii'))
 
 	response_sha256_hash = hashlib.sha256(response).hexdigest()
 

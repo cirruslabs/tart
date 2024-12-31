@@ -9,8 +9,6 @@ import virtio
 # This script is a simple example of how to communicate with the socket device from the host to the guest.
 # It must be running before the guest script is started.
 # The option for Tart: --vsock=connect://vsock:9999${HOME}/.tart/noble-cloud-image.sock
-# Create big content
-content = virtio.create_content()
 
 # Connect to the VM over vsock
 if os.path.exists(virtio.unix_socket_path):
@@ -27,7 +25,7 @@ while True:
 	print("Connected.")
 
 	# echo
-	virtio.sock_echo(conn, content)
+	virtio.sock_echo(conn, virtio.create_content())
 
 	conn.close()
 
