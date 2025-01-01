@@ -66,6 +66,10 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
   }
 
   private func create(configuration: VZVirtualMachineConfiguration) throws -> ConsoleDevice {
+    if self.consoleURL.scheme == "none" {
+      return self
+    }
+
     let consolePort: VZVirtioConsolePortConfiguration = VZVirtioConsolePortConfiguration()
     let consoleDevice: VZVirtioConsoleDeviceConfiguration = VZVirtioConsoleDeviceConfiguration()
     let fileHandleForReading: FileHandle

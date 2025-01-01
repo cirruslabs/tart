@@ -237,8 +237,11 @@ struct Run: AsyncParsableCommand {
 
   var vsocks: [String] = []
 
-  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\")", valueName: "url"))
+  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\"). --console=none to disable it", valueName: "url"))
   var consoleURL: String?
+
+  @Flag(help: "Disable serial console device for VM. same as --console=none")
+  var noConsole: Bool = false
 
   mutating func validate() throws {
     if vnc && vncExperimental {
@@ -293,7 +296,17 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    if let consoleURL = consoleURL {
+    if noConsole && consoleURL != nil {
+      throw ValidationError("--no-console and --console are mutually exclusive")
+    }
+
+    if self.consoleURL == "none" {
+      self.noConsole = true
+    }
+
+    if noConsole {
+      consoleURL = "none://"
+    } else if let consoleURL = consoleURL {
       guard let u = URL(string: consoleURL) else {
         throw ValidationError("Invalid serial console URL")
       }
