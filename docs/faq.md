@@ -5,6 +5,16 @@ title: Frequently Asked Questions
 description: Advanced configuration and troubleshooting tips for advanced configurations.
 ---
 
+## Troubleshooting crashes
+
+If you experience a crash or encounter another error while using the tart executable, you can collect debug information to assist with troubleshooting. Run the following command in a separate terminal window to gather logs from the Tart process and the macOS Virtualization subsystem:
+
+```shell
+log stream --predicate='process=="tart" OR process CONTAINS "Virtualization"' > tart.log
+```
+
+While the events are being streamed, attempt to reproduce the issue. Once the issue is reproduced, stop the streaming by pressing Ctrl+C. Then, attach the tart.log file to your report.
+
 ## VM location on disk
 
 Tart stores all its files in `~/.tart/` directory. Local images that you can run are stored in `~/.tart/vms/`.
