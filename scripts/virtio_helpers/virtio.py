@@ -41,7 +41,7 @@ def sock_echo(conn, message):
 	# Read echo
 	response = sock_read(conn)
 
-	conn.sendall("end".encode(encoding='ascii'))
+	sock_send(conn, "end".encode(encoding='ascii'))
 
 	response_sha256_hash = hashlib.sha256(response).hexdigest()
 

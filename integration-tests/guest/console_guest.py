@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
-import os
+import platform
 import select
+import os
 
+if platform.system() == "Linux":
+	console_path = "/dev/virtio-ports/tart-agent"
+elif platform.system() == "Darwin":
+	console_path = "/dev/tty.tart-agent"
+else:
+	raise Exception("Unsupported platform: {0}".format(platform.system()))
 
 # This script is a simple example of how to communicate with the console device in the guest.
 def readmessage(fd):
@@ -37,22 +44,24 @@ def writemessage(fd, message):
 	fd.write(length)
 	fd.write(message)
 
-print("Reading pipe")
+with open("/tmp/vsock_echo.pid", "w") as pid_file:
+	pid_file.write(str(os.getpid()))
+	print("Reading pipe")
 
-with open("/dev/virtio-ports/tart-agent", "rb") as pipe:
-	message = readmessage(pipe)
-	pipe.close()
+	with open(console_path, "rb") as pipe:
+		message = readmessage(pipe)
+		pipe.close()
 
-print("Writing pipe")
+	print("Writing pipe")
 
-with open("/dev/virtio-ports/tart-agent", "wb") as pipe:
-	writemessage(pipe, message)
-	pipe.close()
+	with open(console_path, "wb") as pipe:
+		writemessage(pipe, message)
+		pipe.close()
 
-print("Acking pipe")
+	print("Acking pipe")
 
-with open("/dev/virtio-ports/tart-agent", "rb") as pipe:
-	data = pipe.read(3)
-	if data:
-		print("Received data: {0}".format(data.decode()))
+	with open(console_path, "rb") as pipe:
+		# Read end message
+		response = readmessage(pipe)
+		print("Received data: {0}".format(response.decode()))
 		pipe.close()

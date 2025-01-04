@@ -296,11 +296,9 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    if noConsole && consoleURL != nil {
+    if noConsole && consoleURL != "none" {
       throw ValidationError("--no-console and --console are mutually exclusive")
-    }
-
-    if self.consoleURL == "none" {
+    } else if self.consoleURL == "none" {
       self.noConsole = true
     }
 

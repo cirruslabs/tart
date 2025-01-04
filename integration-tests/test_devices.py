@@ -1,4 +1,5 @@
 import hashlib
+import http.client
 import logging
 import os
 import select
@@ -6,7 +7,6 @@ import socket
 from threading import Thread
 from time import sleep
 
-import pytest
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
 
@@ -40,7 +40,20 @@ def ssh_command(ip, command):
 	client.connect(ip, username="admin", password="admin", timeout=120)
 
 	try:
-		_, stdout, _ = client.exec_command(command + " 2>&1 | tee output.log")
+		_, stdout, _ = client.exec_command("source .profile ; " + command + " 2>&1 | tee output.log")
+		log.info(stdout.read().decode())
+	except Exception as e:
+		raise e
+	finally:
+		client.close()
+
+def bash(ip, command):
+	client = SSHClient()
+	client.set_missing_host_key_policy(AutoAddPolicy)
+	client.connect(ip, username="admin", password="admin", timeout=120)
+
+	try:
+		_, stdout, _ = client.exec_command("bash -c '" + command + "' 2>&1")
 		log.info(stdout.read().decode())
 	except Exception as e:
 		raise e
@@ -62,26 +75,56 @@ def scp_put(ip, src, dst):
 	finally:
 		client.close()
 
-class GuestEcho(Thread):
-	def __init__(self, ip, delay, echo_file):
-		super().__init__()
-		self.ip = ip
-		self.delay = delay
-		self.echo_file = echo_file
 
-		scp_put(ip, echo_file, "/home/admin/echo.py")
-
-	def run(self):
-		# Run the echo client
-		if self.delay > 0:
-			sleep(self.delay)
-
-		log.info("echo.py copied and running")
-
-		ssh_command(self.ip, "sudo python3 echo.py")
-		log.info("echo.py finished")
-		
 class TestVirtioDevices:
+	interpreter = "python3"
+
+	class GuestEcho(Thread):
+		def __init__(self, ip, delay, echo_file, interpreter = "python3", need_sudo = False):
+			super().__init__()
+			self.ip = ip
+			self.delay = delay
+			self.interpreter = interpreter
+			self.need_sudo = need_sudo
+
+			scp_put(ip, os.path.join(os.path.dirname(echo_file), "waitpid.sh"), "waitpid.sh")
+
+			# On Linux we use python3, on MacOS we use swift
+			if interpreter == "python3":
+				self.echo_file = echo_file + ".py"
+				self.target = "echo.py"
+				scp_put(ip, self.echo_file, self.target)
+			elif interpreter == "swift":
+				self.echo_file = echo_file + ".swift"
+				self.target = "echo.swift"
+				scp_put(ip, self.echo_file, self.target)
+			else:
+				self.echo_file = echo_file + ".go"
+				self.target = "echo.go"
+				self.interpreter = "go run"
+
+				# Install golang on MacOS VM
+				ssh_command(self.ip, "brew install golang")
+				# Copy go files & prepare go mod
+				scp_put(ip, self.echo_file, self.target)
+				scp_put(ip, os.path.join(os.path.dirname(echo_file), "go.mod"), "go.mod")
+				scp_put(ip, os.path.join(os.path.dirname(echo_file), "go.sum"), "go.sum")
+				ssh_command(self.ip, "go mod tidy")
+
+		def run(self):
+			# Run the echo client
+			if self.delay > 0:
+				sleep(self.delay)
+
+			log.info("{0} copied and running".format(self.target))
+
+			if self.need_sudo:
+				ssh_command(self.ip, "sudo {0} {1}".format(self.interpreter, self.target))
+			else:
+				ssh_command(self.ip, "{0} {1}".format(self.interpreter, self.target))
+	
+			log.info("{0} finished".format(self.target))
+
 	def read_message(self, fd):
 		while True:
 			rlist, _, _ = select.select([fd], [], [], 60)
@@ -111,26 +154,14 @@ class TestVirtioDevices:
 		os.write(fd, message)
 
 	def echo_message(self, fd_in, fd_out, message):
-		content_sha256_hash = hashlib.sha256(message).hexdigest()
 		# Send message
 		self.write_message(fd_out, message)
 		# Read echo
 		response = self.read_message(fd_in)
 
-		os.write(fd_out, "end".encode(encoding='ascii'))
+		self.write_message(fd_out, "end".encode())
 
-		response_sha256_hash = hashlib.sha256(response).hexdigest()
-
-		if response_sha256_hash == content_sha256_hash:
-			log.info("Data received successfully")
-			result = True
-		else:
-			log.info("Hashes are not equal")
-			log.info("Expected: ", content_sha256_hash)
-			log.info("Received: ", response_sha256_hash)
-			result = False
-
-		return result
+		return self.same_content(message, response)
 
 	def sock_send(self, conn, message):
 		length = len(message).to_bytes(8, "big")
@@ -157,16 +188,8 @@ class TestVirtioDevices:
 
 		return response
 
-	def sock_echo(self, conn, message):
-		content_sha256_hash = hashlib.sha256(message).hexdigest()
-		# Send message
-		self.sock_send(conn, message)
-
-		# Read echo
-		response = self.sock_read(conn)
-
-		conn.sendall("end".encode(encoding='ascii'))
-
+	def same_content(self, content, response):
+		content_sha256_hash = hashlib.sha256(content).hexdigest()
 		response_sha256_hash = hashlib.sha256(response).hexdigest()
 
 		if response_sha256_hash == content_sha256_hash:
@@ -177,6 +200,17 @@ class TestVirtioDevices:
 			log.info("Expected: ", content_sha256_hash)
 			log.info("Received: ", response_sha256_hash)
 			return False
+
+	def sock_echo(self, conn, message):
+		# Send message
+		self.sock_send(conn, message)
+
+		# Read echo
+		response = self.sock_read(conn)
+
+		self.sock_send(conn, "end".encode())
+
+		return self.same_content(message, response)	
 
 	def cleanup(self, tart, conn, ip, tart_run_process, vmname=vm_name):
 		if conn:
@@ -193,7 +227,7 @@ class TestVirtioDevices:
 		log.info("Deleting the VM")
 		tart.run(["delete", vmname])
 
-	def create_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
+	def create_vm(self, tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
 		if vmname in stdout:
@@ -205,8 +239,7 @@ class TestVirtioDevices:
 			tart.run(["delete", vmname])
 
 
-		tart.run(["clone", "ghcr.io/cirruslabs/ubuntu:latest", vmname])
-		tart.run(["set", vmname, "--disk-size", "20"])
+		tart.run(["clone", image, vmname])
 
 		args = ["run", vmname, "--no-graphics", "--no-audio"]
 
@@ -240,24 +273,30 @@ class TestVirtioDevices:
 
 		return tart_run_process, ip
 
-	@pytest.mark.dependency()
-	def test_virtio_bind(self, tart):
+	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
+		return self.create_vm(tart, "ghcr.io/cirruslabs/ubuntu:latest", vsock_argument, console_argument, vmname, pass_fds)
+
+	def waitpidfile(self, ip):
+		ssh_command(ip, "bash waitpid.sh")
+
+	def do_test_virtio_bind(self, tart, interpreter="python3", cleanup=True):
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=bind://vsock:9999{0}".format(unix_socket_path))
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=bind://vsock:9999{0}".format(unix_socket_path))
 
 		try:
 			# Copy test file to the VM and run the echo client in background
-			echo = GuestEcho(ip, 0, "{0}/guest/vsock_echo_server.py".format(curdir))
+			echo = self.GuestEcho(ip, 0, "{0}/guest/vsock_echo_server".format(curdir), interpreter)
 			echo.start()
 
-			# Wait thread OS to start
-			sleep(5)
+			# Wait a bit thread OS to start
+			self.waitpidfile(ip)
 
-			# Connect to the VM over vsock
+			log.info("Try to connected to guest.")
+
 			client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 			client_socket.settimeout(30)
 			client_socket.connect(unix_socket_path)
@@ -274,27 +313,97 @@ class TestVirtioDevices:
 		except Exception as e:
 			raise e
 		finally:
-			self.cleanup(tart, client_socket, ip, tart_run_process)
+			if cleanup:
+				self.cleanup(tart, client_socket, ip, tart_run_process)
 
-	@pytest.mark.dependency()
-	def test_virtio_connect(self, tart):
+	def do_test_virtio_tcp(self, tart, interpreter="python3", cleanup=True):
+		client_socket = None
+		tart_run_process = None
+		ip = None
+
+		# Create a Linux VM
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999")
+
+		try:
+			# Copy test file to the VM and run the echo client in background
+			echo = self.GuestEcho(ip, 0, "{0}/guest/vsock_echo_server".format(curdir), interpreter)
+			echo.start()
+
+			# Wait a bit thread OS to start
+			self.waitpidfile(ip)
+
+			client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			client_socket.settimeout(30)
+			client_socket.connect(("127.0.0.1", 9999))
+
+			log.info("Connected to socket.")
+
+			# Echo
+			ok = self.sock_echo(client_socket, content)
+
+			echo.join()
+		
+			log.info("Ending.")
+			assert ok
+		except Exception as e:
+			raise e
+		finally:
+			if cleanup:
+				self.cleanup(tart, client_socket, ip, tart_run_process)
+
+	def do_test_virtio_http(self, tart, interpreter="python3", cleanup=True):
+		client_socket = None
+		tart_run_process = None
+		ip = None
+
+		# Create a Linux VM
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999")
+
+		try:
+			# Copy test file to the VM and run the echo client in background
+			echo = self.GuestEcho(ip, 0, "{0}/guest/vsock_echo_http".format(curdir), interpreter)
+			echo.start()
+
+			# Wait thread OS to start
+			sleep(5)
+
+			log.info("Create http client")
+
+			conn = http.client.HTTPConnection("localhost", 9999, timeout=30)
+
+			# Echo
+			conn.request("POST", "/", content)
+			response = conn.getresponse()
+			data = response.read()
+			response.close()
+		
+			log.info("Ending.")
+			assert self.same_content(content, data)
+		except Exception as e:
+			raise e
+		finally:
+			if cleanup:
+				self.cleanup(tart, client_socket, ip, tart_run_process)
+
+	def do_test_virtio_connect(self, tart, interpreter="python3", cleanup=True):
 		server = None
 		tart_run_process = None
 		ip = None
 
 		try:
-			# Listen over unix socket before start VM
-			os.remove(unix_socket_path)
+			if os.path.exists(unix_socket_path):
+				os.remove(unix_socket_path)
 
+			# Listen over unix socket before start VM
 			server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 			server.bind(unix_socket_path)
 			server.listen(1)
 
 			# Create a Linux VM
-			tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=connect://vsock:9999{0}".format(unix_socket_path))
+			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=connect://vsock:9999{0}".format(unix_socket_path))
 
 			# Copy test file to the VM and run the echo client in background
-			echo = GuestEcho(ip, 5, "{0}/guest/vsock_echo_client.py".format(curdir))
+			echo = self.GuestEcho(ip, 5, "{0}/guest/vsock_echo_client".format(curdir), interpreter)
 
 			echo.start()
 
@@ -310,10 +419,10 @@ class TestVirtioDevices:
 		except Exception as e:
 			raise e
 		finally:
-			self.cleanup(tart, server, ip, tart_run_process)
+			if cleanup:
+				self.cleanup(tart, server, ip, tart_run_process)
 
-	@pytest.mark.dependency()
-	def test_virtio_pipe(self, tart):
+	def do_test_virtio_pipe(self, tart, interpreter="python3", cleanup=True):
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -327,10 +436,10 @@ class TestVirtioDevices:
 			host_in_fd, vm_write_fd = os.pipe()
 			
 			# Create a Linux VM
-			tart_run_process, ip = self.create_vm(tart, vsock_argument="--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd))
+			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd))
 
 			# Copy test file to the VM and run the echo client in background
-			echo = GuestEcho(ip, 5, "{0}/guest/vsock_echo_client.py".format(curdir))
+			echo = self.GuestEcho(ip, 5, "{0}/guest/vsock_echo_client".format(curdir), interpreter)
 
 			echo.start()
 
@@ -355,25 +464,24 @@ class TestVirtioDevices:
 				os.close(vm_read_fd)
 			if vm_write_fd:
 				os.close(vm_write_fd)
+			if cleanup:
+				self.cleanup(tart, None, ip, tart_run_process)
 
-			self.cleanup(tart, None, ip, tart_run_process)
-
-	@pytest.mark.dependency()
-	def test_console_socket(self, tart):
+	def do_test_console_socket(self, tart, interpreter="python3", cleanup=True):
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_vm(tart, console_argument="--console=unix:{0}".format(console_socket_path))
+		tart_run_process, ip = self.create_test_vm(tart, console_argument="--console=unix:{0}".format(console_socket_path))
 
 		try:
 			# Copy test file to the VM and run the echo client in background
-			echo = GuestEcho(ip, 5, "{0}/guest/console_guest.py".format(curdir))
+			echo = self.GuestEcho(ip, 5, "{0}/guest/console_guest".format(curdir), interpreter, need_sudo=True)
 			echo.start()
 
 			# Wait thread OS to start
-			sleep(5)
+			self.waitpidfile(ip)
 
 			client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 			client_socket.settimeout(30)
@@ -390,10 +498,10 @@ class TestVirtioDevices:
 		except Exception as e:
 			raise e
 		finally:
-			self.cleanup(tart, client_socket, ip, tart_run_process)
+			if cleanup:
+				self.cleanup(tart, client_socket, ip, tart_run_process)
 
-	@pytest.mark.dependency()
-	def test_console_pipe(self, tart):
+	def do_test_console_pipe(self, tart, interpreter="python3", cleanup=True):
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -407,12 +515,12 @@ class TestVirtioDevices:
 			host_in_fd, vm_write_fd = os.pipe()
 
 			# Create a Linux VM
-			tart_run_process, ip = self.create_vm(tart,
+			tart_run_process, ip = self.create_test_vm(tart,
 											console_argument="--console=fd://{0},{1}".format(vm_read_fd, vm_write_fd),
 											pass_fds=(vm_read_fd, vm_write_fd))
 
 			# Copy test file to the VM and run the echo client in background
-			echo = GuestEcho(ip, 5, "{0}/guest/console_guest.py".format(curdir))
+			echo = self.GuestEcho(ip, 5, "{0}/guest/console_guest".format(curdir), interpreter, need_sudo=True)
 			echo.start()
 
 			# Wait thread OS to start
@@ -437,6 +545,56 @@ class TestVirtioDevices:
 				os.close(vm_read_fd)
 			if vm_write_fd:
 				os.close(vm_write_fd)
+			if cleanup:
+				self.cleanup(tart, None, ip, tart_run_process)
+	
+class TestVirtioDevicesOnLinux(TestVirtioDevices):
+	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
+		return self.create_vm(tart, "ghcr.io/cirruslabs/ubuntu:latest", vsock_argument, console_argument, vmname, pass_fds)
 
-			self.cleanup(tart, None, ip, tart_run_process)
+	def test_virtio_bind(self, tart):
+		self.do_test_virtio_bind(tart)
+
+	def test_virtio_http(self, tart):
+		self.do_test_virtio_http(tart)
+
+	def test_virtio_tcp(self, tart):
+		self.do_test_virtio_tcp(tart)
+
+	def test_virtio_connect(self, tart):
+		self.do_test_virtio_connect(tart)
+
+	def test_virtio_pipe(self, tart):
+		self.do_test_virtio_pipe(tart)
+
+	def test_console_socket(self, tart):
+		self.do_test_console_socket(tart)
+
+	def test_console_pipe(self, tart):
+		self.do_test_console_pipe(tart)
+
+class TestVirtioDevicesOnMacOS(TestVirtioDevices):
+	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
+		return self.create_vm(tart, "ghcr.io/cirruslabs/macos-sequoia-xcode:latest", vsock_argument, console_argument, vmname, pass_fds)
+
+	def test_virtio_bind(self, tart):
+		self.do_test_virtio_bind(tart, "swift")
+
+	def test_virtio_http(self, tart):
+		self.do_test_virtio_http(tart, "go")
+
+	def test_virtio_tcp(self, tart):
+		self.do_test_virtio_tcp(tart, "swift")
+
+	def test_virtio_connect(self, tart):
+		self.do_test_virtio_connect(tart, "swift")
+
+	def test_virtio_pipe(self, tart):
+		self.do_test_virtio_pipe(tart, "swift")
+
+	def test_console_socket(self, tart):
+		self.do_test_console_socket(tart)
+
+	def test_console_pipe(self, tart):
+		self.do_test_console_pipe(tart)
 

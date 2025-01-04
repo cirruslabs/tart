@@ -20,8 +20,8 @@ print("Connected.")
 
 message = virtio.sock_read(conn)
 virtio.sock_send(conn, message)
+message = virtio.sock_read(conn)
 
-conn.recv(3)
 conn.close()
 server.close()
 

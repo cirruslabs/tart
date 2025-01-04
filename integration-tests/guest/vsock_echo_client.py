@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-
-import os
 import socket
-from time import sleep
+import platform
 
+PORT = 9999
+
+if platform.system() == "Linux":
+    FAMILY = socket.AF_VSOCK
+    CID = socket.VMADDR_CID_HOST
+elif platform.system() == "Darwin":
+    FAMILY = 40
+    CID = 2
+else:
+	raise Exception("Unsupported platform: {0}".format(platform.system()))
 
 def sock_send(conn, message):
     length = len(message).to_bytes(8, "big")
@@ -31,10 +39,7 @@ def sock_read(conn):
 
     return response
 
-CID = socket.VMADDR_CID_HOST
-PORT = 9999
-
-conn = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)
+conn = socket.socket(FAMILY, socket.SOCK_STREAM)
 conn.settimeout(120) # 2 minutes for debugging
 conn.connect((CID, PORT))
 
@@ -43,7 +48,8 @@ print("Connected.")
 message = sock_read(conn)
 sock_send(conn, message)
 
-conn.recv(3)
+# Read end message
+message = sock_read(conn)
 
 conn.close()
 print("Disconnected.")

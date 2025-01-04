@@ -17,5 +17,6 @@ client_socket.settimeout(120) # 2 minutes for debugging
 
 # Echo
 virtio.sock_echo(client_socket, virtio.create_content())
+#virtio.sock_echo(client_socket, b"Hello, world!")
 
 client_socket.close()
