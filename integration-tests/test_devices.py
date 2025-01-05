@@ -9,6 +9,7 @@ from time import sleep
 
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
+import uuid
 
 log = logging.getLogger()
 unix_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "unix_socket.sock")
@@ -280,12 +281,13 @@ class TestVirtioDevices:
 		ssh_command(ip, "bash waitpid.sh")
 
 	def do_test_virtio_bind(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=bind://vsock:9999{0}".format(unix_socket_path))
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=bind://vsock:9999{0}".format(unix_socket_path), vmname=vmname)
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -314,15 +316,16 @@ class TestVirtioDevices:
 			raise e
 		finally:
 			if cleanup:
-				self.cleanup(tart, client_socket, ip, tart_run_process)
+				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_tcp(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999")
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999", vmname=vmname)
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -349,15 +352,16 @@ class TestVirtioDevices:
 			raise e
 		finally:
 			if cleanup:
-				self.cleanup(tart, client_socket, ip, tart_run_process)
+				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_http(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999")
+		tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=tcp://127.0.0.1:9999", vmname=vmname)
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -383,9 +387,10 @@ class TestVirtioDevices:
 			raise e
 		finally:
 			if cleanup:
-				self.cleanup(tart, client_socket, ip, tart_run_process)
+				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_connect(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		server = None
 		tart_run_process = None
 		ip = None
@@ -400,7 +405,7 @@ class TestVirtioDevices:
 			server.listen(1)
 
 			# Create a Linux VM
-			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=connect://vsock:9999{0}".format(unix_socket_path))
+			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=connect://vsock:9999{0}".format(unix_socket_path), vmname=vmname)
 
 			# Copy test file to the VM and run the echo client in background
 			echo = self.GuestEcho(ip, 5, "{0}/guest/vsock_echo_client".format(curdir), interpreter)
@@ -420,9 +425,10 @@ class TestVirtioDevices:
 			raise e
 		finally:
 			if cleanup:
-				self.cleanup(tart, server, ip, tart_run_process)
+				self.cleanup(tart, server, ip, tart_run_process, vmname)
 
 	def do_test_virtio_pipe(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -436,7 +442,7 @@ class TestVirtioDevices:
 			host_in_fd, vm_write_fd = os.pipe()
 			
 			# Create a Linux VM
-			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd))
+			tart_run_process, ip = self.create_test_vm(tart, vsock_argument="--vsock=fd://{0},{1}:9999".format(vm_read_fd, vm_write_fd), pass_fds=(vm_read_fd, vm_write_fd), vmname=vmname)
 
 			# Copy test file to the VM and run the echo client in background
 			echo = self.GuestEcho(ip, 5, "{0}/guest/vsock_echo_client".format(curdir), interpreter)
@@ -465,15 +471,16 @@ class TestVirtioDevices:
 			if vm_write_fd:
 				os.close(vm_write_fd)
 			if cleanup:
-				self.cleanup(tart, None, ip, tart_run_process)
+				self.cleanup(tart, None, ip, tart_run_process, vmname)
 
 	def do_test_console_socket(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		client_socket = None
 		tart_run_process = None
 		ip = None
 
 		# Create a Linux VM
-		tart_run_process, ip = self.create_test_vm(tart, console_argument="--console=unix:{0}".format(console_socket_path))
+		tart_run_process, ip = self.create_test_vm(tart, console_argument="--console=unix:{0}".format(console_socket_path), vmname=vmname)
 
 		try:
 			# Copy test file to the VM and run the echo client in background
@@ -499,9 +506,10 @@ class TestVirtioDevices:
 			raise e
 		finally:
 			if cleanup:
-				self.cleanup(tart, client_socket, ip, tart_run_process)
+				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_console_pipe(self, tart, interpreter="python3", cleanup=True):
+		vmname = "integration-test-devices-" + str(uuid.uuid4())
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -517,6 +525,7 @@ class TestVirtioDevices:
 			# Create a Linux VM
 			tart_run_process, ip = self.create_test_vm(tart,
 											console_argument="--console=fd://{0},{1}".format(vm_read_fd, vm_write_fd),
+											vmname=vmname,
 											pass_fds=(vm_read_fd, vm_write_fd))
 
 			# Copy test file to the VM and run the echo client in background
@@ -546,7 +555,7 @@ class TestVirtioDevices:
 			if vm_write_fd:
 				os.close(vm_write_fd)
 			if cleanup:
-				self.cleanup(tart, None, ip, tart_run_process)
+				self.cleanup(tart, None, ip, tart_run_process, vmname)
 	
 class TestVirtioDevicesOnLinux(TestVirtioDevices):
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
