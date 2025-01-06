@@ -4,13 +4,13 @@ import logging
 import os
 import select
 import socket
-import uuid
 from threading import Thread
 from time import sleep
-
 import pytest
+
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
+import uuid
 
 log = logging.getLogger()
 unix_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "unix_socket.sock")
@@ -36,12 +36,6 @@ content.extend(content)
 content.extend(content)
 content.extend(content)
 
-def log_info(msg):
-  if "CIRRUS_WORKING_DIR" in os.environ:
-    print(msg)
-  else:
-    log.info(msg)
-
 def ssh_command(ip, command):
 	client = SSHClient()
 	client.set_missing_host_key_policy(AutoAddPolicy)
@@ -49,7 +43,7 @@ def ssh_command(ip, command):
 
 	try:
 		_, stdout, _ = client.exec_command("source .profile ; " + command + " 2>&1 | tee output.log")
-		log_info(stdout.read().decode())
+		log.info(stdout.read().decode())
 	except Exception as e:
 		raise e
 	finally:
@@ -62,7 +56,7 @@ def bash(ip, command):
 
 	try:
 		_, stdout, _ = client.exec_command("bash -c '" + command + "' 2>&1")
-		log_info(stdout.read().decode())
+		log.info(stdout.read().decode())
 	except Exception as e:
 		raise e
 	finally:
@@ -124,14 +118,14 @@ class TestVirtioDevices:
 			if self.delay > 0:
 				sleep(self.delay)
 
-			log_info("{0} copied and running".format(self.target))
+			log.info("{0} copied and running".format(self.target))
 
 			if self.need_sudo:
 				ssh_command(self.ip, "sudo {0} {1}".format(self.interpreter, self.target))
 			else:
 				ssh_command(self.ip, "{0} {1}".format(self.interpreter, self.target))
 	
-			log_info("{0} finished".format(self.target))
+			log.info("{0} finished".format(self.target))
 
 	def get_vm_name(self):
 		#return vm_name + "-" + str(uuid.uuid4())
@@ -144,7 +138,7 @@ class TestVirtioDevices:
 				data = os.read(fd, 8)
 				length = int.from_bytes(data, byteorder='big')
 
-				log_info("Message length: {0}".format(length))
+				log.info("Message length: {0}".format(length))
 
 				response = bytearray()
 
@@ -160,7 +154,7 @@ class TestVirtioDevices:
 	def write_message(self, fd, message):
 		length = len(message).to_bytes(8, "big")
 
-		log_info("Send message length: {0}".format(len(message)))
+		log.info("Send message length: {0}".format(len(message)))
 
 		os.write(fd, length)
 		os.write(fd, message)
@@ -178,7 +172,7 @@ class TestVirtioDevices:
 	def sock_send(self, conn, message):
 		length = len(message).to_bytes(8, "big")
 
-		log_info("Send message length: {0}".format(len(message)))
+		log.info("Send message length: {0}".format(len(message)))
 
 		conn.sendall(length)
 		conn.sendall(message)
@@ -187,11 +181,11 @@ class TestVirtioDevices:
 		data = conn.recv(8)
 		length = int.from_bytes(data, byteorder='big')
 
-		log_info("Message length: {0}".format(length))
+		log.info("Message length: {0}".format(length))
 
 		response = bytearray()
 
-		log_info("Waiting for message")
+		log.info("Waiting for message")
 
 		while length > 0:
 			data = conn.recv(8192)
@@ -205,12 +199,12 @@ class TestVirtioDevices:
 		response_sha256_hash = hashlib.sha256(response).hexdigest()
 
 		if response_sha256_hash == content_sha256_hash:
-			log_info("Data received successfully")
+			log.info("Data received successfully")
 			return True
 		else:
-			log_info("Hashes are not equal")
-			log_info("Expected: ", content_sha256_hash)
-			log_info("Received: ", response_sha256_hash)
+			log.info("Hashes are not equal")
+			log.info("Expected: ", content_sha256_hash)
+			log.info("Received: ", response_sha256_hash)
 			return False
 
 	def sock_echo(self, conn, message):
@@ -230,20 +224,20 @@ class TestVirtioDevices:
 
 		# Shutdown the VM
 		if ip:
-			log_info("Shutting down the VM")
+			log.info("Shutting down the VM")
 			ssh_command(ip, "sudo shutdown -h now")
 			if tart_run_process:
 				tart_run_process.wait()
 
 		# Delete the VM
-		log_info("Deleting the VM")
+		log.info("Deleting the VM")
 		tart.run(["delete", vmname])
 
 	def create_vm(self, tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=None, console_argument=None, vmname=vm_name, diskSize=None, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
 		if vmname in stdout:
-			log_info(f"VM {vmname} already exists, deleting it.")
+			log.info(f"VM {vmname} already exists, deleting it.")
 			try:
 				tart.run(["stop", vmname])
 			except Exception:
@@ -277,14 +271,14 @@ class TestVirtioDevices:
 				client = SSHClient()
 				client.set_missing_host_key_policy(AutoAddPolicy)
 				client.connect(ip, username="admin", password="admin", timeout=120)
-				log_info("Connected to the VM via SSH")
+				log.info("Connected to the VM via SSH")
 				break
 			except Exception:
 				sleep(1)
 		else:
 			raise Exception("Unable to connect to the VM via SSH")
 
-		log_info("vm created")
+		log.info("vm created")
 
 		return tart_run_process, ip
 
@@ -311,20 +305,20 @@ class TestVirtioDevices:
 			# Wait a bit thread OS to start
 			self.waitpidfile(ip)
 
-			log_info("Try to connected to guest.")
+			log.info("Try to connected to guest.")
 
 			client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 			client_socket.settimeout(30)
 			client_socket.connect(unix_socket_path)
 
-			log_info("Connected to socket.")
+			log.info("Connected to socket.")
 
 			# Echo
 			ok = self.sock_echo(client_socket, content)
 
 			echo.join()
 		
-			log_info("Ending.")
+			log.info("Ending.")
 			assert ok
 		except Exception as e:
 			raise e
@@ -353,14 +347,14 @@ class TestVirtioDevices:
 			client_socket.settimeout(30)
 			client_socket.connect(("127.0.0.1", 9999))
 
-			log_info("Connected to socket.")
+			log.info("Connected to socket.")
 
 			# Echo
 			ok = self.sock_echo(client_socket, content)
 
 			echo.join()
 		
-			log_info("Ending.")
+			log.info("Ending.")
 			assert ok
 		except Exception as e:
 			raise e
@@ -385,7 +379,7 @@ class TestVirtioDevices:
 			# Wait thread OS to start
 			sleep(5)
 
-			log_info("Create http client")
+			log.info("Create http client")
 
 			conn = http.client.HTTPConnection("localhost", 9999, timeout=30)
 
@@ -395,7 +389,7 @@ class TestVirtioDevices:
 			data = response.read()
 			response.close()
 		
-			log_info("Ending.")
+			log.info("Ending.")
 			assert self.same_content(content, data)
 		except Exception as e:
 			raise e
@@ -427,7 +421,7 @@ class TestVirtioDevices:
 			echo.start()
 
 			conn, _ = server.accept()
-			log_info("Connected.")
+			log.info("Connected.")
 
 			# Send the content
 			ok = self.sock_echo(conn, content)
@@ -465,7 +459,7 @@ class TestVirtioDevices:
 
 			sleep(10)
 
-			log_info("Connected.")
+			log.info("Connected.")
 
 			# Send the content
 			ok = self.echo_message(host_in_fd, host_out_fd, content)
@@ -508,7 +502,7 @@ class TestVirtioDevices:
 			client_socket.settimeout(30)
 			client_socket.connect(console_socket_path)
 
-			log_info("Connected to socket.")
+			log.info("Connected to socket.")
 
 			# Send the content
 			ok = self.sock_echo(client_socket, content)
@@ -549,7 +543,7 @@ class TestVirtioDevices:
 			# Wait thread OS to start
 			sleep(5)
 
-			log_info("Connected.")
+			log.info("Connected.")
 
 			# Send the content
 			ok = self.echo_message(host_in_fd, host_out_fd, content)
