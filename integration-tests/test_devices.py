@@ -6,6 +6,7 @@ import select
 import socket
 from threading import Thread
 from time import sleep
+import pytest
 
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
@@ -126,6 +127,10 @@ class TestVirtioDevices:
 	
 			log.info("{0} finished".format(self.target))
 
+	def get_vm_name(self):
+		#return vm_name + "-" + str(uuid.uuid4())
+		return vm_name
+
 	def read_message(self, fd):
 		while True:
 			rlist, _, _ = select.select([fd], [], [], 60)
@@ -228,7 +233,7 @@ class TestVirtioDevices:
 		log.info("Deleting the VM")
 		tart.run(["delete", vmname])
 
-	def create_vm(self, tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
+	def create_vm(self, tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=None, console_argument=None, vmname=vm_name, diskSize=None, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
 		if vmname in stdout:
@@ -241,6 +246,9 @@ class TestVirtioDevices:
 
 
 		tart.run(["clone", image, vmname])
+
+		if diskSize:
+			tart.run(["set", vmname, "--disk-size={0}".format(diskSize)])
 
 		args = ["run", vmname, "--no-graphics", "--no-audio"]
 
@@ -275,13 +283,13 @@ class TestVirtioDevices:
 		return tart_run_process, ip
 
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, "ghcr.io/cirruslabs/ubuntu:latest", vsock_argument, console_argument, vmname, pass_fds)
+		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def waitpidfile(self, ip):
 		ssh_command(ip, "bash waitpid.sh")
 
 	def do_test_virtio_bind(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		client_socket = None
 		tart_run_process = None
 		ip = None
@@ -319,7 +327,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_tcp(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		client_socket = None
 		tart_run_process = None
 		ip = None
@@ -355,7 +363,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_http(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		client_socket = None
 		tart_run_process = None
 		ip = None
@@ -390,7 +398,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_virtio_connect(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		server = None
 		tart_run_process = None
 		ip = None
@@ -428,7 +436,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, server, ip, tart_run_process, vmname)
 
 	def do_test_virtio_pipe(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -474,7 +482,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, None, ip, tart_run_process, vmname)
 
 	def do_test_console_socket(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		client_socket = None
 		tart_run_process = None
 		ip = None
@@ -509,7 +517,7 @@ class TestVirtioDevices:
 				self.cleanup(tart, client_socket, ip, tart_run_process, vmname)
 
 	def do_test_console_pipe(self, tart, interpreter="python3", cleanup=True):
-		vmname = "integration-test-devices-" + str(uuid.uuid4())
+		vmname = self.get_vm_name()
 		vm_read_fd = None
 		host_out_fd = None
 		host_in_fd = None
@@ -559,7 +567,7 @@ class TestVirtioDevices:
 	
 class TestVirtioDevicesOnLinux(TestVirtioDevices):
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, "ghcr.io/cirruslabs/ubuntu:latest", vsock_argument, console_argument, vmname, pass_fds)
+		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, diskSize=20, pass_fds=pass_fds)
 
 	def test_virtio_bind(self, tart):
 		self.do_test_virtio_bind(tart)
@@ -584,7 +592,7 @@ class TestVirtioDevicesOnLinux(TestVirtioDevices):
 
 class TestVirtioDevicesOnMacOS(TestVirtioDevices):
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, "ghcr.io/cirruslabs/macos-sequoia-xcode:latest", vsock_argument, console_argument, vmname, pass_fds)
+		return self.create_vm(tart, "ghcr.io/cirruslabs/macos-sequoia-xcode:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def test_virtio_bind(self, tart):
 		self.do_test_virtio_bind(tart, "swift")

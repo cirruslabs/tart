@@ -1,14 +1,19 @@
+import uuid
+
 def test_delete(tart):
+    debian = f"debian-{uuid.uuid4()}"
+
     # Create a Linux VM (because we can create it really fast)
-    tart.run(["create", "--linux", "debian"])
+    tart.run(["create", "--linux", debian])
 
     # Ensure that the VM exists
     stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
-    assert stdout == "debian\n"
+    assert debian in stdout
 
     # Delete the VM
-    tart.run(["delete", "debian"])
+    tart.run(["delete", debian])
 
     # Ensure that the VM was removed
     stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
-    assert stdout == ""
+
+    assert debian not in stdout
