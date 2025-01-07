@@ -244,7 +244,8 @@ class TestVirtioDevices:
 				pass
 			tart.run(["delete", vmname])
 
-
+		# Create the VM
+		log.info("Clone image {0} to VM {1}".format(image, vmname))
 		tart.run(["clone", image, vmname])
 
 		if diskSize:
@@ -259,24 +260,27 @@ class TestVirtioDevices:
 			args.append(console_argument)
 
 		# Run the VM asynchronously
+		log.info("Start VM {0}".format(vmname))
 		tart_run_process = tart.run_async(args, pass_fds=pass_fds)
 
 		# Obtain the VM's IP
+		log.info("Waiting for VM to start")
 		stdout, _ = tart.run(["ip", vmname, "--wait", "120"])
 		ip = stdout.strip()
 
 		# Repeat until the VM is reachable via SSH
+		log.info("VM started with ip: {0}, wait ssh to be ready".format(ip))
 		for _ in range(120):
 			try:
 				client = SSHClient()
 				client.set_missing_host_key_policy(AutoAddPolicy)
 				client.connect(ip, username="admin", password="admin", timeout=120)
-				log.info("Connected to the VM via SSH")
+				log.info("Connected to the VM {0} via SSH".format(vmname))
 				break
 			except Exception:
 				sleep(1)
 		else:
-			raise Exception("Unable to connect to the VM via SSH")
+			raise Exception("Unable to connect to the VM {0} via SSH".format(vmname))
 
 		log.info("vm created")
 
@@ -286,6 +290,7 @@ class TestVirtioDevices:
 		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def waitpidfile(self, ip):
+		log.info(f"Wait guest echo to be ready on ip: {ip}")
 		ssh_command(ip, "bash waitpid.sh")
 
 	def do_test_virtio_bind(self, tart, interpreter="python3", cleanup=True):

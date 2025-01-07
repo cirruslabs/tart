@@ -16,15 +16,13 @@ task:
     - codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart
     - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
     # Run integration tests
-    - df -h $TMPDIR
-    - df -h $CIRRUS_WORKING_DIR
-    - df -h $HOME
     - cd integration-tests
     - HOMEBREW_NO_AUTO_UPDATE=1 brew install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - pip install -r requirements.txt
-    - pytest --verbose --capture=tee-sys --log-cli-level=INFO --log-cli-format="%(asctime)s [%(levelname)4s] (%(filename)s:%(lineno)s) %(message)s" --log-cli-date-format="%Y-%m-%d %H:%M:%S" --log-file=$CIRRUS_WORKING_DIR/pytest.log --junit-xml=pytest-junit.xml
+    - python3 standalone.py
+    - pytest -o log_cli=true --verbose --capture=tee-sys --log-cli-level=INFO --log-cli-format="%(asctime)s [%(levelname)4s] (%(filename)s:%(lineno)s) %(message)s" --log-cli-date-format="%Y-%m-%d %H:%M:%S" --log-file=$CIRRUS_WORKING_DIR/pytest.log --junit-xml=pytest-junit.xml
   pytest_junit_result_artifacts:
     path: "integration-tests/pytest-junit.xml"
     format: junit
