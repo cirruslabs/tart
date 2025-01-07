@@ -7,6 +7,7 @@ import socket
 from threading import Thread
 from time import sleep
 import pytest
+import subprocess
 
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
@@ -268,13 +269,17 @@ class TestVirtioDevices:
 		stdout, _ = tart.run(["ip", vmname, "--wait", "120"])
 		ip = stdout.strip()
 
+		# Test ping address
+		out = subprocess.run(['ping', ip, '-c', '8'], capture_output=True)
+		print(out.stdout.decode())
+
 		# Repeat until the VM is reachable via SSH
 		log.info("VM started with ip: {0}, wait ssh to be ready".format(ip))
 		client = SSHClient()
 		client.set_missing_host_key_policy(AutoAddPolicy)
 		for _ in range(120):
 			try:
-				log.info("Try connect to the VM {0} via {1}".format(vmname, ip))
+				#log.info("Try connect to the VM {0} via {1}".format(vmname, ip))
 				client.connect(ip, username="admin", password="admin", timeout=1)
 				log.info("Connected to the VM {0} via SSH".format(vmname))
 				break
