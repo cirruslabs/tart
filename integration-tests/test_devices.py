@@ -7,7 +7,6 @@ import socket
 from threading import Thread
 from time import sleep
 import pytest
-import subprocess
 
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
@@ -268,10 +267,6 @@ class TestVirtioDevices:
 		log.info("Waiting for VM to start")
 		stdout, _ = tart.run(["ip", vmname, "--wait", "120"])
 		ip = stdout.strip()
-
-		# Test ping address
-		out = subprocess.run(['ping', ip, '-c', '8'], capture_output=True)
-		print(out.stdout.decode())
 
 		# Repeat until the VM is reachable via SSH
 		log.info("VM started with ip: {0}, wait ssh to be ready".format(ip))
