@@ -12,6 +12,9 @@ from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
 import uuid
 
+ubuntu_image="ghcr.io/cirruslabs/ubuntu:24.04"
+macos_image="ghcr.io/cirruslabs/macos-sequoia-xcode:latest"
+
 log = logging.getLogger()
 unix_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "unix_socket.sock")
 console_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "console.sock")
@@ -233,7 +236,7 @@ class TestVirtioDevices:
 		log.info("Deleting the VM")
 		tart.run(["delete", vmname])
 
-	def create_vm(self, tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=None, console_argument=None, vmname=vm_name, diskSize=None, pass_fds=()):
+	def create_vm(self, tart, image=ubuntu_image, vsock_argument=None, console_argument=None, vmname=vm_name, diskSize=None, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
 		if vmname in stdout:
@@ -288,7 +291,7 @@ class TestVirtioDevices:
 		return tart_run_process, ip
 
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:24.04", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
+		return self.create_vm(tart, image=ubuntu_image, vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def waitpidfile(self, ip):
 		log.info(f"Wait guest echo to be ready on ip: {ip}")
@@ -573,7 +576,7 @@ class TestVirtioDevices:
 	
 class TestVirtioDevicesOnLinux(TestVirtioDevices):
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, diskSize=20, pass_fds=pass_fds)
+		return self.create_vm(tart, image=ubuntu_image, vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, diskSize=20, pass_fds=pass_fds)
 
 	def test_virtio_bind(self, tart):
 		self.do_test_virtio_bind(tart)
@@ -598,7 +601,7 @@ class TestVirtioDevicesOnLinux(TestVirtioDevices):
 
 class TestVirtioDevicesOnMacOS(TestVirtioDevices):
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, "ghcr.io/cirruslabs/macos-sequoia-xcode:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
+		return self.create_vm(tart, image=macos_image, vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def test_virtio_bind(self, tart):
 		self.do_test_virtio_bind(tart, "swift")
