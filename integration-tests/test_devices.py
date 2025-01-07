@@ -270,11 +270,12 @@ class TestVirtioDevices:
 
 		# Repeat until the VM is reachable via SSH
 		log.info("VM started with ip: {0}, wait ssh to be ready".format(ip))
+		client = SSHClient()
+		client.set_missing_host_key_policy(AutoAddPolicy)
 		for _ in range(120):
 			try:
-				client = SSHClient()
-				client.set_missing_host_key_policy(AutoAddPolicy)
-				client.connect(ip, username="admin", password="admin", timeout=120)
+				log.info("Try connect to the VM {0} via {1}".format(vmname, ip))
+				client.connect(ip, username="admin", password="admin", timeout=1)
 				log.info("Connected to the VM {0} via SSH".format(vmname))
 				break
 			except Exception:
