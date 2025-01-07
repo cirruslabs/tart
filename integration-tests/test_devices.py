@@ -288,7 +288,7 @@ class TestVirtioDevices:
 		return tart_run_process, ip
 
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
-		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:latest", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
+		return self.create_vm(tart, image="ghcr.io/cirruslabs/ubuntu:24.04", vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
 	def waitpidfile(self, ip):
 		log.info(f"Wait guest echo to be ready on ip: {ip}")
