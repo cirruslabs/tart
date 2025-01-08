@@ -4,17 +4,19 @@ import logging
 import os
 import select
 import socket
+import uuid
 from threading import Thread
 from time import sleep
-import pytest
 
+import pytest
 from paramiko import AutoAddPolicy, SSHClient
 from scp import SCPClient
-import uuid
 
+recreate_vm = False # "CIRRUS_WORKING_DIR" not in os.environ:
 ubuntu_image="ghcr.io/cirruslabs/ubuntu:24.04"
 macos_image="ghcr.io/cirruslabs/macos-sequoia-xcode:latest"
-
+#macos_image="ghcr.io/cirruslabs/macos-sonoma-xcode:16"
+#macos_image="ghcr.io/cirruslabs/macos-ventura-xcode:13.4.1"
 log = logging.getLogger()
 unix_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "unix_socket.sock")
 console_socket_path = os.path.join(os.path.expanduser("~"), ".tart", "cache", "console.sock")
@@ -38,6 +40,7 @@ content.extend(content)
 content.extend(content)
 content.extend(content)
 content.extend(content)
+
 
 def ssh_command(ip, command):
 	client = SSHClient()
@@ -130,8 +133,11 @@ class TestVirtioDevices:
 	
 			log.info("{0} finished".format(self.target))
 
-	def get_vm_name(self):
+	def get_vm_name(self, suffix=None):
 		#return vm_name + "-" + str(uuid.uuid4())
+		if suffix:
+			return vm_name + "-" + suffix
+
 		return vm_name
 
 	def read_message(self, fd):
@@ -232,27 +238,34 @@ class TestVirtioDevices:
 			if tart_run_process:
 				tart_run_process.wait()
 
-		# Delete the VM
-		log.info("Deleting the VM")
-		tart.run(["delete", vmname])
+		# Keep the VM if the test is running in Cirrus CI
+		if recreate_vm:
+			log.info("Deleting the VM")
+			tart.run(["delete", vmname])
 
 	def create_vm(self, tart, image=ubuntu_image, vsock_argument=None, console_argument=None, vmname=vm_name, diskSize=None, pass_fds=()):
 		# Instantiate a VM with admin:admin SSH access
+		exists = False
 		stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
 		if vmname in stdout:
-			log.info(f"VM {vmname} already exists, deleting it.")
+			exists = True
+
 			try:
 				tart.run(["stop", vmname])
 			except Exception:
 				pass
-			tart.run(["delete", vmname])
+			# Keep the VM if the test is running in Cirrus CI and recreate_vm is set
+			if recreate_vm:
+				log.info(f"VM {vmname} already exists, deleting it.")
+				tart.run(["delete", vmname])
 
-		# Create the VM
-		log.info("Clone image {0} to VM {1}".format(image, vmname))
-		tart.run(["clone", image, vmname])
+		# Create the VM if not exists
+		if not exists:
+			log.info("Clone image {0} to VM {1}".format(image, vmname))
+			tart.run(["clone", image, vmname])
 
-		if diskSize:
-			tart.run(["set", vmname, "--disk-size={0}".format(diskSize)])
+			if diskSize:
+				tart.run(["set", vmname, "--disk-size={0}".format(diskSize)])
 
 		args = ["run", vmname, "--no-graphics", "--no-audio"]
 
@@ -261,6 +274,8 @@ class TestVirtioDevices:
 
 		if console_argument:
 			args.append(console_argument)
+		else:
+			args.append("--console=none")
 
 		# Run the VM asynchronously
 		log.info("Start VM {0}".format(vmname))
@@ -550,12 +565,14 @@ class TestVirtioDevices:
 			echo.start()
 
 			# Wait thread OS to start
-			sleep(5)
+			self.waitpidfile(ip)
 
 			log.info("Connected.")
 
 			# Send the content
 			ok = self.echo_message(host_in_fd, host_out_fd, content)
+
+			log.info("Disconnected.")
 
 			echo.join()
 
@@ -575,6 +592,9 @@ class TestVirtioDevices:
 				self.cleanup(tart, None, ip, tart_run_process, vmname)
 	
 class TestVirtioDevicesOnLinux(TestVirtioDevices):
+	def get_vm_name(self, suffix=None):
+		return super().get_vm_name("linux")
+
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
 		return self.create_vm(tart, image=ubuntu_image, vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, diskSize=20, pass_fds=pass_fds)
 
@@ -600,6 +620,9 @@ class TestVirtioDevicesOnLinux(TestVirtioDevices):
 		self.do_test_console_pipe(tart)
 
 class TestVirtioDevicesOnMacOS(TestVirtioDevices):
+	def get_vm_name(self, suffix=None):
+		return super().get_vm_name("macos")
+
 	def create_test_vm(self, tart, vsock_argument=None, console_argument=None, vmname=vm_name, pass_fds=()):
 		return self.create_vm(tart, image=macos_image, vsock_argument=vsock_argument, console_argument=console_argument, vmname=vmname, pass_fds=pass_fds)
 
