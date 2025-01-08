@@ -641,9 +641,11 @@ class TestVirtioDevicesOnMacOS(TestVirtioDevices):
 	def test_virtio_pipe(self, tart):
 		self.do_test_virtio_pipe(tart, "swift")
 
+	@pytest.mark.only_sequoia(macos_image)
 	def test_console_socket(self, tart):
 		self.do_test_console_socket(tart)
 
+	@pytest.mark.only_sequoia(macos_image)
 	def test_console_pipe(self, tart):
 		self.do_test_console_pipe(tart)
 
