@@ -3,13 +3,6 @@ import platform
 import select
 import os
 
-if platform.system() == "Linux":
-	console_path = "/dev/virtio-ports/tart-agent"
-elif platform.system() == "Darwin":
-	console_path = "/dev/tty.tart-agent"
-else:
-	raise Exception("Unsupported platform: {0}".format(platform.system()))
-
 # This script is a simple example of how to communicate with the console device in the guest.
 def readmessage(fd):
 	while True:
@@ -44,24 +37,59 @@ def writemessage(fd, message):
 	fd.write(length)
 	fd.write(message)
 
-with open("/tmp/vsock_echo.pid", "w") as pid_file:
-	pid_file.write(str(os.getpid()))
-	print("Reading pipe")
+def echo_linux():
+	console_path = "/dev/virtio-ports/tart-agent"
+	with open("/tmp/vsock_echo.pid", "w") as pid_file:
+		try:
+			pid_file.write(str(os.getpid()))
+			print("Reading pipe")
 
-	with open(console_path, "rb") as pipe:
-		message = readmessage(pipe)
-		pipe.close()
+			with open(console_path, "rb") as pipe:
+				message = readmessage(pipe)
 
-	print("Writing pipe")
+			print("Writing pipe")
 
-	with open(console_path, "wb") as pipe:
-		writemessage(pipe, message)
-		pipe.close()
+			with open(console_path, "wb") as pipe:
+				writemessage(pipe, message)
 
-	print("Acking pipe")
+			print("Acking pipe")
 
-	with open(console_path, "rb") as pipe:
-		# Read end message
-		response = readmessage(pipe)
-		print("Received data: {0}".format(response.decode()))
-		pipe.close()
+			with open(console_path, "rb") as pipe:
+				# Read end message
+				response = readmessage(pipe)
+				print("Received data: {0}".format(response.decode()))
+		except Exception as e:
+			raise e
+		finally:
+			os.remove("/tmp/vsock_echo.pid")
+
+def echo_darwin():
+	console_path = "/dev/tty.tart-agent"
+	with open("/tmp/vsock_echo.pid", "w") as pid_file:
+		try:
+			pid_file.write(str(os.getpid()))
+
+			with open(console_path, "ab+") as pipe:
+				print("Reading pipe")
+				message = readmessage(pipe)
+
+				print("Writing pipe")
+				writemessage(pipe, message)
+		
+				print("Acking pipe")
+				response = readmessage(pipe)
+
+				print("Received data: {0}".format(response.decode()))
+		except Exception as e:
+			raise e
+		finally:
+			os.remove("/tmp/vsock_echo.pid")
+
+if platform.system() == "Linux":
+	echo_linux()
+elif platform.system() == "Darwin":
+	echo_darwin()
+else:
+	raise Exception("Unsupported platform: {0}".format(platform.system()))
+
+
