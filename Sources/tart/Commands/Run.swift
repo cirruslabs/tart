@@ -237,11 +237,16 @@ struct Run: AsyncParsableCommand {
 
   var vsocks: [String] = []
 
-  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\"). --console=none to disable it", valueName: "url"))
+  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=unix, --console=file, or --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\")",
+                                                             discussion: """
+                                                             - --console=unix — use a Unix socket for the serial console located at ~/.tart/vms/<vm-name>/console.sock
+                                                             - --console=unix:/tmp/serial.sock — use a Unix socket for the serial console located at the specified path
+                                                             - --console=file — use a simple file for the serial console located at ~/.tart/vms/<vm-name>/console.log
+                                                             - --console=fd://0,1 — use file descriptors for the serial console. The first file descriptor is for reading, the second is for writing
+                                                             ** INFO: The console doesn't work on MacOS sonoma and earlier  **
+                                                             """,
+                                                             valueName: "url"))
   var consoleURL: String?
-
-  @Flag(help: "Disable serial console device for VM. same as --console=none")
-  var noConsole: Bool = false
 
   mutating func validate() throws {
     if vnc && vncExperimental {
@@ -296,42 +301,44 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    if noConsole && consoleURL != "none" {
-      throw ValidationError("--no-console and --console are mutually exclusive")
-    } else if self.consoleURL == "none" {
-      self.noConsole = true
+    if self.consoleURL == "file" {
+      let  console = URL(fileURLWithPath: "console.log", relativeTo: vmDir.diskURL).absoluteURL
+
+      self.consoleURL = console.absoluteString
+    } else if self.consoleURL == "unix" {
+      let  console = URL(fileURLWithPath: "console.sock", relativeTo: vmDir.diskURL).absoluteURL
+
+      self.consoleURL = console.absoluteString.replacingOccurrences(of: "file:/", with: "unix:/")
     }
 
-    if noConsole {
-      consoleURL = "none://"
-    } else if let consoleURL = consoleURL {
-      guard let u = URL(string: consoleURL) else {
+    if let consoleURL = consoleURL {
+      guard let u: URL = URL(string: consoleURL) else {
         throw ValidationError("Invalid serial console URL")
       }
 
-      if u.scheme != "unix" && u.scheme != "fd" {
-        throw ValidationError("Invalid serial console URL scheme")
+      if u.scheme != "unix" && u.scheme != "fd" && u.isFileURL == false {
+        throw ValidationError("Invalid serial console URL scheme: must be unix, fd or file")
       }
 
       if u.scheme == "fd" {
         let host = u.host?.split(separator: ",")
 
         if host == nil || host!.count == 0 {
-          throw ValidationError("Invalid console URL")
+          throw ValidationError("Invalid console URL: file descriptor is not specified")
         }
 
         for fd in host! {
           if Int(fd) == nil {
-            throw ValidationError("Invalid console URL")
+            throw ValidationError("Invalid console URL: file descriptor is not a number")
           }
         }
-      } else if u.scheme == "unix" {
+      } else {
         if u.path == "" {
           throw ValidationError("Invalid console URL")
         }
 
-        if u.path.utf8.count > 103 {
-          throw ValidationError("The path of the console URL is too long")
+        if u.scheme == "unix" && u.path.utf8.count > 103 {
+          throw ValidationError("The unix socket is too long")
         }
       }
     }

@@ -13,7 +13,7 @@ class CommunicationDevices {
     try? mainGroup.syncShutdownGracefully()
   }
 
-  private init(configuration: VZVirtualMachineConfiguration, consoleURL: URL, sockets: [SocketDevice]) throws {
+  private init(configuration: VZVirtualMachineConfiguration, consoleURL: URL?, sockets: [SocketDevice]) throws {
     let mainGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 
     self.mainGroup = mainGroup
@@ -33,7 +33,7 @@ class CommunicationDevices {
   }
 
   // Create the communication devices console and socket devices
-  public static func setup(configuration: VZVirtualMachineConfiguration, consoleURL: URL, sockets: [SocketDevice]) throws -> CommunicationDevices {
+  public static func setup(configuration: VZVirtualMachineConfiguration, consoleURL: URL?, sockets: [SocketDevice]) throws -> CommunicationDevices {
     return try CommunicationDevices(configuration: configuration, consoleURL: consoleURL, sockets: sockets)
   }
 }

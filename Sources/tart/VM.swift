@@ -418,15 +418,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Create console device useful for implementing and socketDevices
     // host feature checks in the guest agent software.
     if !suspendable {
-      let console: URL
-
-      if let consoleURL = consoleURL  {
-        console = consoleURL.absoluteURL
-      } else {
-        console = URL(fileURLWithPath: "console.sock", relativeTo: diskURL).absoluteURL
-      }
-
-      communicationDevices = try CommunicationDevices.setup(configuration: configuration, consoleURL: console, sockets: socketDevices)
+      communicationDevices = try CommunicationDevices.setup(configuration: configuration, consoleURL: consoleURL, sockets: socketDevices)
     }
 
     try configuration.validate()

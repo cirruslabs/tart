@@ -274,8 +274,6 @@ class TestVirtioDevices:
 
 		if console_argument:
 			args.append(console_argument)
-		else:
-			args.append("--console=none")
 
 		# Run the VM asynchronously
 		log.info("Start VM {0}".format(vmname))

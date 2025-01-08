@@ -6,11 +6,11 @@ import Virtualization
 
 final class ConsoleDevice: CatchRemoteCloseDelegate {
   let mainGroup: EventLoopGroup
-  let consoleURL: URL
+  let consoleURL: URL?
   var channel: Channel?
   var pipeChannel: Channel?
 
-  private init(on: EventLoopGroup, consoleURL: URL) {
+  private init(on: EventLoopGroup, consoleURL: URL?) {
     //self.consoleSocket = URL(fileURLWithPath: "tart-agent.sock", isDirectory: false, relativeTo: diskURL).absoluteURL
     self.consoleURL = consoleURL
     self.mainGroup = on
@@ -20,7 +20,7 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
     self.channel = channel
   }
 
-  private func createUnixConsole() -> (FileHandle, FileHandle){
+  private func createUnixConsole(consoleURL: URL) -> (FileHandle, FileHandle){
     let inputPipe = Pipe()
     let outputPipe = Pipe()
 
@@ -49,24 +49,36 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
       }
 
     // Listen on the console socket
-    let binder = bootstrap.bind(unixDomainSocketPath: self.consoleURL.path(), cleanupExistingSocketFile: true)
+    let binder = bootstrap.bind(unixDomainSocketPath: consoleURL.path(), cleanupExistingSocketFile: true)
 
     // When the bind is complete, set the channel
     binder.whenComplete { result in
       switch result {
       case let .success(channel):
         self.setChannel(channel)
-        defaultLogger.appendNewLine("Console listening on \(self.consoleURL.absoluteString)")
+        defaultLogger.appendNewLine("Console listening on \(consoleURL.absoluteString)")
       case let .failure(error):
-        defaultLogger.appendNewLine("Failed to bind console on \(self.consoleURL.absoluteString), \(error)")
+        defaultLogger.appendNewLine("Failed to bind console on \(consoleURL.absoluteString), \(error)")
       }
     }
 
     return (outputPipe.fileHandleForReading, inputPipe.fileHandleForWriting)
   }
 
+  private func createFileConsole(consoleURL: URL) throws -> (FileHandle, FileHandle) {
+    if FileManager.default.fileExists(atPath: consoleURL.absoluteURL.path()) {
+      try FileManager.default.removeItem(at: consoleURL)
+    }
+
+    FileManager.default.createFile(atPath: consoleURL.absoluteURL.path(), contents: nil)
+
+    defaultLogger.appendNewLine("Console binded to file \(consoleURL.absoluteString)")
+
+    return (try FileHandle(forReadingFrom: consoleURL), try FileHandle(forWritingTo: consoleURL))
+  }
+
   private func create(configuration: VZVirtualMachineConfiguration) throws -> ConsoleDevice {
-    if self.consoleURL.scheme == "none" {
+    guard let consoleURL = self.consoleURL else {
       return self
     }
 
@@ -75,9 +87,11 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
     let fileHandleForReading: FileHandle
     let fileHandleForWriting: FileHandle
 
-    if self.consoleURL.scheme == "unix" || self.consoleURL.isFileURL {
-      (fileHandleForReading, fileHandleForWriting) = createUnixConsole()
-    } else if let host = self.consoleURL.host(), self.consoleURL.scheme == "fd" {
+    if consoleURL.scheme == "unix" {
+      (fileHandleForReading, fileHandleForWriting) = createUnixConsole(consoleURL: consoleURL)
+    } else if consoleURL.isFileURL {
+      (fileHandleForReading, fileHandleForWriting) = try createFileConsole(consoleURL: consoleURL)
+    } else if let host = consoleURL.host(), consoleURL.scheme == "fd" {
       // fd://0,1
       let fd = host.split(separator: Character(","))
 
@@ -89,7 +103,7 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
         fileHandleForWriting = FileHandle(fileDescriptor: dup(Int32(fd[0])!), closeOnDealloc: false)
       }
     } else {
-      throw RuntimeError.VMConfigurationError("Unsupported console URL \(self.consoleURL.absoluteString)")
+      throw RuntimeError.VMConfigurationError("Unsupported console URL \(consoleURL.absoluteString)")
     }
 
     // Create console device attachement
@@ -109,15 +123,15 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
   }
 
   func close() {
-    if let channel {
+    if let consoleURL, let channel {
       let closeFuture = channel.close()
 
       closeFuture.whenComplete { result in
         switch result {
         case .success:
-          defaultLogger.appendNewLine("Console closed \(self.consoleURL.absoluteString)")
+          defaultLogger.appendNewLine("Console closed \(consoleURL.absoluteString)")
         case let .failure(error):
-          defaultLogger.appendNewLine("Failed to close console \(self.consoleURL.absoluteString), \(error)")
+          defaultLogger.appendNewLine("Failed to close console \(consoleURL.absoluteString), \(error)")
         }
       }
 
@@ -126,18 +140,18 @@ final class ConsoleDevice: CatchRemoteCloseDelegate {
   }
 
   func closedByRemote(port: Int) {
-    if self.pipeChannel != nil {
+    if let consoleURL, self.pipeChannel != nil {
       self.pipeChannel = nil
 
       if port == 0 {
-        defaultLogger.appendNewLine("Console closed by the host on \(self.consoleURL.absoluteString)")
+        defaultLogger.appendNewLine("Console closed by the host on \(consoleURL.absoluteString)")
       } else {
-        defaultLogger.appendNewLine("Console closed by the guest on \(self.consoleURL.absoluteString)")
+        defaultLogger.appendNewLine("Console closed by the guest on \(consoleURL.absoluteString)")
       }
     }
   }
 
-  static public func setupConsole(on: EventLoopGroup, consoleURL: URL, configuration: VZVirtualMachineConfiguration) throws  -> ConsoleDevice{
+  static public func setupConsole(on: EventLoopGroup, consoleURL: URL?, configuration: VZVirtualMachineConfiguration) throws  -> ConsoleDevice{
     try ConsoleDevice(on: on, consoleURL: consoleURL).create(configuration: configuration)
   }
 }
