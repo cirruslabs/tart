@@ -10,7 +10,7 @@ import virtio
 
 # Connect to the VM over vsock
 client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-client_socket.connect(virtio.tart_agent_path)
+client_socket.connect(virtio.console_socket_path)
 client_socket.settimeout(120) # 2 minutes for debugging
 
 # Echo
