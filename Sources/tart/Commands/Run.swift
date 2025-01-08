@@ -190,7 +190,13 @@ struct Run: AsyncParsableCommand {
   @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", valueName: "comma-separated CIDRs"))
   var netSoftnetAllow: String?
 
-  @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", valueName: "comma-separated port specifications"))
+  @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", discussion: """
+  Options are comma-separated and are as follows:
+
+  * EXTERNAL_PORT:INTERNAL_PORT — forward TCP traffic from the EXTERNAL_PORT on a host's egress interface (automatically detected and could be Wi-Fi, Ethernet and a VPN interface) to the INTERNAL_PORT on guest's IP (as reported by "tart ip")
+
+  Note that your software should either listen on 0.0.0.0 inside of a VM or on an IP address assigned to that VM for the port forwarding to work correctly.
+  """, valueName: "comma-separated port specifications"))
   var netSoftnetExpose: String?
 
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
