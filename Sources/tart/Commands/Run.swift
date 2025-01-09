@@ -197,7 +197,7 @@ struct Run: AsyncParsableCommand {
 
   Note that your software should either listen on 0.0.0.0 inside of a VM or on an IP address assigned to that VM for the port forwarding to work correctly.
 
-  Another thing to keep in mind is that regular Softnet restrictions will still apply even to port forwarding. So if you're planning to access your VM from LAN, and your LAN is 192.168.0.0/24, for example, then add --net-softnet-allow=192.168.0.0/24. If you only need port forwarding, to completely disable Softnet restrictions you can use --net-softnet-allow=0.0.0.0/0.
+  Another thing to keep in mind is that regular Softnet restrictions will still apply even to port forwarding. So if you're planning to access your VM from local network, and your local network is 192.168.0.0/24, for example, then add --net-softnet-allow=192.168.0.0/24. If you only need port forwarding, to completely disable Softnet restrictions you can use --net-softnet-allow=0.0.0.0/0.
   """, valueName: "comma-separated port specifications"))
   var netSoftnetExpose: String?
 
