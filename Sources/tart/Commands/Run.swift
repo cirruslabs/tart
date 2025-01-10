@@ -183,12 +183,41 @@ struct Run: AsyncParsableCommand {
   """, valueName: "interface name"))
   var netBridged: [String] = []
 
-  @Flag(help: ArgumentHelp("Use software networking instead of the default shared (NAT) networking",
-                           discussion: "Learn how to configure Softnet for use with Tart here: https://github.com/cirruslabs/softnet"))
+  @Flag(help: ArgumentHelp("Use software networking provided by Softnet instead of the default shared (NAT) networking",
+                           discussion: """
+                           Softnet provides better network isolation and alleviates DHCP shortage on production systems. Tart invokes Softnet when this option is specified as a sub-process and communicates with it over socketpair(2).
+
+                           It is essentially a userspace packet filter which restricts the VM networking and prevents a class of security issues, such as ARP spoofing. By default, the VM will only be able to:
+
+                           * send traffic from its own MAC-address
+                           * send traffic from the IP-address assigned to it by the DHCP
+                           * send traffic to globally routable IPv4 addresses
+                           * send traffic to gateway IP of the vmnet bridge (this would normally be \"bridge100\" interface)
+                           * receive any incoming traffic
+
+                           In addition, Softnet tunes macOS built-in DHCP server to decrease its lease time from the default 86,400 seconds (one day) to 600 seconds (10 minutes). This is especially important when you use Tart to clone and run a lot of ephemeral VMs over a period of one day.
+
+                           More on Softnet here: https://github.com/cirruslabs/softnet
+                           """))
   var netSoftnet: Bool = false
 
-  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", valueName: "comma-separated CIDRs"))
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
+  This option allows you bypass the private IPv4 address space restrctions imposed by --net-softnet.
+
+  For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
+  """, valueName: "comma-separated CIDRs"))
   var netSoftnetAllow: String?
+
+  @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", discussion: """
+  Options are comma-separated and are as follows:
+
+  * EXTERNAL_PORT:INTERNAL_PORT — forward TCP traffic from the EXTERNAL_PORT on a host's egress interface (automatically detected and could be Wi-Fi, Ethernet and a VPN interface) to the INTERNAL_PORT on guest's IP (as reported by "tart ip")
+
+  Note that your software should either listen on 0.0.0.0 inside of a VM or on an IP address assigned to that VM for the port forwarding to work correctly.
+
+  Another thing to keep in mind is that regular Softnet restrictions will still apply even to port forwarding. So if you're planning to access your VM from local network, and your local network is 192.168.0.0/24, for example, then add --net-softnet-allow=192.168.0.0/24. If you only need port forwarding, to completely disable Softnet restrictions you can use --net-softnet-allow=0.0.0.0/0.
+  """, valueName: "comma-separated port specifications"))
+  var netSoftnetExpose: String?
 
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
@@ -525,6 +554,10 @@ struct Run: AsyncParsableCommand {
 
     if let netSoftnetAllow = netSoftnetAllow {
       softnetExtraArguments += ["--allow", netSoftnetAllow]
+    }
+
+    if let netSoftnetExpose = netSoftnetExpose {
+      softnetExtraArguments += ["--expose", netSoftnetExpose]
     }
 
     if netSoftnet {
