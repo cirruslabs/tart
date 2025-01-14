@@ -3,8 +3,12 @@ project_name: tart
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build --arch x86_64 -c release --product tart
-    - swift build --arch arm64 -c release --product tart
+    # FIXME: Use a single build command after fix https://github.com/nicklockwood/SwiftFormat/issues/1645
+    # - swift build --arch arm64 --arch x86_64 --configuration release --product tart
+    - swift build --arch arm64 --configuration release --product tart
+    - swift build --arch x86_64 --configuration release --product tart
+    - mkdir -p .build/universal
+    - lipo -create -output .build/universal/tart .build/arm64-apple-macosx/release/tart .build/x86_64-apple-macosx/release/tart
     - gon gon.hcl
 
 builds:
@@ -15,13 +19,12 @@ builds:
       - darwin
     goarch:
       - arm64
-      - amd64
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
-      path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
+      path: .build/universal/tart
 
 archives:
-  - name_template: "{{ .ProjectName }}-{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}-{{ .Version }}"
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
