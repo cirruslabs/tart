@@ -115,7 +115,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     let digest = Digest()
 
     for try await chunk in channel {
-      fileHandle.write(chunk)
+      try fileHandle.write(contentsOf: chunk)
       digest.update(chunk)
       progress.completedUnitCount += Int64(chunk.count)
     }

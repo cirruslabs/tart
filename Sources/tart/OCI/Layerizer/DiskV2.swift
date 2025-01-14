@@ -268,7 +268,7 @@ class DiskV2: Disk {
 
           if chunk != actualContentsOnDisk {
             try disk.seek(toOffset: offset)
-            disk.write(chunk)
+            try disk.write(contentsOf: chunk)
           }
         }
 
@@ -282,7 +282,7 @@ class DiskV2: Disk {
       // is zeroed via truncate(2)
       if chunk != zeroChunk {
         try disk.seek(toOffset: offset)
-        disk.write(chunk)
+        try disk.write(contentsOf: chunk)
       }
 
       offset += UInt64(chunk.count)

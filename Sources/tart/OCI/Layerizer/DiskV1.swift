@@ -57,7 +57,7 @@ class DiskV1: Disk {
     // Decompress the layers onto the disk in a single stream
     let filter = try OutputFilter(.decompress, using: .lz4, bufferCapacity: Self.bufferSizeBytes) { data in
       if let data = data {
-        disk.write(data)
+        try disk.write(contentsOf: data)
       }
     }
 

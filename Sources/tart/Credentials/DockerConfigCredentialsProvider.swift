@@ -36,7 +36,11 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     process.launch()
 
-    inPipe.fileHandleForWriting.write("\(host)\n".data(using: .utf8)!)
+    do {
+      try inPipe.fileHandleForWriting.write(contentsOf: "\(host)\n".data(using: .utf8)!)
+    } catch {
+      throw CredentialsProviderError.Failed(message: "Failed to write host to Docker helper!")
+    }
     inPipe.fileHandleForWriting.closeFile()
 
     let outputData = try outPipe.fileHandleForReading.readToEnd()
