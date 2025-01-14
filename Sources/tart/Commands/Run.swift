@@ -213,7 +213,10 @@ struct Run: AsyncParsableCommand {
 
   * EXTERNAL_PORT:INTERNAL_PORT — forward TCP traffic from the EXTERNAL_PORT on a host's egress interface (automatically detected and could be Wi-Fi, Ethernet and a VPN interface) to the INTERNAL_PORT on guest's IP (as reported by "tart ip")
 
-  Note that your software should either listen on 0.0.0.0 inside of a VM or on an IP address assigned to that VM for the port forwarding to work correctly.
+  Note that for the port forwarding to work correctly:
+
+  * the software in guest listening on INTERNAL_PORT should either listen on 0.0.0.0 or on an IP address assigned to that guest
+  * connection to the EXTERNAL_PORT should be performed from the local network that the host is attached to or from the internet, it's not possible to connect to that forwarded port from the host itself
 
   Another thing to keep in mind is that regular Softnet restrictions will still apply even to port forwarding. So if you're planning to access your VM from local network, and your local network is 192.168.0.0/24, for example, then add --net-softnet-allow=192.168.0.0/24. If you only need port forwarding, to completely disable Softnet restrictions you can use --net-softnet-allow=0.0.0.0/0.
   """, valueName: "comma-separated port specifications"))
