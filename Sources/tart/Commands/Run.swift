@@ -1062,7 +1062,7 @@ struct DirectoryShare {
     process.standardInput = inPipe
     process.launch()
 
-    inPipe.fileHandleForWriting.write(response!.data)
+    try inPipe.fileHandleForWriting.write(contentsOf: response!.data)
     try inPipe.fileHandleForWriting.close()
     process.waitUntilExit()
 

@@ -24,7 +24,7 @@ extension VMDirectory {
     }
     let configFile = try FileHandle(forWritingTo: configURL)
     try await registry.pullBlob(configLayers.first!.digest) { data in
-      configFile.write(data)
+      try configFile.write(contentsOf: data)
     }
     try configFile.close()
 
@@ -79,7 +79,7 @@ extension VMDirectory {
     }
     let nvram = try FileHandle(forWritingTo: nvramURL)
     try await registry.pullBlob(nvramLayers.first!.digest) { data in
-      nvram.write(data)
+      try nvram.write(contentsOf: data)
     }
     try nvram.close()
 
