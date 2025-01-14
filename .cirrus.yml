@@ -3,9 +3,6 @@ use_compute_credits: true
 task:
   only_if: $CIRRUS_TAG == '' && ($CIRRUS_USER_PERMISSION == 'write' || $CIRRUS_USER_PERMISSION == 'admin')
   name: Release (Dry Run)
-  depends_on:
-    - lint
-    - build
   macos_instance:
     image: ghcr.io/cirruslabs/macos-runner:sonoma
   env:
