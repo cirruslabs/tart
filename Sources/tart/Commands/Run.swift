@@ -256,6 +256,30 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
+  @Option(name: [.customLong("vsock")], help: ArgumentHelp("Allow to create virtio socket between guest and host, format like url: <bind|connect|tcp|udp>://<address>:<port number>/<file for unix socket>, eg. bind://dummy:1234/tmp/vsock.sock",
+                                                           discussion: """
+                                                           The vsock option allows to create a virtio socket between the guest and the host. the port number to use for the connection must be greater than 1023.
+                                                           The mode is as follows:
+                                                           - bind: creates a socket file on the host and listens for connections eg. bind://vsock:1234/tmp/unix_socket. The VM must listen the vsock port number.
+                                                           - connect: uses an existing socket file on the host, eg. connect://vsock:1234/tmp/unix_socket. The VM must connect on vsock port number.
+                                                           - tcp: listen TCP on address. The VM must listen on the same port number, eg. tcp://127.0.0.1:1234, tcp://[::1]:1234.
+                                                           - udp: listen UDP on address. The VM must listen on the same port number,  eg. udp://127.0.0.1:1234, udp://[::1]:1234
+                                                           - fd: use file descriptor. The VM must connect on the same port number,  eg. fd://24:1234, fd://24,25:1234. 24 = file descriptor for read or read/write if alone, 25 = file descriptor for write.
+                                                           """))
+
+  var vsocks: [String] = []
+
+  @Option(name: [.customLong("console")], help: ArgumentHelp("URL to the serial console (e.g. --console=unix, --console=file, or --console=\"fd://0,1\" or --console=\"unix:/tmp/serial.sock\")",
+                                                             discussion: """
+                                                             - --console=unix — use a Unix socket for the serial console located at ~/.tart/vms/<vm-name>/console.sock
+                                                             - --console=unix:/tmp/serial.sock — use a Unix socket for the serial console located at the specified path
+                                                             - --console=file — use a simple file for the serial console located at ~/.tart/vms/<vm-name>/console.log
+                                                             - --console=fd://0,1 — use file descriptors for the serial console. The first file descriptor is for reading, the second is for writing
+                                                             ** INFO: The console doesn't work on MacOS sonoma and earlier  **
+                                                             """,
+                                                             valueName: "url"))
+  var consoleURL: String?
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -306,6 +330,48 @@ struct Run: AsyncParsableCommand {
     for disk in disk {
       if disk.hasSuffix("-amd64.iso") {
         throw ValidationError("Seems you have a disk targeting x86 architecture (hence amd64 in the name). Please use an 'arm64' version of the disk.")
+      }
+    }
+
+    if self.consoleURL == "file" {
+      let  console = URL(fileURLWithPath: "console.log", relativeTo: vmDir.diskURL).absoluteURL
+
+      self.consoleURL = console.absoluteString
+    } else if self.consoleURL == "unix" {
+      let  console = URL(fileURLWithPath: "console.sock", relativeTo: vmDir.diskURL).absoluteURL
+
+      self.consoleURL = console.absoluteString.replacingOccurrences(of: "file:/", with: "unix:/")
+    }
+
+    if let consoleURL = consoleURL {
+      guard let u: URL = URL(string: consoleURL) else {
+        throw ValidationError("Invalid serial console URL")
+      }
+
+      if u.scheme != "unix" && u.scheme != "fd" && u.isFileURL == false {
+        throw ValidationError("Invalid serial console URL scheme: must be unix, fd or file")
+      }
+
+      if u.scheme == "fd" {
+        let host = u.host?.split(separator: ",")
+
+        if host == nil || host!.count == 0 {
+          throw ValidationError("Invalid console URL: file descriptor is not specified")
+        }
+
+        for fd in host! {
+          if Int(fd) == nil {
+            throw ValidationError("Invalid console URL: file descriptor is not a number")
+          }
+        }
+      } else {
+        if u.path == "" {
+          throw ValidationError("Invalid console URL")
+        }
+
+        if u.scheme == "unix" && u.path.utf8.count > 103 {
+          throw ValidationError("The unix socket is too long")
+        }
       }
     }
   }
@@ -359,6 +425,8 @@ struct Run: AsyncParsableCommand {
       additionalStorageDevices: try additionalDiskAttachments(),
       directorySharingDevices: directoryShares() + rosettaDirectoryShare(),
       serialPorts: serialPorts,
+      socketDevices: try socketDeviceAttachments(),
+      consoleURL: consoleURL != nil ? URL(string: consoleURL!) : nil,
       suspendable: suspendable,
       nested: nested,
       audio: !noAudio,
@@ -602,6 +670,12 @@ struct Run: AsyncParsableCommand {
       }
 
       return bridgeDescription
+    }
+  }
+
+  func socketDeviceAttachments() throws -> [SocketDevice] {
+    try vsocks.map {
+      try SocketDevice(description: $0)
     }
   }
 
