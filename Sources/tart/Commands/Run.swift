@@ -205,6 +205,8 @@ struct Run: AsyncParsableCommand {
   This option allows you bypass the private IPv4 address space restrctions imposed by --net-softnet.
 
   For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
+
+  Implies --net-softnet.
   """, valueName: "comma-separated CIDRs"))
   var netSoftnetAllow: String?
 
@@ -219,6 +221,8 @@ struct Run: AsyncParsableCommand {
   * connection to the EXTERNAL_PORT should be performed from the local network that the host is attached to or from the internet, it's not possible to connect to that forwarded port from the host itself
 
   Another thing to keep in mind is that regular Softnet restrictions will still apply even to port forwarding. So if you're planning to access your VM from local network, and your local network is 192.168.0.0/24, for example, then add --net-softnet-allow=192.168.0.0/24. If you only need port forwarding, to completely disable Softnet restrictions you can use --net-softnet-allow=0.0.0.0/0.
+
+  Implies --net-softnet.
   """, valueName: "comma-separated port specifications"))
   var netSoftnetExpose: String?
 
@@ -261,7 +265,12 @@ struct Run: AsyncParsableCommand {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
 
-    // check that not more than one network option is specified
+    // Automatically enable --net-softnet when any of its related options are specified
+    if netSoftnetAllow != nil || netSoftnetExpose != nil {
+      netSoftnet = true
+    }
+
+    // Check that no more than one network option is specified
     var netFlags = 0
     if netBridged.count > 0 { netFlags += 1 }
     if netSoftnet { netFlags += 1 }
