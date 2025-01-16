@@ -17,8 +17,7 @@ task:
     - export PATH=$(pwd)/.build/arm64-apple-macosx/debug:$PATH
     # Run integration tests
     - cd integration-tests
-    - HOMEBREW_NO_AUTO_UPDATE=1 brew install virtualenv
-    - virtualenv venv
+    - python3 -m venv --symlinks venv
     - source venv/bin/activate
     - pip install -r requirements.txt
     - pytest --verbose --junit-xml=pytest-junit.xml
@@ -121,7 +120,7 @@ task:
     - security import certificate.p12 -k build.keychain -P password101 -T /usr/bin/codesign -T /usr/bin/pkgbuild
     - security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k password101 build.keychain
     - xcrun notarytool store-credentials "notarytool" --apple-id "hello@cirruslabs.org" --team-id "9M2P8L4D89" --password $AC_PASSWORD
-  install_script: 
+  install_script:
     - brew install go goreleaser/tap/goreleaser-pro getsentry/tools/sentry-cli
     - brew install mitchellh/gon/gon
   info_script:
@@ -153,7 +152,7 @@ task:
     registry_config: ENCRYPTED[!cf1a0f25325aa75bad3ce6ebc890bc53eb0044c02efa70d8cefb83ba9766275a994b4831706c52630a0692b2fa9cfb9e!]
   env:
     DEPLOY_TOKEN: ENCRYPTED[!45ed45666558902ed1c2400add734ec063103bec31841847e8c8764802fca229bfa6d85c690e16ad159e047574b48793!]
-  deploy_script: 
+  deploy_script:
     - git config --global user.name "Cirrus CI"
     - git config --global user.name "hello@cirruslabs.org"
     - git remote set-url origin https://$DEPLOY_TOKEN@github.com/cirruslabs/tart/
