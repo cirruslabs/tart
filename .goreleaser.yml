@@ -37,7 +37,8 @@ archives:
         strip_parent: true
       - LICENSE
     hooks:
-      after:
+      before:
+        - mkdir -p tart.app/Contents/MacOS
         - mv tart tart.app/Contents/MacOS/tart
 
 release:
