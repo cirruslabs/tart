@@ -21,11 +21,14 @@ builds:
 
 universal_binaries:
   - replace: true
+    id: tart-universal
     hooks:
       post: gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
+    builds:
+      - tart-universal
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents

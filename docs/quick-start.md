@@ -17,8 +17,8 @@ tart run sonoma-base
     It's also possible to manually install `tart` binary from the latest released archive:
 
     ```bash
-    curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart-arm64.tar.gz
-    tar -xzvf tart-arm64.tar.gz
+    curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
+    tar -xzvf tart.tar.gz
     ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
     ./tart.app/Contents/MacOS/tart run sonoma-base
     ```
