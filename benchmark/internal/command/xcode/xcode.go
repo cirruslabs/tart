@@ -1,10 +1,8 @@
-package fio
+package xcode
 
 import (
-	"encoding/json"
 	"fmt"
 	executorpkg "github.com/cirruslabs/tart/benchmark/internal/executor"
-	"github.com/dustin/go-humanize"
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -19,13 +17,13 @@ var prepare string
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fio",
-		Short: "run Flexible I/O tester (fio) benchmarks",
+		Use:   "xcode",
+		Short: "run XCode benchmarks",
 		RunE:  run,
 	}
 
 	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
-	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-base:latest", "image to use for testing")
+	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-xcode:latest", "image to use for testing")
 	cmd.Flags().StringVar(&prepare, "prepare", "", "command to run before running each benchmark")
 
 	return cmd
@@ -45,8 +43,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}()
 
 	table := uitable.New()
-	table.AddRow("Name", "Executor", "B/W (read)", "B/W (write)", "I/O (read)", "I/O (write)",
-		"Latency (read)", "Latency (write)", "Latency (sync)")
+	table.AddRow("Name", "Executor", "Time")
 
 	for _, benchmark := range benchmarks {
 		for _, executorInitializer := range executorpkg.DefaultInitializers(cmd.Context(), image, logger) {
@@ -79,13 +76,6 @@ func run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			logger.Sugar().Infof("installing Flexible I/O tester (fio) on executor %s",
-				executorInitializer.Name)
-
-			if _, err := executor.Run(cmd.Context(), "brew install fio"); err != nil {
-				return err
-			}
-
 			logger.Sugar().Infof("running benchmark %q on %s executor", benchmark.Name,
 				executorInitializer.Name)
 
@@ -94,36 +84,16 @@ func run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			var fioResult Result
-
-			if err := json.Unmarshal(stdout, &fioResult); err != nil {
+			output, err := ParseOutput(string(stdout))
+			if err != nil {
 				return err
 			}
 
-			if len(fioResult.Jobs) != 1 {
-				return fmt.Errorf("expected exactly 1 job from fio's JSON output, got %d",
-					len(fioResult.Jobs))
-			}
+			duration := output.Ended.Sub(output.Started)
 
-			job := fioResult.Jobs[0]
+			logger.Sugar().Infof("Xcode benchmark duration: %s", duration)
 
-			readBandwidth := humanize.Bytes(uint64(job.Read.BW)*humanize.KByte) + "/s"
-			readIOPS := humanize.SIWithDigits(job.Read.IOPS, 2, "IOPS")
-
-			logger.Sugar().Infof("read bandwidth: %s, read IOPS: %s, read latency: %s",
-				readBandwidth, readIOPS, job.Read.LatencyNS.String())
-
-			writeBandwidth := humanize.Bytes(uint64(job.Write.BW)*humanize.KByte) + "/s"
-			writeIOPS := humanize.SIWithDigits(job.Write.IOPS, 2, "IOPS")
-
-			logger.Sugar().Infof("write bandwidth: %s, write IOPS: %s, write latency: %s",
-				writeBandwidth, writeIOPS, job.Write.LatencyNS.String())
-
-			logger.Sugar().Infof("sync latency: %s", job.Sync.LatencyNS.String())
-
-			table.AddRow(benchmark.Name, executorInitializer.Name, readBandwidth, writeBandwidth,
-				readIOPS, writeIOPS, job.Read.LatencyNS.String(), job.Write.LatencyNS.String(),
-				job.Sync.LatencyNS.String())
+			table.AddRow(benchmark.Name, executorInitializer.Name, duration)
 
 			if err := executor.Close(); err != nil {
 				return fmt.Errorf("failed to close executor %s: %w",

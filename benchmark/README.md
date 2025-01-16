@@ -185,3 +185,42 @@ sync test                               	Tart (--root-disk-opts="sync=none")    
 sync test                               	Tart (--root-disk-opts="caching=cached")          	0 B/s     	35 MB/s    	0 IOPS     	15.67 kIOPS 	0s ± 0s                   	11.319µs ± 24.771µs       	51.731µs ± 42.208µs    
 sync test                               	Tart (--root-disk-opts="sync=none,caching=cached")	0 B/s     	17 MB/s    	0 IOPS     	7.39 kIOPS  	0s ± 0s                   	21.23µs ± 81.749µs        	113.239µs ± 191.266µs  
 ```
+
+### Jan 16, 2025
+
+Host:
+
+* Hardware: Mac mini (Apple M2 Pro, 8 performance and 4 efficiency cores, 32 GB RAM, `Mac14,12`)
+* OS: macOS Sequoia 15.2
+
+Guest:
+
+* Hardware: [Virtualization.Framework](https://developer.apple.com/documentation/virtualization)
+* OS: macOS Sonoma 14.6
+
+```
+Name                    	Executor                                          	Time
+XcodeBenchmark (d869315)	local                                             	2m15s
+XcodeBenchmark (d869315)	Tart                                              	4m22s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none")               	4m21s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="caching=cached")          	4m15s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none,caching=cached")	4m16s
+```
+
+```
+Name                    	Executor                                          	Time
+XcodeBenchmark (d869315)	local                                             	2m7s
+XcodeBenchmark (d869315)	Tart                                              	4m37s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none")               	4m35s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="caching=cached")          	4m19s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none,caching=cached")	4m16s
+```
+
+```
+Name                    	Executor                                          	Time
+XcodeBenchmark (d869315)	local                                             	2m6s
+XcodeBenchmark (d869315)	Tart                                              	4m24s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none")               	4m22s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="caching=cached")          	4m18s
+XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none,caching=cached")	4m17s
+```
