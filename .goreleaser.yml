@@ -16,7 +16,8 @@ builds:
     goos:
       - darwin
     goarch:
-      - all
+      - amd64
+      - arm64
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
       path: '.build/universal/tart'
