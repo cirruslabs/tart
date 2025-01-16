@@ -3,8 +3,11 @@ project_name: tart
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build --arch arm64 --configuration release --product tart
-    - swift build --arch x86_64 --configuration release --product tart
+    - swift build --arch arm64 --product tart
+    - swift build --arch x86_64 --product tart
+    - mkdir -p .build/universal
+    - lipo -create -output .build/universal/tart .build/arm64-apple-macosx/debug/tart .build/x86_64-apple-macosx/debug/tart
+    - gon gon.hcl
 
 builds:
   - id: tart
@@ -13,23 +16,14 @@ builds:
     goos:
       - darwin
     goarch:
-      - arm64
-      - amd64
+      - all
     binary: tart.app/Contents/MacOS/tart
     prebuilt:
-      path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
+      path: '.build/universal/tart'
 
-universal_binaries:
-  - replace: true
-    id: tart-universal
-    hooks:
-      post: gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
-    id: tart-universal-archive
-    builds:
-      - tart-universal
     files:
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
@@ -47,8 +41,6 @@ release:
 
 brews:
   - name: tart
-    ids:
-      - tart-universal-archive
     repository:
       owner: cirruslabs
       name: homebrew-cli
