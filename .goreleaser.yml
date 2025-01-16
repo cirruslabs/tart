@@ -3,11 +3,8 @@ project_name: tart
 before:
   hooks:
     - .ci/set-version.sh
-    - swift build --arch arm64 --product tart
-    - swift build --arch x86_64 --product tart
-    - mkdir -p .build/universal
-    - lipo -create -output .build/universal/tart .build/arm64-apple-macosx/debug/tart .build/x86_64-apple-macosx/debug/tart
-    - gon gon.hcl
+    - swift build --arch arm64 --configuration release --product tart
+    - swift build --arch x86_64 --configuration release --product tart
 
 builds:
   - id: tart
@@ -16,12 +13,15 @@ builds:
     goos:
       - darwin
     goarch:
-      - amd64
       - arm64
-    binary: tart.app/Contents/MacOS/tart
+      - amd64
     prebuilt:
-      path: '.build/universal/tart'
+      path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
 
+universal_binaries:
+  - replace: true
+    hooks:
+      post: gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
@@ -36,6 +36,9 @@ archives:
         dst: tart.app/Contents/Resources
         strip_parent: true
       - LICENSE
+    hooks:
+      after:
+        - mv tart tart.app/Contents/MacOS/tart
 
 release:
   prerelease: auto
