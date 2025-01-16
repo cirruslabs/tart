@@ -47,18 +47,18 @@ task:
 
 task:
   only_if: $CIRRUS_TAG == ''
-  name: Build (universal)
+  env:
+    matrix:
+      BUILD_ARCH: arm64
+      BUILD_ARCH: x86_64
+  name: Build ($BUILD_ARCH)
   alias: build
   macos_instance:
     image: ghcr.io/cirruslabs/macos-runner:sonoma
-  build_script:
-    - swift build --arch arm64 --product tart
-    - swift build --arch x86_64 --product tart
-    - mkdir -p .build/universal
-    - lipo -create -output .build/universal/tart .build/arm64-apple-macosx/debug/tart .build/x86_64-apple-macosx/debug/tart
-  sign_script: codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/universal/tart
+  build_script: swift build --arch $BUILD_ARCH --product tart
+  sign_script: codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/$BUILD_ARCH-apple-macosx/debug/tart
   binary_artifacts:
-    path: .build/universal/tart
+    path: .build/$BUILD_ARCH-apple-macosx/debug/tart
 
 task:
   only_if: $CIRRUS_TAG == '' && ($CIRRUS_USER_PERMISSION == 'write' || $CIRRUS_USER_PERMISSION == 'admin')
@@ -129,7 +129,7 @@ task:
     - swift -version
   release_script: goreleaser
   upload_sentry_debug_files_script:
-    - cd .build/universal/
+    - cd dist/tart_darwin_all/
     # Generate and upload symbols
     - dsymutil tart
     - sentry-cli debug-files upload tart.dSYM/
