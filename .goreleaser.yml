@@ -27,6 +27,7 @@ universal_binaries:
 
 archives:
   - name_template: "{{ .ProjectName }}"
+    id: tart-universal-archive
     builds:
       - tart-universal
     files:
@@ -46,6 +47,8 @@ release:
 
 brews:
   - name: tart
+    ids:
+      - tart-universal-archive
     repository:
       owner: cirruslabs
       name: homebrew-cli
