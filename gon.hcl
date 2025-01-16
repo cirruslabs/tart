@@ -1,4 +1,4 @@
-source = [".build/universal/tart"]
+source = [ "dist/tart_darwin_all/tart" ]
 bundle_id = "com.github.cirruslabs.tart"
 
 apple_id {
