@@ -92,7 +92,7 @@ task:
   goreleaser_script: goreleaser release --skip=publish --snapshot --clean
   always:
     dist_artifacts:
-      path: "dist/*"
+      path: "dist/**"
 
 task:
   name: Release
