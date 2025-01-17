@@ -26,6 +26,7 @@ universal_binaries:
 
 app_bundles:
   - bundle: com.cirruslabs.tart
+    icon: ./Resources/AppIcon.icns
 
 release:
   prerelease: auto
