@@ -1,4 +1,4 @@
-source = [ "dist/tart_darwin_all/tart" ]
+source = [ "dist/tart_darwin_all/tart.app/Contents/MacOS/tart" ]
 bundle_id = "com.github.cirruslabs.tart"
 
 apple_id {
