@@ -1,3 +1,5 @@
+version: 2
+
 project_name: tart
 
 before:
@@ -20,7 +22,8 @@ builds:
       path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
 
 universal_binaries:
-  - replace: true
+  - name_template: tart.app/Contents/MacOS/tart
+    replace: true
     hooks:
       post: gon gon.hcl
 
