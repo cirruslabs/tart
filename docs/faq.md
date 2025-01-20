@@ -77,6 +77,37 @@ sudo rm /var/db/dhcpd_leases
 
 And no worries, this file will be re-created on the next `tart run`.
 
+## Unsupported DHCP client identifiers
+
+Due to the limitations of the macOS built-in DHCP server, `tart ip` is unable to correctly report the IP addresses for VMs using DHCP client identifiers that are not based on VMs link-layer addresses (MAC addresses).
+
+One notorious example of this is Ubuntu, using [DUID-EN](https://metebalci.com/blog/a-note-on-dhcpv6-duid-and-prefix-delegation#duid-types) identifier by default on new versions, which results in the `/var/db/dhcpd_leases` entry for Ubuntu appearing as follows:
+
+```ini
+{
+    name=ubuntu
+    ip_address=192.168.64.14
+    hw_address=ff,f1:f5:dd:7f:0:2:0:0:ab:11:cb:fb:30:b0:97:b6:3a:67
+    identifier=ff,f1:f5:dd:7f:0:2:0:0:ab:11:cb:fb:30:b0:97:b6:3a:67
+    lease=0x678e2ce7
+}
+```
+
+Because the macOS built-in DHCP server overwrites the `hw_address` with the `identifier`, it leaves no information about the VM's MAC address to the `tart ip`, which relies on this file to determine the IP address associated with the VM's MAC address.
+
+To avoid this issue, make sure that your VM only sends a DHCP client identifier (option 61) with link-layer address (MAC address) or that it doesn't send this option at all.
+
+For the aforementioned Ubuntu, the solution is outlined in the section [How to integrate with Windows DHCP Server](https://netplan.readthedocs.io/en/stable/examples/#how-to-integrate-with-windows-dhcp-server) of Canonical Netplan's documentation:
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp3s0:
+      dhcp4: yes
+      dhcp-identifier: mac
+```
+
 ## Running login/clone/pull/push commands over SSH
 
 When invoking the Tart in an SSH session, you might get error like this:
