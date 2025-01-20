@@ -120,7 +120,9 @@ tart ip --resolver=arp <VM>
 
 This causes the `tart ip` to consult the host's ARP table instead of the `/var/db/dhcpd_leases` file.
 
-Note that this method of resolving the IP heavily relies on the level of VM's talkativeness on the network. This is normally not an issue for macOS VMs, but on Linux VMs you might need to install Samba, which includes a [NetBIOS name server](https://www.samba.org/samba/docs/current/man-html/nmbd.8.html) that exhibits the same behavior as macOS and populates the ARP table of the host OS:
+Note that this method of resolving the IP heavily relies on the level of VM's activity on the network, namely, exchanging ARP requests between the guest and the host.
+
+This is normally not an issue for macOS VMs, but on Linux VMs you might need to install Samba, which includes a [NetBIOS name server](https://www.samba.org/samba/docs/current/man-html/nmbd.8.html) and exhibits the same behavior as macOS, resulting in the population of the ARP table of the host OS:
 
 ```shell
 sudo apt-get install samba
