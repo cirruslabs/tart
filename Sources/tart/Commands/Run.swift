@@ -328,8 +328,12 @@ struct Run: AsyncParsableCommand {
         }
 
         for fd in host! {
-          if Int(fd) == nil {
-            throw ValidationError("Invalid console URL: file descriptor is not a number")
+          guard let fd = Int32(fd) else {
+            throw ValidationError("Invalid console URL: file descriptor \(fd) is not a number")
+          }
+
+          if fcntl(fd, F_GETFD) == -1 {
+            throw ValidationError("Invalid console URL: file descriptor \(fd) is not valid errno=\(errno)")
           }
         }
       } else {
