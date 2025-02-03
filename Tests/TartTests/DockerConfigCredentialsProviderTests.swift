@@ -27,10 +27,10 @@ struct DockerConfigCredentialsProviderTests {
     }
     
     static let noConfig = ProcessInfoMock()
-    static let invalidConfig = ProcessInfoMock(environment: ["DOCKER_AUTH_CONFIG": "invalid-json"])
-    static let exampleComConfig = ProcessInfoMock(environment: ["DOCKER_AUTH_CONFIG": exampleComDockerConfigJsonString])
-    static let exampleComAlternateConfig = ProcessInfoMock(environment: ["DOCKER_AUTH_CONFIG": exampleComDockerConfigJsonString])
-    static let coffeeComConfig = ProcessInfoMock(environment: ["DOCKER_AUTH_CONFIG": coffeeComDockerConfigJsonString])
+    static let invalidConfig = ProcessInfoMock(environment: ["TART_DOCKER_AUTH_CONFIG": "invalid-json"])
+    static let exampleComConfig = ProcessInfoMock(environment: ["TART_DOCKER_AUTH_CONFIG": exampleComDockerConfigJsonString])
+    static let exampleComAlternateConfig = ProcessInfoMock(environment: ["TART_DOCKER_AUTH_CONFIG": exampleComDockerConfigJsonString])
+    static let coffeeComConfig = ProcessInfoMock(environment: ["TART_DOCKER_AUTH_CONFIG": coffeeComDockerConfigJsonString])
   }
   
   private class FileManagerMock: FileManaging {    

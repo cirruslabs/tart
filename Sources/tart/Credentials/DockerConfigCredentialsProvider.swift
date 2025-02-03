@@ -50,7 +50,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
   // MARK: - Private
   private func configFromEnvironment() throws -> DockerConfig? {
-    guard let configJson = processInfo.environment["DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
+    guard let configJson = processInfo.environment["TART_DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
       return nil
     }
 
