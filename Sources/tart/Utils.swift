@@ -38,7 +38,7 @@ extension ProcessInfo: ProcessInformation { }
 protocol FileManaging {
   /// Returns a Boolean value that indicates whether a file or directory exists at a specified path.
   func fileExists(atPath path: String) -> Bool
-  
+
   /// Returns the Data contents of the file at the given `url`. Uses `Data(contentsOf:options:)`.
   func data(contentsOf url: URL, options: Data.ReadingOptions) throws -> Data
 }

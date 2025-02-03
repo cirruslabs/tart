@@ -1,45 +1,45 @@
 import Foundation
 
 class DockerConfigCredentialsProvider: CredentialsProvider {
-  
+
   // MARK: - Dependencies
   private let fileManager: FileManaging
   private let processInfo: ProcessInformation
-  
+
   // MARK: - Init
   convenience init() {
     self.init(fileManager: FileManager.default, processInfo: ProcessInfo.processInfo)
   }
-  
+
   init(fileManager: FileManaging, processInfo: ProcessInformation) {
     self.fileManager = fileManager
     self.processInfo = processInfo
   }
-  
+
   // MARK: - CredentialsProvider
   func retrieve(host: String) throws -> (String, String)? {
     let configFromEnvironment = try? self.configFromEnvironment()
     let configFromFileSystem = try? self.configFromFileSystem()
-    
+
     guard configFromEnvironment ?? configFromFileSystem != nil else {
       return nil
     }
-    
+
     if let config = configFromEnvironment {
       if let credentials = config.auths?[host]?.decodeCredentials() {
         return credentials
       }
-      
+
       if let helperProgram = try config.findCredHelper(host: host) {
         return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
       }
     }
-    
+
     if let config = configFromFileSystem {
       if let credentials = config.auths?[host]?.decodeCredentials() {
         return credentials
       }
-      
+
       if let helperProgram = try config.findCredHelper(host: host) {
         return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
       }
@@ -47,23 +47,23 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
 
     return nil
   }
-  
+
   // MARK: - Private
   private func configFromEnvironment() throws -> DockerConfig? {
     guard let configJson = processInfo.environment["DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
       return nil
     }
-    
+
     return try JSONDecoder().decode(DockerConfig.self, from: configJson)
   }
-  
+
   private func configFromFileSystem() throws -> DockerConfig? {
     let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
-    
+
     if !fileManager.fileExists(atPath: dockerConfigURL.path) {
       return nil
     }
-    
+
     return try JSONDecoder().decode(DockerConfig.self, from: fileManager.data(contentsOf: dockerConfigURL))
   }
 
