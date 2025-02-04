@@ -417,9 +417,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Create console device useful for implementing and socketDevices
     // host feature checks in the guest agent software.
-    if !suspendable {
-      communicationDevices = try CommunicationDevices.setup(configuration: configuration, consoleURL: consoleURL, sockets: socketDevices)
-    }
+    communicationDevices = try CommunicationDevices.setup(configuration: configuration, consoleURL: consoleURL, sockets: socketDevices)
 
     try configuration.validate()
 
