@@ -2,55 +2,29 @@ import Foundation
 
 class DockerConfigCredentialsProvider: CredentialsProvider {
 
-  // MARK: - Dependencies
-  private let fileManager: FileManaging
-  private let processInfo: ProcessInformation
-
-  // MARK: - Init
-  convenience init() {
-    self.init(fileManager: FileManager.default, processInfo: ProcessInfo.processInfo)
-  }
-
-  init(fileManager: FileManaging, processInfo: ProcessInformation) {
-    self.fileManager = fileManager
-    self.processInfo = processInfo
-  }
-
-  // MARK: - CredentialsProvider
   func retrieve(host: String) throws -> (String, String)? {
-    let configFromEnvironment = try? self.configFromEnvironment()
-    let configFromFileSystem = try? self.configFromFileSystem()
-
-    guard configFromEnvironment ?? configFromFileSystem != nil else {
+    guard let config = try configFromEnvironment() ?? (try configFromFileSystem()) else {
       return nil
     }
-
-    if let config = configFromEnvironment {
-      if let credentials = config.auths?[host]?.decodeCredentials() {
-        return credentials
-      }
-
-      if let helperProgram = try config.findCredHelper(host: host) {
-        return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
-      }
-    }
-
-    if let config = configFromFileSystem {
-      if let credentials = config.auths?[host]?.decodeCredentials() {
-        return credentials
-      }
-
-      if let helperProgram = try config.findCredHelper(host: host) {
-        return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
-      }
-    }
-
-    return nil
+    
+    return try retrieveCredentials(for: host, from: config)
   }
 
   // MARK: - Private
+  private func retrieveCredentials(for host: String, from config: DockerConfig) throws -> (String, String)? {
+    if let credentials = config.auths?[host]?.decodeCredentials() {
+      return credentials
+    }
+
+    if let helperProgram = try config.findCredHelper(host: host) {
+      return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
+    }
+    
+    return nil
+  }
+  
   private func configFromEnvironment() throws -> DockerConfig? {
-    guard let configJson = processInfo.environment["TART_DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
+    guard let configJson = ProcessInfo.processInfo.environment["TART_DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
       return nil
     }
 
@@ -60,11 +34,11 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
   private func configFromFileSystem() throws -> DockerConfig? {
     let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
 
-    if !fileManager.fileExists(atPath: dockerConfigURL.path) {
+    if !FileManager.default.fileExists(atPath: dockerConfigURL.path) {
       return nil
     }
 
-    return try JSONDecoder().decode(DockerConfig.self, from: fileManager.data(contentsOf: dockerConfigURL))
+    return try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: dockerConfigURL))
   }
 
   private func executeHelper(binaryName: String, host: String) throws -> (String, String)? {
