@@ -1,21 +1,44 @@
 import Foundation
 
 class DockerConfigCredentialsProvider: CredentialsProvider {
+
   func retrieve(host: String) throws -> (String, String)? {
-    let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
-    if !FileManager.default.fileExists(atPath: dockerConfigURL.path) {
+    guard let config = try configFromEnvironment() ?? (try configFromFileSystem()) else {
       return nil
     }
-    let config = try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: dockerConfigURL))
 
-    if let credentialsFromAuth = config.auths?[host]?.decodeCredentials() {
-      return credentialsFromAuth
+    return try retrieveCredentials(for: host, from: config)
+  }
+
+  // MARK: - Private
+  private func retrieveCredentials(for host: String, from config: DockerConfig) throws -> (String, String)? {
+    if let credentials = config.auths?[host]?.decodeCredentials() {
+      return credentials
     }
+
     if let helperProgram = try config.findCredHelper(host: host) {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
     }
 
     return nil
+  }
+
+  private func configFromEnvironment() throws -> DockerConfig? {
+    guard let configJson = ProcessInfo.processInfo.environment["TART_DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
+      return nil
+    }
+
+    return try JSONDecoder().decode(DockerConfig.self, from: configJson)
+  }
+
+  private func configFromFileSystem() throws -> DockerConfig? {
+    let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
+
+    if !FileManager.default.fileExists(atPath: dockerConfigURL.path) {
+      return nil
+    }
+
+    return try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: dockerConfigURL))
   }
 
   private func executeHelper(binaryName: String, host: String) throws -> (String, String)? {
