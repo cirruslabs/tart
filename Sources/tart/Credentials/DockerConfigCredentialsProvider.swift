@@ -6,7 +6,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     guard let config = try configFromEnvironment() ?? (try configFromFileSystem()) else {
       return nil
     }
-    
+
     return try retrieveCredentials(for: host, from: config)
   }
 
@@ -19,10 +19,10 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     if let helperProgram = try config.findCredHelper(host: host) {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
     }
-    
+
     return nil
   }
-  
+
   private func configFromEnvironment() throws -> DockerConfig? {
     guard let configJson = ProcessInfo.processInfo.environment["TART_DOCKER_AUTH_CONFIG"]?.data(using: .utf8) else {
       return nil
