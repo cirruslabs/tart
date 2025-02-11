@@ -73,8 +73,7 @@ struct Set: AsyncParsableCommand {
     }
 
     #if arch(arm64)
-      if randomSerial {
-        let oldPlatform = vmConfig.platform as! Darwin
+      if randomSerial, let oldPlatform = vmConfig.platform as? Darwin {
         vmConfig.platform = Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: oldPlatform.hardwareModel)
       }
     #endif
