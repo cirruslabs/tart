@@ -202,7 +202,7 @@ struct Run: AsyncParsableCommand {
   var netSoftnet: Bool = false
 
   @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
-  This option allows you bypass the private IPv4 address space restrctions imposed by --net-softnet.
+  This option allows you bypass the private IPv4 address space restrictions imposed by --net-softnet.
 
   For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
 
