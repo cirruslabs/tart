@@ -21,11 +21,12 @@ class Tart:
     def home(self) -> str:
         return self.tmp_dir.name
 
-    def run(self, args):
-        env = os.environ.copy()
-        env.update({"TART_HOME": self.tmp_dir.name})
+    def run(self, args, env = {}):
+        environ = os.environ.copy()
+        environ.update(env)
+        environ.update({"TART_HOME": self.tmp_dir.name})
 
-        completed_process = subprocess.run(["tart"] + args, env=env, capture_output=True)
+        completed_process = subprocess.run(["tart"] + args, env=environ, capture_output=True)
 
         completed_process.check_returncode()
 
