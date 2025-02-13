@@ -112,12 +112,13 @@ tart login acme.io
 If you login to your registry with OAuth, you may need to create an access token to use as the password.
 Credentials are securely stored in Keychain.
 
-In addition, Tart supports Docker credential helpers via the `TART_DOCKER_AUTH_CONFIG` environment variable or as a file 
-in `~/.docker/config.json`. While using a JSON file is often more convenient for persistent management, the environment 
-variable provides greater flexibility, allowing multiple Tart instances to run with different credential helper 
-configurations—useful in CI/CD environments. The TART_DOCKER_AUTH_CONFIG environment variable takes precedence over the 
-`config.json` file: if credentials for `example.com` exist in both, the environment variable’s values will be used. 
-However, if `example.com` is not found in `TART_DOCKER_AUTH_CONFIG`, Tart will fall back to the values in the `config.json`.
+In addition, Tart supports Docker credential helpers via the `TART_DOCKER_CONFIG` environment variable or as a file 
+in `~/.docker/config.json`. If `TART_DOCKER_CONFIG` is set, Tart will attempt to load the credential configuration 
+from the specified file path. If the file cannot be found or the path is invalid, an error is thrown. If the variable 
+is not set, Tart will default to using `~/.docker/config.json`.
+
+Using `TART_DOCKER_CONFIG` provides greater flexibility, allowing multiple Tart instances to run with different 
+credential helper configurations—useful in CI/CD environments.
 
 Finally, `TART_REGISTRY_USERNAME` and `TART_REGISTRY_PASSWORD` environment variables allow to override any authorization
 for all registries which might useful for integrating with your CI's secret management. No additional lookup for a host-specific authorization

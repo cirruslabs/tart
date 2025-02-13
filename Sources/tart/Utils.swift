@@ -6,6 +6,16 @@ extension Collection {
   }
 }
 
+extension NSError {
+  static func fileNotFoundError(url: URL) -> NSError {
+      return NSError(
+          domain: NSCocoaErrorDomain,
+          code: NSFileReadNoSuchFileError,
+          userInfo: [NSURLErrorKey: url]
+      )
+  }
+}
+
 func resolveBinaryPath(_ name: String) -> URL? {
   guard let path = ProcessInfo.processInfo.environment["PATH"] else {
     return nil
