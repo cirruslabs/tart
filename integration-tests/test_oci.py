@@ -92,7 +92,7 @@ class TestOCI:
             raise_on_nonzero_returncode=False
         )
 
-        expected_error = 'The file “this-file-does-not-exist” couldn’t be opened because there is no such file.'
+        expected_error = f"Registry authentication failed. Could not find docker configuration at '/temp/this-file-does-not-exist'."
 
         assert returncode == 1, f"Tart should fail with exit code 1 but failed with {returncode}."
         assert expected_error in stderr, f"Expected error '{expected_error}' not found in stderr: {stderr}"

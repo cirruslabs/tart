@@ -21,7 +21,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
       let url = URL(filePath: configPathFromEnvironment)
 
       guard FileManager.default.fileExists(atPath: configPathFromEnvironment) else {
-        throw NSError.fileNotFoundError(url: url)
+        throw NSError.fileNotFoundError(url: url, message: "Registry authentication failed. Could not find docker configuration at '\(configPathFromEnvironment)'.")
       }
 
       return url
