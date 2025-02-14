@@ -1,6 +1,7 @@
 import requests
 import tempfile
 import subprocess
+import bcrypt
 
 from testcontainers.core.waiting_utils import wait_container_is_ready
 from testcontainers.core.container import DockerContainer
@@ -36,15 +37,10 @@ class DockerRegistry(DockerContainer):
 
     def _generate_htpasswd(self, username: str, password: str) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False)
-        temp_file.close()  # Close to allow subprocess to write to it
-
-        # Use htpasswd command to create a bcrypt-hashed password file
-        subprocess.run(
-            ["htpasswd", "-Bbn", username, password],
-            stdout=open(temp_file.name, "w"),
-            check=True
-        )
-
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        htpasswd_entry = f"{username}:{hashed}"
+        temp_file.write(htpasswd_entry.encode('utf-8'))
+        temp_file.close()
         return temp_file.name
 
     @wait_container_is_ready(requests.exceptions.ConnectionError)
