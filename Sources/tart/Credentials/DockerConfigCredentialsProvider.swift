@@ -6,7 +6,7 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
     guard let configFileURL = try configFileURL else {
       return nil
     }
-    
+
     let config = try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: configFileURL))
     return try retrieveCredentials(for: host, from: config)
   }
@@ -17,33 +17,33 @@ class DockerConfigCredentialsProvider: CredentialsProvider {
       guard let configPathFromEnvironment = ProcessInfo.processInfo.environment["TART_DOCKER_CONFIG"] else {
         return nil
       }
-      
+
       let url = URL(filePath: configPathFromEnvironment)
-      
+
       guard FileManager.default.fileExists(atPath: configPathFromEnvironment) else {
         throw NSError.fileNotFoundError(url: url)
       }
-      
+
       return url
     }
   }
-  
+
   private var dockerConfigFileURL: URL? {
     let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
-    
+
     guard FileManager.default.fileExists(atPath: url.path) else {
       return nil
     }
-    
+
     return url
   }
-  
+
   private var configFileURL: URL? {
     get throws {
       return try configFileURLFromEnvironment ?? dockerConfigFileURL
     }
   }
-  
+
   private func retrieveCredentials(for host: String, from config: DockerConfig) throws -> (String, String)? {
     if let credentials = config.auths?[host]?.decodeCredentials() {
       return credentials

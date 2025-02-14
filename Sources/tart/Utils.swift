@@ -8,11 +8,11 @@ extension Collection {
 
 extension NSError {
   static func fileNotFoundError(url: URL) -> NSError {
-      return NSError(
-          domain: NSCocoaErrorDomain,
-          code: NSFileReadNoSuchFileError,
-          userInfo: [NSURLErrorKey: url]
-      )
+    return NSError(
+      domain: NSCocoaErrorDomain,
+      code: NSFileReadNoSuchFileError,
+      userInfo: [NSURLErrorKey: url]
+    )
   }
 }
 
