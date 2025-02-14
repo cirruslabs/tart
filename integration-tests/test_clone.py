@@ -6,5 +6,5 @@ def test_clone(tart):
     tart.run(["clone", "debian", "ubuntu"])
 
     # Ensure that we have now 2 VMs
-    stdout, _, = tart.run(["list", "--source", "local", "--quiet"])
+    stdout, _, _ = tart.run(["list", "--source", "local", "--quiet"])
     assert stdout == "debian\nubuntu\n"
