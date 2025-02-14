@@ -54,3 +54,11 @@ class DockerRegistry(DockerContainer):
         requests.get(f"http://127.0.0.1:{exposed_port}/v2/")
 
         return f"127.0.0.1:{exposed_port}/tart/{for_vm}:latest"
+    
+    @wait_container_is_ready(requests.exceptions.ConnectionError)
+    def remote_host(self):
+        exposed_port = self.get_exposed_port(self._default_exposed_port)
+
+        requests.get(f"http://127.0.0.1:{exposed_port}/v2/")
+
+        return f"127.0.0.1:{exposed_port}"

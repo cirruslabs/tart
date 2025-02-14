@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import tempfile
 import timeit
@@ -28,6 +30,72 @@ class TestOCI:
 
         actual_speed_per_second = self._calculate_speed_per_second(amount_to_transfer, stop - start)
         assert actual_speed_per_second > minimal_speed_per_second
+        
+    @pytest.mark.dependency()
+    @pytest.mark.parametrize("docker_registry_authenticated", [("user1", "pass1")], indirect=True)
+    def test_authenticated_push_from_env_config(self, tart, vm_with_random_disk, docker_registry_authenticated):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(_docker_credentials_store(docker_registry_authenticated.remote_host(), "user1", "pass1"))
+            tf.close()
+        tart.run(["push", "--insecure", vm_with_random_disk, docker_registry_authenticated.remote_name(vm_with_random_disk)], env = { "TART_DOCKER_CONFIG": tf.name })
+
+    @pytest.mark.dependency()
+    @pytest.mark.parametrize("docker_registry_authenticated", [("user1", "pass1")], indirect=True)
+    def test_authenticated_push_from_docker_config(self, tart, vm_with_random_disk, docker_registry_authenticated):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(_docker_credentials_store(docker_registry_authenticated.remote_host(), "user1", "pass1"))
+            tf.close()
+            if not os.path.exists(os.path.expanduser("~/.docker")):
+                os.mkdir(os.path.expanduser("~/.docker"))
+            os.rename(tf.name, os.path.expanduser("~/.docker/config.json"))
+
+        tart.run(["push", "--insecure", vm_with_random_disk, docker_registry_authenticated.remote_name(vm_with_random_disk)])
+
+    @pytest.mark.dependency()
+    @pytest.mark.parametrize("docker_registry_authenticated", [("user1", "pass1")], indirect=True)
+    def test_authenticated_push_env_path_precedence(self, tart, vm_with_random_disk, docker_registry_authenticated):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(_docker_credentials_store(docker_registry_authenticated.remote_host(), "user1", "pass1"))
+            tf.close()
+
+        with tempfile.NamedTemporaryFile(delete=False) as tf2:
+            tf2.write(_docker_credentials_store(docker_registry_authenticated.remote_host(), "notuser", "notpassword"))
+            tf2.close()
+            if not os.path.exists(os.path.expanduser("~/.docker")):
+                os.mkdir(os.path.expanduser("~/.docker"))
+            os.rename(tf2.name, os.path.expanduser("~/.docker/config.json"))
+            
+        tart.run(["push", "--insecure", vm_with_random_disk, docker_registry_authenticated.remote_name(vm_with_random_disk)], env = { "TART_DOCKER_CONFIG": tf.name })
+
+    @pytest.mark.dependency()
+    @pytest.mark.parametrize("docker_registry_authenticated", [("user1", "pass1")], indirect=True)
+    def test_authenticated_push_env_credentials_precedence(self, tart, vm_with_random_disk, docker_registry_authenticated):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(_docker_credentials_store(docker_registry_authenticated.remote_host(), "notuser", "notpassword"))
+            tf.close()
+
+        env = {
+            "TART_REGISTRY_USERNAME": "user1",
+            "TART_REGISTRY_PASSWORD": "pass1",
+            "TART_DOCKER_CONFIG": tf.name
+        }
+        tart.run(["push", "--insecure", vm_with_random_disk, docker_registry_authenticated.remote_name(vm_with_random_disk)], env)
+
+    @pytest.mark.dependency()
+    @pytest.mark.parametrize("docker_registry_authenticated", [("user1", "pass1")], indirect=True)
+    def test_authenticated_push_invalid_env_path_error(self, tart, vm_with_random_disk, docker_registry_authenticated):
+        env = { "TART_DOCKER_CONFIG": "/temp/this-file-does-not-exist" }
+
+        _, stderr, returncode = tart.run(
+            ["push", "--insecure", vm_with_random_disk, docker_registry_authenticated.remote_name(vm_with_random_disk)],
+            env,
+            raise_on_nonzero_returncode=False
+        )
+
+        expected_error = 'The file “this-file-does-not-exist” couldn’t be opened because there is no such file.'
+
+        assert returncode == 1, f"Tart should fail with exit code 1 but failed with {returncode}."
+        assert expected_error in stderr, f"Expected error '{expected_error}' not found in stderr: {stderr}"
 
     @staticmethod
     def _calculate_speed_per_second(amount_transferred, time_taken):
@@ -53,3 +121,20 @@ def vm_with_random_disk(tart):
     yield vm_name
 
     tart.run(["delete", vm_name])
+
+def _docker_credentials_store(host, user, password):
+    # Encode "username:password" in Base64
+    auth_string = f"{user}:{password}"
+    auth_b64 = base64.b64encode(auth_string.encode()).decode()
+
+    # Create JSON structure
+    docker_auth = {
+        "auths": {
+            host: {
+                "auth": auth_b64
+            }
+        }
+    }
+
+    # Convert dictionary to JSON
+    return json.dumps(docker_auth).encode()

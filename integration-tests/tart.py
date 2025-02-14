@@ -21,16 +21,17 @@ class Tart:
     def home(self) -> str:
         return self.tmp_dir.name
 
-    def run(self, args, env = {}):
+    def run(self, args, env = {}, raise_on_nonzero_returncode=True):
         environ = os.environ.copy()
         environ.update(env)
         environ.update({"TART_HOME": self.tmp_dir.name})
 
         completed_process = subprocess.run(["tart"] + args, env=environ, capture_output=True)
 
-        completed_process.check_returncode()
+        if raise_on_nonzero_returncode:
+            completed_process.check_returncode
 
-        return completed_process.stdout.decode("utf-8"), completed_process.stderr.decode("utf-8")
+        return completed_process.stdout.decode("utf-8"), completed_process.stderr.decode("utf-8"), completed_process.returncode
 
     def run_async(self, args) -> subprocess.Popen:
         env = os.environ.copy()
