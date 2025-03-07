@@ -75,6 +75,8 @@ enum RuntimeError : Error {
   case SuspendFailed(_ message: String)
   case PullFailed(_ message: String)
   case VirtualMachineLimitExceeded(_ hint: String)
+  case InvalidProxyString
+  case FailedToLoadCACertificate(_ message: String)
 }
 
 protocol HasExitCode {
@@ -136,6 +138,10 @@ extension RuntimeError : CustomStringConvertible {
       return message
     case .VirtualMachineLimitExceeded(let hint):
       return "The number of VMs exceeds the system limit\(hint)"
+    case .InvalidProxyString:
+      return "Invalid proxy string, should be in the form of host:port"
+    case .FailedToLoadCACertificate(let message):
+      return "Failed to load CA certificate: \(message)"
     }
   }
 }

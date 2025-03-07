@@ -83,7 +83,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Check if we already have this IPSW in cache
     var headRequest = URLRequest(url: remoteURL)
     headRequest.httpMethod = "HEAD"
-    let (_, headResponse) = try await Fetcher.fetch(headRequest, viaFile: false)
+    let (_, headResponse) = try await Fetcher().fetch(headRequest, viaFile: false)
 
     if let hash = headResponse.value(forHTTPHeaderField: "x-amz-meta-digest-sha256") {
       let ipswLocation = try IPSWCache().locationFor(fileName: "sha256:\(hash).ipsw")
@@ -100,7 +100,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     defaultLogger.appendNewLine("Fetching \(remoteURL.lastPathComponent)...")
 
     let request = URLRequest(url: remoteURL)
-    let (channel, response) = try await Fetcher.fetch(request, viaFile: true)
+    let (channel, response) = try await Fetcher().fetch(request, viaFile: true)
 
     let temporaryLocation = try Config().tartTmpDir.appendingPathComponent(UUID().uuidString + ".ipsw")
 

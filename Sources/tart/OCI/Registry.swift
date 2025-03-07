@@ -115,6 +115,7 @@ class Registry {
   let namespace: String
   let credentialsProviders: [CredentialsProvider]
   let authenticationKeeper = AuthenticationKeeper()
+  let fetcher: Fetcher
 
   var host: String? {
     guard let host = baseURL.host else { return nil }
@@ -128,17 +129,22 @@ class Registry {
 
   init(baseURL: URL,
        namespace: String,
-       credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
+       credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()],
+       proxy: String? = nil,
+       caCert: String? = nil
   ) throws {
     self.baseURL = baseURL
     self.namespace = namespace
     self.credentialsProviders = credentialsProviders
+    self.fetcher = try Fetcher(proxy: proxy, caCert: caCert)
   }
 
   convenience init(
     host: String,
     namespace: String,
     insecure: Bool = false,
+    proxy: String? = nil,
+    caCert: String? = nil,
     credentialsProviders: [CredentialsProvider] = [EnvironmentCredentialsProvider(), DockerConfigCredentialsProvider(), KeychainCredentialsProvider()]
   ) throws {
     let proto = insecure ? "http" : "https"
@@ -154,7 +160,7 @@ class Registry {
       throw RuntimeError.ImproperlyFormattedHost(host, hint)
     }
 
-    try self.init(baseURL: baseURL, namespace: namespace, credentialsProviders: credentialsProviders)
+    try self.init(baseURL: baseURL, namespace: namespace, credentialsProviders: credentialsProviders, proxy: proxy, caCert: caCert)
   }
 
   func ping() async throws {
@@ -448,6 +454,6 @@ class Registry {
     request.setValue("Tart/\(CI.version) (\(DeviceInfo.os); \(DeviceInfo.model))",
                      forHTTPHeaderField: "User-Agent")
 
-    return try await Fetcher.fetch(request, viaFile: viaFile)
+    return try await self.fetcher.fetch(request, viaFile: viaFile)
   }
 }
