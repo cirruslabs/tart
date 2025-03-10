@@ -84,7 +84,7 @@ class DiskV2: Disk {
     }
   }
 
-  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil, deduplicate: Bool = false, maxRetries: UInt) async throws {
+  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil, deduplicate: Bool = false, maxRetries: UInt = 5) async throws {
     // Support resumable pulls
     let pullResumed = FileManager.default.fileExists(atPath: diskURL.path)
 
