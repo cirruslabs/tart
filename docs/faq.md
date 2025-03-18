@@ -177,3 +177,70 @@ export TART_NO_AUTO_PRUNE=
 ```shell
 TART_NO_AUTO_PRUNE= tart pull ...
 ```
+
+## Disk resizing
+
+Disk resizing works on most cloud-ready Linux distributions out-of-the box (e.g. Ubuntu Cloud Images have the `cloud-initramfs-growroot` package installed that runs on boot) and on the rest of the distributions by running the `growpart` or `resize2fs` commands.
+
+For macOS, however, things are a bit more complicated, and you generally have two options: automated and manual resizing.
+
+For the automated option, you can use [Packer](https://www.packer.io/) with the [Packer builder for Tart VMs](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart). The latter has two has configuration directives related to the disk resizing behavior:
+
+* [`disk_size_gb`](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart#configuration-reference) — controls the target disk size in gigabytes
+* [`recovery_partition`](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart#configuration-reference) — controls what to do with the recovery partition when resizing the disk
+    * you can either keep, delete or relocate it to the end of the disk
+
+For the manual approach, you have to remove the recovery partition first, repair the disk and the resize the APFS container.
+
+To do this, first we'll need to identify the primary disk and the APFS containers by running the command below from within a VM:
+
+```shell
+diskutil list physical
+```
+
+For example, the output might look like this:
+
+```plain
+/dev/disk0 (internal, physical):
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:      GUID_partition_scheme                        *100.0 GB   disk0
+   1:             Apple_APFS_ISC Container disk1         524.3 MB   disk0s1
+   2:                 Apple_APFS Container disk3         44.1 GB    disk0s2
+   3:        Apple_APFS_Recovery Container disk2         5.4 GB     disk0s3
+                    (free space)                         50.0 GB    -
+```
+
+In the output, you'll normally see:
+
+* a single physical disk (`disk0`)
+* APFS container with the system partition which we're going to resize (`disk0s2`)
+* APFS container with the recovery partition which we're going to delete (`disk0s3`)
+* `(free space)` which we'll put to use
+
+To proceed, boot the VM in recovery mode using `tart run --recovery` and choose the "Options" item:
+
+![](assets/images/faq/tart-run-recovery-options.png){width="640" .center}
+
+When the recovery OS boots, open the Terminal app:
+
+![](assets/images/faq/tart-run-recovery-terminal.png){width="720" .center}
+
+In Terminal app, invoke the command below to remove the recovery partition:
+
+```shell
+diskutil eraseVolume free free disk0s3
+```
+
+Now, repair the disk:
+
+```shell
+yes | diskutil repairDisk disk0
+```
+
+Finally, resize the system APFS container to take all the remaining space:
+
+```shell
+diskutil apfs resizeContainer disk0s2 0
+```
+
+Now, you can shut down and `tart run` as you'd normally do.
