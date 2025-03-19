@@ -26,6 +26,15 @@ struct Pull: AsyncParsableCommand {
   @Flag(help: .hidden)
   var deduplicate: Bool = false
 
+  @Option(help: .hidden)
+  var proxy: String?
+
+  @Option(help: .hidden)
+  var caCert: String?
+
+  @Option(help: .hidden)
+  var maxRetries: UInt = 5
+
   func validate() throws {
     if concurrency < 1 {
       throw ValidationError("network concurrency cannot be less than 1")
@@ -42,10 +51,10 @@ struct Pull: AsyncParsableCommand {
     }
 
     let remoteName = try RemoteName(remoteName)
-    let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
+    let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure, proxy: proxy, caCert: caCert)
 
     defaultLogger.appendNewLine("pulling \(remoteName)...")
 
-    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate)
+    try await VMStorageOCI().pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate, maxRetries: maxRetries)
   }
 }

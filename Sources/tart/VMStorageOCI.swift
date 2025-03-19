@@ -140,7 +140,7 @@ class VMStorageOCI: PrunableStorage {
     try list().filter { (_, _, isSymlink) in !isSymlink }.map { (_, vmDir, _) in vmDir }
   }
 
-  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, deduplicate: Bool) async throws {
+  func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, deduplicate: Bool, maxRetries: UInt) async throws {
     SentrySDK.configureScope { scope in
       scope.setContext(value: ["imageName": name.description], key: "OCI")
     }
@@ -196,7 +196,7 @@ class VMStorageOCI: PrunableStorage {
       }
 
       try await withTaskCancellationHandler(operation: {
-        try await retry(maxAttempts: 5) {
+        try await retry(maxAttempts: Int(maxRetries)) {
           // Choose the best base image which has the most deduplication ratio
           let localLayerCache = try await chooseLocalLayerCache(name, manifest, registry)
 
@@ -210,7 +210,7 @@ class VMStorageOCI: PrunableStorage {
             }
           }
 
-          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache, deduplicate: deduplicate)
+          try await tmpVMDir.pullFromRegistry(registry: registry, manifest: manifest, concurrency: concurrency, localLayerCache: localLayerCache, deduplicate: deduplicate, maxRetries: maxRetries)
         } recoverFromFailure: { error in
           if error is URLError {
             print("Error pulling image: \"\(error.localizedDescription)\", attempting to re-try...")
