@@ -13,7 +13,7 @@ brew install go
 Finally, run the following command from this (`benchmark/`) directory:
 
 ```shell
-go run cmd/main.go fio --image ghcr.io/cirruslabs/macos-sonoma-base:latest --prepare 'sudo purge && sync'
+go run cmd/main.go fio --image ghcr.io/cirruslabs/macos-sequoia-base:latest --prepare 'sudo purge && sync'
 ```
 
 You can also enable the debugging output to diagnose issues:
