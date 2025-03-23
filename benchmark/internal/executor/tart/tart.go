@@ -48,7 +48,7 @@ func New(ctx context.Context, image string, runArgsExtra []string, logger *zap.L
 	setResourcesArguments := []string{
 		"set", tart.vmName,
 		"--cpu", strconv.Itoa(runtime.NumCPU()),
-		"--memory", strconv.FormatUint(vmStat.Total, 10),
+		"--memory", strconv.FormatUint(vmStat.Total/1024/1024, 10),
 	}
 	if err := Cmd(ctx, tart.logger, setResourcesArguments...); err != nil {
 		return nil, err
