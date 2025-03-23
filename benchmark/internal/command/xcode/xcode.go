@@ -23,7 +23,7 @@ func NewCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
-	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sonoma-xcode:latest", "image to use for testing")
+	cmd.Flags().StringVar(&image, "image", "ghcr.io/cirruslabs/macos-sequoia-xcode:latest", "image to use for testing")
 	cmd.Flags().StringVar(&prepare, "prepare", "", "command to run before running each benchmark")
 
 	return cmd
