@@ -45,10 +45,13 @@ func New(ctx context.Context, image string, runArgsExtra []string, logger *zap.L
 		return nil, err
 	}
 
+	cpus := strconv.Itoa(runtime.NumCPU())
+	memory := strconv.FormatUint(vmStat.Total/1024/1024, 10)
+	logger.Info("Setting resources", zap.String("cpus", cpus), zap.String("memory", memory))
 	setResourcesArguments := []string{
 		"set", tart.vmName,
-		"--cpu", strconv.Itoa(runtime.NumCPU()),
-		"--memory", strconv.FormatUint(vmStat.Total/1024/1024, 10),
+		"--cpu", cpus,
+		"--memory", memory,
 	}
 	if err := Cmd(ctx, tart.logger, setResourcesArguments...); err != nil {
 		return nil, err
