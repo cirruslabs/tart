@@ -46,7 +46,8 @@ func New(ctx context.Context, image string, runArgsExtra []string, logger *zap.L
 	}
 
 	cpus := strconv.Itoa(runtime.NumCPU())
-	memory := strconv.FormatUint(vmStat.Total/1024/1024, 10)
+	// 75% of total memory
+	memory := strconv.FormatUint(3*vmStat.Total/1024/1024/4, 10)
 	logger.Info("Setting resources", zap.String("cpus", cpus), zap.String("memory", memory))
 	setResourcesArguments := []string{
 		"set", tart.vmName,
