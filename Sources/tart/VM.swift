@@ -351,11 +351,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Clipboard sharing via Spice agent
-    if clipboard && vmConfig.os == .linux {
+    if clipboard {
       let spiceAgentConsoleDevice = VZVirtioConsoleDeviceConfiguration()
       let spiceAgentPort = VZVirtioConsolePortConfiguration()
       spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
-      spiceAgentPort.attachment = VZSpiceAgentPortAttachment()
+      let spiceAgentPortAttachment = VZSpiceAgentPortAttachment()
+      spiceAgentPortAttachment.sharesClipboard = true
+      spiceAgentPort.attachment = spiceAgentPortAttachment
       spiceAgentConsoleDevice.ports[0] = spiceAgentPort
       configuration.consoleDevices.append(spiceAgentConsoleDevice)
     }
