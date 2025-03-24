@@ -208,3 +208,49 @@ XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none")               	3m48
 XcodeBenchmark (d869315)	Tart (--root-disk-opts="caching=cached")          	3m35s
 XcodeBenchmark (d869315)	Tart (--root-disk-opts="sync=none,caching=cached")	3m14s
 ```
+
+### March 24, 2025
+
+Host:
+
+* Hardware: MacBook Pro (Apple M4 Pro, 10 performance and 4 efficiency cores, 48 GB RAM, `Mac16,8`)
+* OS: macOS Sequoia 15.3.2
+
+Guest:
+
+* Hardware: [Virtualization.Framework](https://developer.apple.com/documentation/virtualization)
+* OS: macOS Sonoma 15.3.2
+
+```
+Name                                            Executor                                                B/W (read)      B/W (write)     I/O (read)      I/O (write)     Latency (read)                  Latency (write)                 Latency (sync)     
+Single 4KiB random write process                local                                                   0 B/s           288 MB/s        0 IOPS          72.08 kIOPS     0s ± 0s                         13.477µs ± 40.311µs             0s ± 0s            
+Single 4KiB random write process                Tart                                                    0 B/s           46 MB/s         0 IOPS          11.4 kIOPS      0s ± 0s                         81.762µs ± 135.671µs            0s ± 0s            
+Single 4KiB random write process                Tart (--root-disk-opts="sync=none")                     0 B/s           54 MB/s         0 IOPS          13.57 kIOPS     0s ± 0s                         68.988µs ± 123.728µs            0s ± 0s            
+Single 4KiB random write process                Tart (--root-disk-opts="caching=cached")                0 B/s           84 MB/s         0 IOPS          21.08 kIOPS     0s ± 0s                         44.601µs ± 1.650682ms           0s ± 0s            
+Single 4KiB random write process                Tart (--root-disk-opts="sync=none,caching=cached")      0 B/s           145 MB/s        0 IOPS          36.25 kIOPS     0s ± 0s                         26.676µs ± 1.103668ms           0s ± 0s            
+16 parallel 64KiB random write processes        local                                                   0 B/s           27 GB/s         0 IOPS          424.46 kIOPS    0s ± 0s                         209.332µs ± 323.699µs           0s ± 0s            
+16 parallel 64KiB random write processes        Tart                                                    0 B/s           13 GB/s         0 IOPS          205.98 kIOPS    0s ± 0s                         505.965µs ± 804.325µs           0s ± 0s            
+16 parallel 64KiB random write processes        Tart (--root-disk-opts="sync=none")                     0 B/s           14 GB/s         0 IOPS          219.76 kIOPS    0s ± 0s                         463.554µs ± 740.375µs           0s ± 0s            
+16 parallel 64KiB random write processes        Tart (--root-disk-opts="caching=cached")                0 B/s           13 GB/s         0 IOPS          197.46 kIOPS    0s ± 0s                         521.085µs ± 1.155859ms          0s ± 0s            
+16 parallel 64KiB random write processes        Tart (--root-disk-opts="sync=none,caching=cached")      0 B/s           13 GB/s         0 IOPS          198.12 kIOPS    0s ± 0s                         530.02µs ± 814.37µs             0s ± 0s            
+Single 1MiB random write process                local                                                   0 B/s           5.3 GB/s        0 IOPS          5.13 kIOPS      0s ± 0s                         194.548µs ± 12.791ms            0s ± 0s            
+Single 1MiB random write process                Tart                                                    0 B/s           5.0 GB/s        0 IOPS          4.85 kIOPS      0s ± 0s                         201.829µs ± 13.373317ms         0s ± 0s            
+Single 1MiB random write process                Tart (--root-disk-opts="sync=none")                     0 B/s           5.0 GB/s        0 IOPS          4.83 kIOPS      0s ± 0s                         206.329µs ± 13.458377ms         0s ± 0s            
+Single 1MiB random write process                Tart (--root-disk-opts="caching=cached")                0 B/s           2.1 GB/s        0 IOPS          2.08 kIOPS      0s ± 0s                         479.751µs ± 41.13078ms          0s ± 0s            
+Single 1MiB random write process                Tart (--root-disk-opts="sync=none,caching=cached")      0 B/s           2.4 GB/s        0 IOPS          2.31 kIOPS      0s ± 0s                         417.767µs ± 35.560438ms         0s ± 0s            
+Random reads/writes (4k)                        local                                                   80 MB/s         80 MB/s         20 kIOPS        20 kIOPS        1.574179ms ± 1.176114ms         1.623186ms ± 1.197656ms         0s ± 0s            
+Random reads/writes (4k)                        Tart                                                    50 MB/s         50 MB/s         12.45 kIOPS     12.45 kIOPS     2.543698ms ± 1.666479ms         2.591715ms ± 1.689304ms         0s ± 0s            
+Random reads/writes (4k)                        Tart (--root-disk-opts="sync=none")                     50 MB/s         50 MB/s         12.38 kIOPS     12.38 kIOPS     2.556511ms ± 1.718644ms         2.605763ms ± 1.743227ms         0s ± 0s            
+Random reads/writes (4k)                        Tart (--root-disk-opts="caching=cached")                47 MB/s         47 MB/s         11.8 kIOPS      11.81 kIOPS     2.707348ms ± 59.277732ms        2.707157ms ± 57.894497ms        0s ± 0s            
+Random reads/writes (4k)                        Tart (--root-disk-opts="sync=none,caching=cached")      54 MB/s         54 MB/s         13.4 kIOPS      13.41 kIOPS     2.343959ms ± 57.178667ms        2.425083ms ± 62.422208ms        0s ± 0s            
+Random reads/writes (64k)                       local                                                   801 MB/s        801 MB/s        12.51 kIOPS     12.51 kIOPS     2.680251ms ± 1.546788ms         2.429685ms ± 1.478557ms         0s ± 0s            
+Random reads/writes (64k)                       Tart                                                    525 MB/s        525 MB/s        8.19 kIOPS      8.2 kIOPS       3.988255ms ± 1.73489ms          3.808225ms ± 1.656886ms         0s ± 0s            
+Random reads/writes (64k)                       Tart (--root-disk-opts="sync=none")                     527 MB/s        528 MB/s        8.23 kIOPS      8.24 kIOPS      3.970438ms ± 1.725155ms         3.791091ms ± 1.653082ms         0s ± 0s            
+Random reads/writes (64k)                       Tart (--root-disk-opts="caching=cached")                851 MB/s        851 MB/s        13.3 kIOPS      13.3 kIOPS      2.397771ms ± 38.733179ms        2.4101ms ± 38.043848ms          0s ± 0s            
+Random reads/writes (64k)                       Tart (--root-disk-opts="sync=none,caching=cached")      1.2 GB/s        1.2 GB/s        18.77 kIOPS     18.76 kIOPS     1.70003ms ± 17.869811ms         1.706275ms ± 17.79483ms         0s ± 0s            
+sync test                                       local                                                   0 B/s           29 MB/s         0 IOPS          12.77 kIOPS     0s ± 0s                         56.923µs ± 263.579µs            21.071µs ± 5.485µs 
+sync test                                       Tart                                                    0 B/s           20 MB/s         0 IOPS          8.97 kIOPS      0s ± 0s                         44.86µs ± 171.208µs             65.995µs ± 53.445µs
+sync test                                       Tart (--root-disk-opts="sync=none")                     0 B/s           19 MB/s         0 IOPS          8.51 kIOPS      0s ± 0s                         49.585µs ± 184.35µs             67.187µs ± 47.636µs
+sync test                                       Tart (--root-disk-opts="caching=cached")                0 B/s           42 MB/s         0 IOPS          18.6 kIOPS      0s ± 0s                         9.637µs ± 30.422µs              43.399µs ± 19.732µs
+sync test                                       Tart (--root-disk-opts="sync=none,caching=cached")      0 B/s           41 MB/s         0 IOPS          18.2 kIOPS      0s ± 0s                         9.626µs ± 19.752µs              44.631µs ± 26.998µs
+```
