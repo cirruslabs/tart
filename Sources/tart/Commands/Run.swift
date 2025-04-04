@@ -290,7 +290,7 @@ struct Run: AsyncParsableCommand {
 
     if nested {
       if #unavailable(macOS 15) {
-        throw ValidationError("Nested virtualization is supported on hosts starting with macOS 15 (Sequia), and later.")
+        throw ValidationError("Nested virtualization is supported on hosts starting with macOS 15 (Sequoia), and later.")
       } else if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
         throw ValidationError("Nested virtualization is available for Mac with the M3 chip, and later.")
       }
