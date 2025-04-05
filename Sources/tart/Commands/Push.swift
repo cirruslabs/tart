@@ -26,6 +26,11 @@ struct Push: AsyncParsableCommand {
                              """))
   var chunkSize: Int = 0
 
+
+  @Option(help: ArgumentHelp("labels to attach to the VM in key=value format",
+                            discussion: "Can be specified multiple times to attach multiple labels."))
+  var labels: [String] = []
+
   @Option(help: .hidden)
   var diskFormat: String = "v2"
 
@@ -33,6 +38,7 @@ struct Push: AsyncParsableCommand {
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
   var populateCache: Bool = false
 
+  
   func run() async throws {
     let ociStorage = VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
@@ -55,6 +61,8 @@ struct Push: AsyncParsableCommand {
     let registryGroups = Dictionary(grouping: remoteNames, by: {
       RegistryIdentifier(host: $0.host, namespace: $0.namespace)
     })
+
+    let labelDictionary = parseLabels()
 
     // Push VM
     for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
@@ -81,7 +89,8 @@ struct Push: AsyncParsableCommand {
           references: references,
           chunkSizeMb: chunkSize,
           diskFormat: diskFormat,
-          concurrency: concurrency
+          concurrency: concurrency,
+          labels: labelDictionary
         )
         // Populate the local cache (if requested)
         if populateCache {
@@ -115,6 +124,19 @@ struct Push: AsyncParsableCommand {
     return RemoteName(host: registry.host!, namespace: registry.namespace,
                       reference: Reference(digest: digest))
   }
+  // Helper method to convert labels array to dictionary
+  func parseLabels() -> [String: String] {
+      var result = [String: String]()
+      for label in labels {
+          let parts = label.components(separatedBy: "=")
+          guard parts.count == 2 else { continue }
+          let key = parts[0].trimmingCharacters(in: .whitespaces)
+          let value = parts[1].trimmingCharacters(in: .whitespaces)
+          result[key] = value
+      }
+      return result
+  }  
+
 }
 
 extension Collection where Element == RemoteName {

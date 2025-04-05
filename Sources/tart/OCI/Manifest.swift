@@ -66,11 +66,17 @@ struct OCIManifest: Codable, Equatable {
 struct OCIConfig: Codable {
   var architecture: Architecture = .arm64
   var os: OS = .darwin
+  var config: ConfigContainer?
+
+  struct ConfigContainer: Codable {
+      var Labels: [String: String]?
+  }
 
   func toJSON() throws -> Data {
     try Config.jsonEncoder().encode(self)
   }
 }
+
 
 struct OCIManifestConfig: Codable, Equatable {
   var mediaType: String = ociConfigMediaType
