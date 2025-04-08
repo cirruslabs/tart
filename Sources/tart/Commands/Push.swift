@@ -28,7 +28,7 @@ struct Push: AsyncParsableCommand {
 
 
   @Option(help: ArgumentHelp("labels to attach to the VM in key=value format",
-                            discussion: "Can be specified multiple times to attach multiple labels."))
+                             discussion: "Can be specified multiple times to attach multiple labels."))
   var labels: [String] = []
 
   @Option(help: .hidden)
@@ -38,7 +38,7 @@ struct Push: AsyncParsableCommand {
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
   var populateCache: Bool = false
 
-  
+
   func run() async throws {
     let ociStorage = VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
@@ -126,15 +126,15 @@ struct Push: AsyncParsableCommand {
   }
   // Helper method to convert labels array to dictionary
   func parseLabels() -> [String: String] {
-      var result = [String: String]()
-      for label in labels {
-          let parts = label.components(separatedBy: "=")
-          guard parts.count == 2 else { continue }
-          let key = parts[0].trimmingCharacters(in: .whitespaces)
-          let value = parts[1].trimmingCharacters(in: .whitespaces)
-          result[key] = value
-      }
-      return result
+    var result = [String: String]()
+    for label in labels {
+      let parts = label.components(separatedBy: "=")
+      guard parts.count == 2 else { continue }
+      let key = parts[0].trimmingCharacters(in: .whitespaces)
+      let value = parts[1].trimmingCharacters(in: .whitespaces)
+      result[key] = value
+    }
+    return result
   }  
 
 }

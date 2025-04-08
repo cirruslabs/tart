@@ -69,7 +69,7 @@ struct OCIConfig: Codable {
   var config: ConfigContainer?
 
   struct ConfigContainer: Codable {
-      var Labels: [String: String]?
+    var Labels: [String: String]?
   }
 
   func toJSON() throws -> Data {
