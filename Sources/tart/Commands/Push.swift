@@ -136,7 +136,6 @@ struct Push: AsyncParsableCommand {
     }
     return result
   }  
-
 }
 
 extension Collection where Element == RemoteName {
