@@ -38,7 +38,6 @@ struct Push: AsyncParsableCommand {
                            discussion: "Increases disk usage, but saves time if you're going to pull the pushed images later."))
   var populateCache: Bool = false
 
-
   func run() async throws {
     let ociStorage = VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
