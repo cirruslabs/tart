@@ -27,7 +27,7 @@ struct Push: AsyncParsableCommand {
   var chunkSize: Int = 0
 
 
-  @Option(help: ArgumentHelp("labels to attach to the VM in key=value format",
+  @Option(name: [.customLong("label")], help: ArgumentHelp("additional metadata to attach to the OCI image configuration in key=value format",
                              discussion: "Can be specified multiple times to attach multiple labels."))
   var labels: [String] = []
 
