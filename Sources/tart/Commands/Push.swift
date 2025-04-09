@@ -123,6 +123,7 @@ struct Push: AsyncParsableCommand {
     return RemoteName(host: registry.host!, namespace: registry.namespace,
                       reference: Reference(digest: digest))
   }
+
   // Helper method to convert labels array to dictionary
   func parseLabels() -> [String: String] {
     var result = [String: String]()
