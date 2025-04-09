@@ -77,7 +77,6 @@ struct OCIConfig: Codable {
   }
 }
 
-
 struct OCIManifestConfig: Codable, Equatable {
   var mediaType: String = ociConfigMediaType
   var size: Int
