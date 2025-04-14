@@ -87,7 +87,7 @@ extension VMDirectory {
     try manifest.toJSON().write(to: manifestURL)
   }
 
-  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String, concurrency: UInt) async throws -> RemoteName {
+  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String, concurrency: UInt, labels: [String: String] = [:]) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -121,7 +121,8 @@ extension VMDirectory {
     layers.append(OCIManifestLayer(mediaType: nvramMediaType, size: nvram.count, digest: nvramDigest))
 
     // Craft a stub OCI config for Docker Hub compatibility
-    let ociConfigJSON = try OCIConfig(architecture: config.arch, os: config.os).toJSON()
+    let ociConfigContainer = OCIConfig.ConfigContainer(Labels: labels)
+    let ociConfigJSON = try OCIConfig(architecture: config.arch, os: config.os, config: ociConfigContainer).toJSON()
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON, chunkSizeMb: chunkSizeMb)
     let manifest = OCIManifest(
       config: OCIManifestConfig(size: ociConfigJSON.count, digest: ociConfigDigest),
