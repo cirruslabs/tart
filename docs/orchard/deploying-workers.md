@@ -51,8 +51,6 @@ Then, create a launchd job definition in `/Library/LaunchDaemons/org.cirruslabs.
   <dict>
     <key>Label</key>
     <string>org.cirruslabs.orchard.worker</string>
-    <key>UserName</key>
-    <string>admin</string>
     <key>Program</key>
     <string>/opt/homebrew/bin/orchard</string>
     <key>ProgramArguments</key>
@@ -60,6 +58,8 @@ Then, create a launchd job definition in `/Library/LaunchDaemons/org.cirruslabs.
       <string>/opt/homebrew/bin/orchard</string>
       <string>worker</string>
       <string>run</string>
+      <string>--user</string>
+      <string>admin</string>
       <string>--bootstrap-token</string>
       <string>${BOOTSTRAP_TOKEN}</string>
       <string>orchard.example.com</string>
