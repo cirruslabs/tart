@@ -28,7 +28,7 @@ struct Push: AsyncParsableCommand {
 
 
   @Option(name: [.customLong("label")], help: ArgumentHelp("additional metadata to attach to the OCI image configuration in key=value format",
-                             discussion: "Can be specified multiple times to attach multiple labels."))
+                                                           discussion: "Can be specified multiple times to attach multiple labels."))
   var labels: [String] = []
 
   @Option(help: .hidden)
