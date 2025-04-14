@@ -61,8 +61,6 @@ struct Push: AsyncParsableCommand {
       RegistryIdentifier(host: $0.host, namespace: $0.namespace)
     })
 
-    let labelDictionary = parseLabels()
-
     // Push VM
     for (registryIdentifier, remoteNamesForRegistry) in registryGroups {
       let registry = try Registry(host: registryIdentifier.host, namespace: registryIdentifier.namespace,
@@ -89,7 +87,7 @@ struct Push: AsyncParsableCommand {
           chunkSizeMb: chunkSize,
           diskFormat: diskFormat,
           concurrency: concurrency,
-          labels: labelDictionary
+          labels: parseLabels()
         )
         // Populate the local cache (if requested)
         if populateCache {
