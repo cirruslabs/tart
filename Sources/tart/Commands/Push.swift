@@ -125,13 +125,22 @@ struct Push: AsyncParsableCommand {
   // Helper method to convert labels array to dictionary
   func parseLabels() -> [String: String] {
     var result = [String: String]()
+
     for label in labels {
-      let parts = label.components(separatedBy: "=")
-      guard parts.count == 2 else { continue }
-      let key = parts[0].trimmingCharacters(in: .whitespaces)
-      let value = parts[1].trimmingCharacters(in: .whitespaces)
+      let parts = label.trimmingCharacters(in: .whitespaces).split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+
+      let key = parts.count > 0 ? String(parts[0]) : ""
+      let value = parts.count > 1 ? String(parts[1]) : ""
+
+      // It sometimes makes sense to provide an empty value,
+      // but not an empty key
+      if key.isEmpty {
+        continue
+      }
+
       result[key] = value
     }
+
     return result
   }  
 }
