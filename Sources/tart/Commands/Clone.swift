@@ -31,6 +31,15 @@ struct Clone: AsyncParsableCommand {
   @Flag(help: .hidden)
   var deduplicate: Bool = false
 
+  @Option(help: .hidden)
+  var proxy: String?
+
+  @Option(help: .hidden)
+  var caCert: String?
+
+  @Option(help: .hidden)
+  var maxRetries: UInt = 5
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -47,8 +56,8 @@ struct Clone: AsyncParsableCommand {
 
     if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet
-      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure)
-      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate)
+      let registry = try Registry(host: remoteName.host, namespace: remoteName.namespace, insecure: insecure, proxy: proxy, caCert: caCert)
+      try await ociStorage.pull(remoteName, registry: registry, concurrency: concurrency, deduplicate: deduplicate, maxRetries: maxRetries)
     }
 
     let sourceVM = try VMStorageHelper.open(sourceName)
