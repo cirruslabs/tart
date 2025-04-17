@@ -92,7 +92,7 @@ struct Run: AsyncParsableCommand {
 
   @Flag(help: ArgumentHelp(
     "Disable clipboard sharing between host and guest.",
-    discussion: "Only works with Linux-based guest operating systems."))
+    discussion: "Clipboard sharing requires spice-vdagent package on Linux and https://github.com/utmapp/vd_agent on macOS."))
   var noClipboard: Bool = false
 
   #if arch(arm64)
