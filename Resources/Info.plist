@@ -21,5 +21,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Access to OCI registries on the local network</string>
 </dict>
 </plist>
