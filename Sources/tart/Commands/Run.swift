@@ -261,8 +261,7 @@ struct Run: AsyncParsableCommand {
   var captureSystemKeys: Bool = false
 
   #if arch(arm64)
-    @Flag(help: ArgumentHelp("Don't add trackpad as a pointing device on macOS VMs",
-                             discussion: "By default, macOS VMs include both a USB pointing device and a trackpad. This flag disables the trackpad."))
+    @Flag(help: ArgumentHelp("Don't add trackpad as a pointing device on macOS VMs"))
   #endif
   var noTrackpad: Bool = false
 

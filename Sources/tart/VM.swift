@@ -368,23 +368,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    var attachment: VZStorageDeviceAttachment = try VZDiskImageStorageDeviceAttachment(
-        url: diskURL,
-        readOnly: false,
-        // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
-        //
-        // [1]: https://github.com/cirruslabs/tart/pull/675
-        cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
-        synchronizationMode: sync
+    var attachment = try VZDiskImageStorageDeviceAttachment(
+      url: diskURL,
+      readOnly: false,
+      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
+      //
+      // [1]: https://github.com/cirruslabs/tart/pull/675
+      cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
+      synchronizationMode: sync
     )
-    if #available(macOS 14, *) {
-      attachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
-          url: try URL(string: "nbd://localhost:10809/")!,
-          timeout: 30,
-          isForcedReadOnly: false,
-          synchronizationMode: .full
-      )
-    }
 
     var devices: [VZStorageDeviceConfiguration] = [VZVirtioBlockDeviceConfiguration(attachment: attachment)]
     devices.append(contentsOf: additionalStorageDevices)
