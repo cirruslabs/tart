@@ -42,4 +42,9 @@ struct Linux: Platform {
   func pointingDevices() -> [VZPointingDeviceConfiguration] {
     [VZUSBScreenCoordinatePointingDeviceConfiguration()]
   }
+
+  func pointingDevicesSimplified() -> [VZPointingDeviceConfiguration] {
+    // Linux doesn't support trackpad, so just return the regular pointing devices
+    return pointingDevices()
+  }
 }

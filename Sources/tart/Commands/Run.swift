@@ -260,6 +260,11 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
+  #if arch(arm64)
+    @Flag(help: ArgumentHelp("Don't add trackpad as a pointing device on macOS VMs"))
+  #endif
+  var noTrackpad: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -309,6 +314,17 @@ struct Run: AsyncParsableCommand {
       }
       if dir.count > 0 {
         throw ValidationError("Suspending VMs with shared directories is not supported")
+      }
+
+      if noTrackpad {
+        throw ValidationError("--no-trackpad cannot be used with --suspendable")
+      }
+    }
+
+    if noTrackpad {
+      let config = try VMConfig.init(fromURL: vmDir.configURL)
+      if config.os != .darwin {
+        throw ValidationError("--no-trackpad can only be used with macOS VMs")
       }
     }
 
@@ -373,7 +389,8 @@ struct Run: AsyncParsableCommand {
       audio: !noAudio,
       clipboard: !noClipboard,
       sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw),
-      caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw)
+      caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw),
+      noTrackpad: noTrackpad
     )
 
     let vncImpl: VNC? = try {

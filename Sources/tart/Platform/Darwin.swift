@@ -127,6 +127,11 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
       [VZUSBScreenCoordinatePointingDeviceConfiguration(), VZMacTrackpadConfiguration()]
     }
 
+    func pointingDevicesSimplified() -> [VZPointingDeviceConfiguration] {
+      // Only include the USB pointing device, not the trackpad
+      return [VZUSBScreenCoordinatePointingDeviceConfiguration()]
+    }
+
     func pointingDevicesSuspendable() -> [VZPointingDeviceConfiguration] {
       if #available(macOS 14, *) {
         return [VZMacTrackpadConfiguration()]
