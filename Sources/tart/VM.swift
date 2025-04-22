@@ -50,7 +50,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        audio: Bool = true,
        clipboard: Bool = true,
        sync: VZDiskImageSynchronizationMode = .full,
-       caching: VZDiskImageCachingMode? = nil
+       caching: VZDiskImageCachingMode? = nil,
+       noTrackpad: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -71,7 +72,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 audio: audio,
                                                 clipboard: clipboard,
                                                 sync: sync,
-                                                caching: caching
+                                                caching: caching,
+                                                noTrackpad: noTrackpad
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -298,7 +300,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     audio: Bool = true,
     clipboard: Bool = true,
     sync: VZDiskImageSynchronizationMode = .full,
-    caching: VZDiskImageCachingMode? = nil
+    caching: VZDiskImageCachingMode? = nil,
+    noTrackpad: Bool = false
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -339,7 +342,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       configuration.pointingDevices = platformSuspendable.pointingDevicesSuspendable()
     } else {
       configuration.keyboards = vmConfig.platform.keyboards()
-      configuration.pointingDevices = vmConfig.platform.pointingDevices()
+      if noTrackpad {
+        configuration.pointingDevices = vmConfig.platform.pointingDevicesSimplified()
+      } else {
+        configuration.pointingDevices = vmConfig.platform.pointingDevices()
+      }
     }
 
     // Networking
@@ -361,15 +368,23 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    let attachment: VZDiskImageStorageDeviceAttachment =  try VZDiskImageStorageDeviceAttachment(
-      url: diskURL,
-      readOnly: false,
-      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
-      //
-      // [1]: https://github.com/cirruslabs/tart/pull/675
-      cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
-      synchronizationMode: sync
+    var attachment: VZStorageDeviceAttachment = try VZDiskImageStorageDeviceAttachment(
+        url: diskURL,
+        readOnly: false,
+        // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
+        //
+        // [1]: https://github.com/cirruslabs/tart/pull/675
+        cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
+        synchronizationMode: sync
     )
+    if #available(macOS 14, *) {
+      attachment = try VZNetworkBlockDeviceStorageDeviceAttachment(
+          url: try URL(string: "nbd://localhost:10809/")!,
+          timeout: 30,
+          isForcedReadOnly: false,
+          synchronizationMode: .full
+      )
+    }
 
     var devices: [VZStorageDeviceConfiguration] = [VZVirtioBlockDeviceConfiguration(attachment: attachment)]
     devices.append(contentsOf: additionalStorageDevices)

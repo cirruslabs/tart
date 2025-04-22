@@ -7,6 +7,7 @@ protocol Platform: Codable {
   func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration
   func keyboards() -> [VZKeyboardConfiguration]
   func pointingDevices() -> [VZPointingDeviceConfiguration]
+  func pointingDevicesSimplified() -> [VZPointingDeviceConfiguration]
 }
 
 protocol PlatformSuspendable: Platform {
