@@ -2,7 +2,7 @@
 
 The easiest way to install Orchard CLI is through the [Homebrew](https://brew.sh/):
 
-```
+```shell
 brew install cirruslabs/cli/orchard
 ```
 
@@ -21,13 +21,13 @@ To configure the context, `orchard context` has a subfamily of commands:
 
 Most of the time, you'll only need the `orchard context create`. For example, if you've deployed your Orchard Controller on `orchard-controller.example.com`, a new context can be configured like so:
 
-```
+```shell
 orchard context crate orchard-controller.example.com
 ```
 
 `orchard context create` assumes port 6120 by default, to specify the port explicitly:
 
-```
+```shell
 orchard context crate orchard-controller.example.com:8080
 ```
 
