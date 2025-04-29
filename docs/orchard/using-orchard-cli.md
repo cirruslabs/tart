@@ -57,11 +57,11 @@ When processing this VM, the scheduler will only to place it on available Mac St
 
 ## Using resources when creating VMs
 
-Resources are useful if you want to restrict scheduling of a VM to workers that still have enough resources to fit the VM's specified resources.
+Resources are useful if you want to restrict scheduling of a VM to workers that still have enough of the specified resource to fit the VM's requirements.
 
-The difference between labels is that resources are finite and are automatically accounted by the scheduler.
+The difference between the labels is that the resources are finite and are automatically accounted by the scheduler.
 
-To illustrate with an example, you might have an Orchard Cluster consisting of the following workers:
+To illustrate this with an example, let's say you have an Orchard Cluster consisting of the following workers:
 
 * Mac Mini with 1 Gbps bandwidth (`orchard worker run --resources bandwidth-mbps=1000`)
 * Mac Studio with 10 Gbps bandwidth (`orchard worker run --resources bandwidth-mbps=10000`)
@@ -72,4 +72,6 @@ VM created using the command below will only be scheduled on a Mac Studio with 1
 orchard create vm --resources bandwidth-mbps=7500 <NAME>
 ```
 
-This Mac Studio will be able to accommodate one more VM (due to internal Apple EULA limit for macOS virtualization) with `bandwidth-mbps=2500` or less.
+However, after this VM is scheduled, the 10 Gbps Mac Studio will only be able to accommodate one more VM (due to internal Apple EULA limit for macOS virtualization) with `bandwidth-mbps=2500` or less.
+
+After the VM finishes, the unused resources will be available again.
