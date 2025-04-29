@@ -14,6 +14,47 @@ For example to use a secure, random value:
 ORCHARD_BOOTSTRAP_ADMIN_TOKEN=$(openssl rand -hex 32) orchard controller run
 ```
 
+## Customization
+
+Note that all the [Deployment Methods](#deployment-methods) essentially boil down to starting an `orchard controller run` command and keeping it alive.
+
+This means that by introducing additional command-line arguments, you can customize the Orchard Controller's behavior. Below, we list some of the common scenarios.
+
+### Customizing listening port
+
+* `--listen` — address to listen on (default `:6120`)
+
+### Customizing TLS
+
+* `--controller-cert` — use the controller certificate from the specified path instead of the auto-generated one (requires --controller-key)
+* `--controller-key` — use the controller certificate key from the specified path instead of the auto-generated one (requires --controller-cert)
+* `--insecure-no-tls` — disable TLS, making all connections to the controller unencrypted
+    * useful when deploying Orchard Controller behind a load balancer/ingress controller
+
+### Built-in SSH server
+
+Orchard Controller can act as a simple SSH server that port-forwards connections to the VMs running in the Orchard Cluster.
+
+This way you can completely skip the Orchard API when connecting to a given VM and only use the SSH client:
+
+```shell
+ssh -J <service account name>@orchard-controller.example.com <VM name>
+```
+
+To enable this functionality, pass `--listen-ssh` command-line argument to the `orchard controller run` command, for example:
+
+```ssh
+orchard controller run --listen-ssh 6122
+```
+
+Here's other command-line arguments associated with this functionality:
+
+* `--ssh-host-key` — use the SSH private host key from the specified path instead of the auto-generated one
+* `--insecure-ssh-no-client-auth` — allow SSH clients to connect to the controller's SSH server without authentication, thus only authenticating on the target worker/VM's SSH server
+    * useful when you already have strong credentials on your VMs, and you want to share these VMs to others without additionally giving out Orchard Cluster credentials
+
+Check out our [Jumping through the hoops: SSH jump host functionality in Orchard](/blog/2024/06/20/jumping-through-the-hoops-ssh-jump-host-functionality-in-orchard/) blog post for more information.
+
 ## Deployment Methods
 
 While you can always start `orchard controller run` manually with the required arguments, this method is not recommended due to lack of persistence.
