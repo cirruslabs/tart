@@ -1,0 +1,75 @@
+## Installation
+
+The easiest way to install Orchard CLI is through the [Homebrew](https://brew.sh/):
+
+```
+brew install cirruslabs/cli/orchard
+```
+
+Binaries and packages for other architectures can be found in [GitHub Releases](https://github.com/cirruslabs/orchard/releases).
+
+## Setting up the context
+
+The first step after installing the Orchard CLI is to configure its context. Configuring context is like pairing with the specified Orchard Controller, so that the commands like `orchard create vm`, `orchard ssh vm` will work.
+
+To configure the context, `orchard context` has a subfamily of commands:
+
+* `orchard context create <CONTROLLER ADDRESS>` — creates a new context to communicate with Orchard Controller available on the specified address
+* `orchard context default <CONTROLLER ADDRESS>` — sets a context with a given Orchard Controller address as default (in case there's more than one context configured)
+* `orchard context list` — lists all the configured contexts, indicating the default one
+* `orchard context delete <CONTROLLER ADDRESS>` — deletes a context for the specified Orchard Controller address
+
+Most of the time, you'll only need the `orchard context create`. For example, if you've deployed your Orchard Controller on `orchard-controller.example.com`, a new context can be configured like so:
+
+```
+orchard context crate orchard-controller.example.com
+```
+
+`orchard context create` assumes port 6120 by default, to specify the port explicitly:
+
+```
+orchard context crate orchard-controller.example.com:8080
+```
+
+When creating a new context you will be prompted for the service account name and token, which can be obtained from:
+
+* `orchard controller run` logs
+  * if this is a first start
+* `orchard get service-account`
+  * from an already configured Orchard CLI
+
+## Using labels when creating VMs
+
+Labels are useful if you want to restrict scheduling of a VM to workers whose labels include a subset of the VM's specified labels.
+
+For example, you might have an Orchard Cluster consisting of the following workers:
+
+* Mac Minis (`orchard worker run --labels location=DC1-R12-S4,model=macmini`)
+* Mac Studios (`orchard worker run --labels location=DC1-R18-S8,model=macstudio`)
+
+To create and run a VM specifically on Mac Studio machines, pass the `--labels` command-line argument to `orchard create vm` when creating a VM:
+
+```shell
+orchard create vm --labels model=macstudio <NAME>
+```
+
+When processing this VM, the scheduler will only to place it on available Orchard Workers whose labels include a subset of the VM's labels.
+
+## Using resources when creating VMs
+
+Resources are useful if you want to restrict scheduling of a VM to workers that still have enough resources to fit the VM's specified resources.
+
+The difference between labels is that resources are finite and are automatically accounted by the scheduler.
+
+To illustrate with an example, you might have an Orchard Cluster consisting of the following workers:
+
+* Mac Mini with 1 Gbps bandwidth (`orchard worker run --resources bandwidth-mbps=1000`)
+* Mac Studio with 10 Gbps bandwidth (`orchard worker run --resources bandwidth-mbps=10000`)
+
+VM created using the command below will only be scheduled on a Mac Studio with 10 Gbps bandwidth:
+
+```shell
+orchard create vm --resources bandwidth-mbps=7500 <NAME>
+```
+
+This Mac Studio will be able to accommodate one more VM (due to internal Apple EULA limit for macOS virtualization) with `bandwidth-mbps=2500` or less.

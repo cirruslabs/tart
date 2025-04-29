@@ -4,7 +4,7 @@ Orchard cluster consists of three components:
 
 * Controller — responsible for managing the cluster and scheduling of resources 
 * Worker — responsible for executing the VMs
-* Client — responsible for creating, modifying and removing the resources on the Controller, can either be an Orchard CLI or [an API consumer](/orchard/integration-guide)
+* Client — responsible for creating, modifying and removing the resources on the Controller, can either be an [Orchard CLI](/orchard/using-orchard-cli) or [an API consumer](/orchard/integration-guide)
 
 At the moment, only one Controller instance is currently supported, while you can deploy one or more Workers and run any number of Clients.
 
