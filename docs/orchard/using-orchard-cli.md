@@ -54,6 +54,7 @@ orchard create vm --labels model=macstudio <NAME>
 ```
 
 When processing this VM, the scheduler will only place it on available Mac Studio workers.
+
 ## Using resources when creating VMs
 
 Resources are useful if you want to restrict scheduling of a VM to workers that still have enough of the specified resource to fit the VM's requirements.
