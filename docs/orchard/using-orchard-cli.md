@@ -53,7 +53,7 @@ To create and run a VM specifically on Mac Studio machines, pass the `--labels` 
 orchard create vm --labels model=macstudio <NAME>
 ```
 
-When processing this VM, the scheduler will only to place it on available Orchard Workers whose labels include a subset of the VM's labels.
+When processing this VM, the scheduler will only to place it on available Mac Studios workers.
 
 ## Using resources when creating VMs
 
