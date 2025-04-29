@@ -1,12 +1,14 @@
 ## Architecture
 
-Orchard cluster consists of two components:
+Orchard cluster consists of three components:
 
-* Controller — responsible for managing the cluster and scheduling of resources
+* Controller — responsible for managing the cluster and scheduling of resources 
 * Worker — responsible for executing the VMs
 * Client — responsible for creating, modifying and removing the resources on the Controller, can either be an Orchard CLI or [an API consumer](/orchard/integration-guide)
 
-Normally you deploy a single Controller that needs to be accessible to both the Clients and Workers. Then you can deploy the Workers, which can reside anywhere and be inaccessible to Clients directly, e.g. behind a NAT.
+At the moment, only one Controller instance is currently supported, while you can deploy one or more Workers and run any number of Clients.
+
+In terms of networking requirements, only Controller needs to be directly accessible from Workers and Clients, while Workers and Clients can be deployed and run anywhere (e.g. behind a NAT).
 
 ## Security
 
