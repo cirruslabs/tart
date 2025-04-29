@@ -8,11 +8,11 @@ brew install cirruslabs/cli/orchard
 
 Binaries and packages for other architectures can be found in [GitHub Releases](https://github.com/cirruslabs/orchard/releases).
 
-## Setting up the context
+## Setting up a context
 
 The first step after installing the Orchard CLI is to configure its context. Configuring context is like pairing with the specified Orchard Controller, so that the commands like `orchard create vm`, `orchard ssh vm` will work.
 
-To configure the context, `orchard context` has a subfamily of commands:
+To configure a context, `orchard context` has a subfamily of commands:
 
 * `orchard context create <CONTROLLER ADDRESS>` — creates a new context to communicate with Orchard Controller available on the specified address
 * `orchard context default <CONTROLLER ADDRESS>` — sets a context with a given Orchard Controller address as default (in case there's more than one context configured)
