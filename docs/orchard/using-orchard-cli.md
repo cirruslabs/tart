@@ -34,9 +34,9 @@ orchard context crate orchard-controller.example.com:8080
 When creating a new context you will be prompted for the service account name and token, which can be obtained from:
 
 * `orchard controller run` logs
-  * if this is a first start
+    * if this is a first start
 * `orchard get service-account`
-  * from an already configured Orchard CLI
+    * from an already configured Orchard CLI
 
 ## Using labels when creating VMs
 
