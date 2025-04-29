@@ -102,6 +102,7 @@ nav:
       - "Architecture and Security": orchard/architecture-and-security.md
       - "Deploying Controller": orchard/deploying-controller.md
       - "Deploying Workers": orchard/deploying-workers.md
+      - "Using Orchard CLI": orchard/using-orchard-cli.md
       - "Managing the Cluster": orchard/managing-cluster.md
       - "Integrating with the API": orchard/integration-guide.md
   - "FAQ": faq.md
