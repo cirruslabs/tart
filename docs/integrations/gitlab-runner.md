@@ -42,7 +42,7 @@ Now you can use Tart Images in your `.gitlab-ci.yml`:
 ```yaml
 # You can use any remote Tart Image.
 # Tart Executor will pull it from the registry and use it for creating ephemeral VMs.
-image: ghcr.io/cirruslabs/macos-sonoma-base:latest
+image: ghcr.io/cirruslabs/macos-sequoia-base:latest
 
 test:
   tags:

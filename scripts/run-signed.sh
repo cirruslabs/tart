@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # helper script to build and run a signed tart binary
-# usage: ./scripts/run-signed.sh run sonoma-base
+# usage: ./scripts/run-signed.sh run sequoia-base
 
 set -e
 

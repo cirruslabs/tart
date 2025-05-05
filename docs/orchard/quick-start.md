@@ -26,7 +26,7 @@ more information.
 Now, let's create a Virtual Machine:
 
 ```shell
-orchard create vm --image ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
+orchard create vm --image ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
 ```
 
 You can check a list of VM resources to see if the Virtual Machine we've created above is already running:
@@ -48,7 +48,7 @@ instance. Orchard Controller instance is secured by default and all API calls ar
 To SSH into a VM, use the `orchard ssh` command:
 
 ```shell
-orchard ssh vm sonoma-base
+orchard ssh vm sequoia-base
 ```
 
 You can specify the `--username` and `--password` flags to specify the username/password pair to use for the SSH
@@ -58,14 +58,14 @@ You can also execute remote commands instead of spawning a login shell, similarl
 a command argument:
 
 ```shell
-orchard ssh vm sonoma-base "uname -a"
+orchard ssh vm sequoia-base "uname -a"
 ```
 
 You can execute scripts remotely this way, by telling the remote command-line interpreter to read from the standard
 input and using the redirection operator as follows:
 
 ```shell
-orchard ssh vm sonoma-base "bash -s" < script.sh
+orchard ssh vm sequoia-base "bash -s" < script.sh
 ```
 
 ### VNC
@@ -73,7 +73,7 @@ orchard ssh vm sonoma-base "bash -s" < script.sh
 Similarly to `ssh` command, you can use `vnc` command to open Screen Sharing into a remote VM:
 
 ```shell
-orchard vnc vm sonoma-base
+orchard vnc vm sequoia-base
 ```
 
 You can specify the `--username` and `--password` flags to specify the username/password pair to use for the VNC
@@ -84,7 +84,7 @@ protocol. By default, `admin`/`admin` is used.
 The following command will delete the VM we've created above and clean-up the resources associated with it:
 
 ```shell
-orchard delete vm sonoma-base
+orchard delete vm sequoia-base
 ```
 
 ## Environment variables

@@ -66,8 +66,8 @@ Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) 
 
 ```bash
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
-tart run sonoma-base
+tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
+tart run sequoia-base
 ```
 
 Please check the [official documentation](https://tart.run) for more information and/or feel free to use [discussions](https://github.com/cirruslabs/tart/discussions)

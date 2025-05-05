@@ -138,7 +138,7 @@ struct Run: AsyncParsableCommand {
 
   To work around this pass TART_HOME explicitly:
 
-  sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
+  sudo TART_HOME="$HOME/.tart" tart run sequoia --disk=/dev/disk0
   """, valueName: "path[:options]"))
   var disk: [String] = []
 
