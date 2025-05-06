@@ -7,7 +7,7 @@ import SwiftDate
 struct Prune: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Prune OCI and IPSW caches or local VMs")
 
-  @Option(help: ArgumentHelp("Entries to remove: \"caches\" targets OCI and IPSW caches and \"vms\" targets local VMs."))
+  @Option(help: ArgumentHelp("Entries to remove: \"caches\" targets OCI and IPSW caches and \"vms\" targets local VMs."), completion: .list(["caches", "vms"]))
   var entries: String = "caches"
 
   @Option(help: ArgumentHelp("Remove entries that were last accessed more than n days ago",

@@ -7,7 +7,7 @@ struct Export: AsyncParsableCommand {
   @Argument(help: "Source VM name.", completion: .custom(completeMachines))
   var name: String
 
-  @Argument(help: "Path to the destination file.")
+  @Argument(help: "Path to the destination file.", completion: .file())
   var path: String?
 
   func run() async throws {

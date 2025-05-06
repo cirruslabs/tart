@@ -10,7 +10,7 @@ struct Create: AsyncParsableCommand {
   @Argument(help: "VM name")
   var name: String
 
-  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file or URL (or \"latest\", to fetch the latest supported IPSW automatically)", valueName: "path"))
+  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file or URL (or \"latest\", to fetch the latest supported IPSW automatically)", valueName: "path"), completion: .file())
   var fromIPSW: String?
 
   @Flag(help: "create a Linux VM")
