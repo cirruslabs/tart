@@ -81,7 +81,7 @@ struct Run: AsyncParsableCommand {
   @Option(help: ArgumentHelp(
     "Attach an externally created serial console",
     discussion: "Alternative to `--serial` flag for programmatic integrations."
-  ))
+  ), completion: .file())
   var serialPath: String?
 
   @Flag(help: ArgumentHelp("Force open a UI window, even when VNC is enabled.", visibility: .private))
@@ -116,8 +116,12 @@ struct Run: AsyncParsableCommand {
   #endif
   var vncExperimental: Bool = false
 
+  // Note that the valueName here should really be "path[:options]" instead of just "path",
+  // see ArgumentParser issue[1] for more details.
+  //
+  // [1]: https://github.com/apple/swift-argument-parser/issues/761
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only and synchronization options (e.g. --disk="disk.bin", --disk="ubuntu.iso:ro", --disk="/dev/disk0", --disk "ghcr.io/cirruslabs/xcode:16.0:ro" or --disk="nbd://localhost:10809/myDisk:sync=none")
+  Additional disk attachments with an optional read-only and synchronization options in the form of path[:options] (e.g. --disk="disk.bin", --disk="ubuntu.iso:ro", --disk="/dev/disk0", --disk "ghcr.io/cirruslabs/xcode:16.0:ro" or --disk="nbd://localhost:10809/myDisk:sync=none")
   """, discussion: """
   The disk attachment can be a:
 
@@ -139,7 +143,7 @@ struct Run: AsyncParsableCommand {
   To work around this pass TART_HOME explicitly:
 
   sudo TART_HOME="$HOME/.tart" tart run sequoia --disk=/dev/disk0
-  """, valueName: "path[:options]"))
+  """, valueName: "path"), completion: .file())
   var disk: [String] = []
 
   #if arch(arm64)
@@ -158,7 +162,11 @@ struct Run: AsyncParsableCommand {
   #endif
   var rosettaTag: String?
 
-  @Option(help: ArgumentHelp("Additional directory shares with an optional read-only and mount tag options (e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")", discussion: """
+  // Note that the valueName here should really be "[name:]path[:options]" instead of just "path",
+  // see ArgumentParser issue[1] for more details.
+  //
+  // [1]: https://github.com/apple/swift-argument-parser/issues/761
+  @Option(help: ArgumentHelp("Additional directory shares with an optional read-only and mount tag options in the form of [name:]path[:options] (e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")", discussion: """
   Requires host to be macOS 13.0 (Ventura) or newer. macOS guests must be running macOS 13.0 (Ventura) or newer too.
 
   Options are comma-separated and are as follows:
@@ -170,7 +178,7 @@ struct Run: AsyncParsableCommand {
   Mount tag can be overridden by appending tag property to the directory share (e.g. --dir=\"~/src/build:tag=build\" or --dir=\"~/src/build:ro,tag=build\"). Then it can be mounted via "mount_virtiofs build ~/build" inside guest macOS and "mount -t virtiofs build ~/build" inside guest Linux.
 
   In case of passing multiple directories per mount tag it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\". These names will be used as directory names under the mounting point inside guests. For the example above it will be "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
-  """, valueName: "[name:]path[:options]"))
+  """, valueName: "path"), completion: .directory)
   var dir: [String] = []
 
   @Flag(help: ArgumentHelp("Enable nested virtualization if possible"))
