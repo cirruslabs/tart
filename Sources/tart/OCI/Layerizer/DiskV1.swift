@@ -45,7 +45,7 @@ class DiskV1: Disk {
     return pushedLayers
   }
 
-  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil, deduplicate: Bool = false) async throws {
+  static func pull(registry: Registry, diskLayers: [OCIManifestLayer], diskURL: URL, concurrency: UInt, progress: Progress, localLayerCache: LocalLayerCache? = nil, deduplicate: Bool = false, maxRetries: UInt = 5) async throws {
     if !FileManager.default.createFile(atPath: diskURL.path, contents: nil) {
       throw OCIError.FailedToCreateVmFile
     }
