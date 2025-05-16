@@ -75,6 +75,8 @@ enum RuntimeError : Error {
   case SuspendFailed(_ message: String)
   case PullFailed(_ message: String)
   case VirtualMachineLimitExceeded(_ hint: String)
+  case VMSocketFailed(_ port: UInt32, _ explanation: String)
+  case TerminalOperationFailed(_ message: String)
 }
 
 protocol HasExitCode {
@@ -136,6 +138,10 @@ extension RuntimeError : CustomStringConvertible {
       return message
     case .VirtualMachineLimitExceeded(let hint):
       return "The number of VMs exceeds the system limit\(hint)"
+    case .VMSocketFailed(let port, let explanation):
+      return "Failed to establish a VM socket connection to port \(port): \(explanation)"
+    case .TerminalOperationFailed(let message):
+      return message
     }
   }
 }

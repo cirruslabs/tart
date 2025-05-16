@@ -26,6 +26,9 @@ struct VMDirectory: Prunable {
   var manifestURL: URL {
     baseURL.appendingPathComponent("manifest.json")
   }
+  var controlSocketURL: URL {
+    baseURL.appendingPathComponent("control.sock")
+  }
 
   var explicitlyPulledMark: URL {
     baseURL.appendingPathComponent(".explicitly-pulled")

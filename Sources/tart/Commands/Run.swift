@@ -489,6 +489,8 @@ struct Run: AsyncParsableCommand {
           }
         }
 
+        try await ControlSocket(vmDir.controlSocketURL).run()
+
         try await vm!.run()
 
         if let vncImpl = vncImpl {

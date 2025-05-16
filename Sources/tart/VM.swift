@@ -248,6 +248,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
   }
 
+  @MainActor
+  func connect(toPort: UInt32) async throws -> VZVirtioSocketConnection {
+    guard let socketDevice = virtualMachine.socketDevices.first else {
+      throw RuntimeError.VMSocketFailed(toPort, ", VM has no socket devices configured")
+    }
+
+    guard let virtioSocketDevice = socketDevice as? VZVirtioSocketDevice else {
+      throw RuntimeError.VMSocketFailed(toPort, ", expected VM's first socket device to have a type of VZVirtioSocketDevice, got \(type(of: socketDevice)) instead")
+    }
+
+    return try await virtioSocketDevice.connect(toPort: toPort)
+  }
+
   func run() async throws {
     do {
       try await sema.waitUnlessCancelled()
@@ -408,6 +421,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
       configuration.consoleDevices.append(consoleDevice)
     }
+
+    // Socket device
+    configuration.socketDevices = [VZVirtioSocketDeviceConfiguration()]
 
     try configuration.validate()
 
