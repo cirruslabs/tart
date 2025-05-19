@@ -45,7 +45,7 @@ class ControlSocket {
     self.logger.info("received new control socket connection from a client")
 
     try await clientChannel.executeThenClose { clientInbound, clientOutbound in
-      self.logger.info("dialing to \(vm) on port \(self.vmPort)...")
+      self.logger.info("dialing to VM on port \(self.vmPort)...")
 
       do {
         guard let vmConnection = try await vm?.connect(toPort: self.vmPort) else {
