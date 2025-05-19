@@ -1,6 +1,6 @@
 import Foundation
 import Network
-import Logging
+import os.log
 import NIO
 import NIOPosix
 
@@ -9,7 +9,7 @@ class ControlSocket {
   let controlSocketURL: URL
   let vmPort: UInt32
   let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-  let logger: Logging.Logger = Logging.Logger(label: "org.cirruslabs.tart.control-socket")
+  let logger: os.Logger = os.Logger(subsystem: "org.cirruslabs.tart.control-socket", category: "network")
 
   init(_ controlSocketURL: URL, vmPort: UInt32 = 8080) {
     self.controlSocketURL = controlSocketURL
