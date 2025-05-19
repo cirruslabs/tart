@@ -24,6 +24,11 @@ struct Exec: AsyncParsableCommand {
   var command: [String]
 
   func run() async throws {
+    // We only have withThrowingDiscardingTaskGroup available starting from macOS 14
+    if #unavailable(macOS 14) {
+      throw RuntimeError.Generic("\"tart exec\" is only available on macOS 14 (Sonoma) or newer")
+    }
+
     // Open VM's directory
     let vmDir = try VMStorageLocal().open(name)
 

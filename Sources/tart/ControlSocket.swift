@@ -1,11 +1,14 @@
 import Foundation
 import Network
 import Logging
+import NIO
+import NIOPosix
 
+@available(macOS 14, *)
 class ControlSocket {
   let controlSocketURL: URL
   let vmPort: UInt32
-  let queue: DispatchQueue = DispatchQueue.global(qos: .userInitiated)
+  let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
   let logger: Logging.Logger = Logging.Logger(label: "org.cirruslabs.tart.control-socket")
 
   init(_ controlSocketURL: URL, vmPort: UInt32 = 8080) {
@@ -18,60 +21,69 @@ class ControlSocket {
     // if any, otherwise we may get the "address already in use" error
     try? FileManager.default.removeItem(atPath: controlSocketURL.path())
 
-    let parameters = NWParameters()
-    parameters.defaultProtocolStack.transportProtocol = NWProtocolTCP.Options()
-    parameters.requiredLocalEndpoint = NWEndpoint.unix(path: controlSocketURL.path())
+    let serverChannel = try await ServerBootstrap(group: eventLoopGroup)
+      .bind(unixDomainSocketPath: controlSocketURL.path()) { childChannel in
+        childChannel.eventLoop.makeCompletedFuture {
+          return try NIOAsyncChannel<ByteBuffer, ByteBuffer>(
+            wrappingChannelSynchronously: childChannel
+          )
+        }
+      }
 
-    let listener = try NWListener(using: parameters)
+    try await withThrowingDiscardingTaskGroup { group in
+      try await serverChannel.executeThenClose { serverInbound in
+        for try await clientChannel in serverInbound {
+          group.addTask {
+            try await self.handleClient(clientChannel)
+          }
+        }
+      }
+    }
+  }
 
-    listener.newConnectionHandler = { connection in
-      self.logger.info("received new control socket connection from a client")
+  func handleClient(_ clientChannel: NIOAsyncChannel<ByteBuffer, ByteBuffer>) async throws {
+    self.logger.info("received new control socket connection from a client")
 
-      connection.stateUpdateHandler = { state in
-        switch state {
-        case .ready:
-          Task {
-            self.logger.info("dialing to \(vm) on port \(self.vmPort)...")
+    try await clientChannel.executeThenClose { clientInbound, clientOutbound in
+      self.logger.info("dialing to \(vm) on port \(self.vmPort)...")
 
-            do {
-              guard let vmConnection = try await vm?.connect(toPort: self.vmPort) else {
-                throw RuntimeError.VMSocketFailed(self.vmPort, "VM is not running")
+      do {
+        guard let vmConnection = try await vm?.connect(toPort: self.vmPort) else {
+          throw RuntimeError.VMSocketFailed(self.vmPort, "VM is not running")
+        }
+
+        self.logger.info("running control socket proxy")
+
+        let vmChannel = try await ClientBootstrap(group: eventLoopGroup).withConnectedSocket(vmConnection.fileDescriptor) { childChannel in
+          childChannel.eventLoop.makeCompletedFuture {
+            try NIOAsyncChannel<ByteBuffer, ByteBuffer>(
+              wrappingChannelSynchronously: childChannel
+            )
+          }
+        }
+
+        try await vmChannel.executeThenClose { (vmInbound, vmOutbound) in
+          try await withThrowingDiscardingTaskGroup { group in
+            // Proxy data from a client (e.g. "tart exec") to a VM
+            group.addTask {
+              for try await message in clientInbound {
+                try await vmOutbound.write(message)
               }
+            }
 
-              self.logger.info("running control socket proxy")
-
-              await ControlSocketProxy(queue: self.queue, left: connection, right: vmConnection).run()
-
-              self.logger.info("control socket client disconnected")
-            } catch (let error) {
-              self.logger.error("control socket connection failed: \(error)")
-
-              connection.cancel()
+            // Proxy data from a VM to a client (e.g. "tart exec")
+            group.addTask {
+              for try await message in vmInbound {
+                try await clientOutbound.write(message)
+              }
             }
           }
-        default:
-          // Do nothing
-          return
         }
+
+        self.logger.info("control socket client disconnected")
+      } catch (let error) {
+        self.logger.error("control socket connection failed: \(error)")
       }
-
-      connection.start(queue: self.queue)
-    }
-
-    try await withCheckedThrowingContinuation { continuation in
-      listener.stateUpdateHandler = { state in
-        switch state {
-        case .ready:
-          continuation.resume(returning: ())
-        case .failed(let error):
-          continuation.resume(throwing: error)
-        default:
-          // Do nothing
-          return
-        }
-      }
-
-      listener.start(queue: self.queue)
     }
   }
 }

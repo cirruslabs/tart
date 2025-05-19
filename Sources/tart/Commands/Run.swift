@@ -489,7 +489,11 @@ struct Run: AsyncParsableCommand {
           }
         }
 
-        try await ControlSocket(vmDir.controlSocketURL).run()
+        if #available(macOS 14, *) {
+          Task {
+            try await ControlSocket(vmDir.controlSocketURL).run()
+          }
+        }
 
         try await vm!.run()
 
