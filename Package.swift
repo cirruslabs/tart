@@ -24,6 +24,8 @@ let package = Package(
     .package(url: "https://github.com/groue/Semaphore", from: "0.0.8"),
     .package(url: "https://github.com/fumoboy007/swift-retry", from: "0.2.3"),
     .package(url: "https://github.com/jozefizso/swift-xattr", from: "3.0.0"),
+    .package(url: "https://github.com/grpc/grpc-swift.git", .upToNextMajor(from: "1.24.2")),
+    .package(url: "https://buf.build/gen/swift/git/1.24.2-00000000000000-dfeb75ad2b39.1/cirruslabs_tart-guest-agent_grpc_swift.git", revision: "1.24.2-00000000000000-dfeb75ad2b39.1"),
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -40,6 +42,8 @@ let package = Package(
       .product(name: "Semaphore", package: "Semaphore"),
       .product(name: "DMRetry", package: "swift-retry"),
       .product(name: "XAttr", package: "swift-xattr"),
+      .product(name: "GRPC", package: "grpc-swift"),
+      .product(name: "Cirruslabs_TartGuestAgent_Grpc_Swift", package: "cirruslabs_tart-guest-agent_grpc_swift"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",

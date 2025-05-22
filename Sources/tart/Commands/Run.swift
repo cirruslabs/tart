@@ -489,6 +489,12 @@ struct Run: AsyncParsableCommand {
           }
         }
 
+        if #available(macOS 14, *) {
+          Task {
+            try await ControlSocket(vmDir.controlSocketURL).run()
+          }
+        }
+
         try await vm!.run()
 
         if let vncImpl = vncImpl {

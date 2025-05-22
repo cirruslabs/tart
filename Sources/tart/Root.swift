@@ -18,6 +18,7 @@ struct Root: AsyncParsableCommand {
       Login.self,
       Logout.self,
       IP.self,
+      Exec.self,
       Pull.self,
       Push.self,
       Import.self,
@@ -101,6 +102,11 @@ struct Root: AsyncParsableCommand {
         try command.run()
       }
     } catch {
+      // Not an error, just a custom exit code from "tart exec"
+      if let execCustomExitCodeError = error as? ExecCustomExitCodeError {
+        Foundation.exit(execCustomExitCodeError.exitCode)
+      }
+
       // Capture the error into Sentry
       SentrySDK.capture(error: error)
       SentrySDK.flush(timeout: 2.seconds.timeInterval)
