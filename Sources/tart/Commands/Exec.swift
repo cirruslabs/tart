@@ -73,7 +73,7 @@ struct Exec: AsyncParsableCommand {
     do {
       try await execute(channel)
     } catch let error as GRPCConnectionPoolError {
-      throw RuntimeError.Generic("Failed to connect to the VM using its control socket, is Tart Guest Agent running?")
+      throw RuntimeError.Generic("Failed to connect to the VM using its control socket: \(error.localizedDescription), is the Tart Guest Agent running?")
     }
   }
 
