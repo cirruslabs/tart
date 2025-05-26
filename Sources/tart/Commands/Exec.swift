@@ -77,7 +77,7 @@ struct Exec: AsyncParsableCommand {
     }
   }
 
-  func execute(_ channel: GRPCChannel) async throws {
+  private func execute(_ channel: GRPCChannel) async throws {
     let agentAsyncClient = AgentAsyncClient(channel: channel)
     let callOptions = CallOptions(timeLimit: .timeout(.seconds(1)))
     let execCall = agentAsyncClient.makeExecCall(callOptions: callOptions)
