@@ -9,7 +9,11 @@ struct ExecCustomExitCodeError: Error {
 }
 
 struct Exec: AsyncParsableCommand {
-  static var configuration = CommandConfiguration(abstract: "Execute a command in a running VM")
+  static var configuration = CommandConfiguration(abstract: "Execute a command in a running VM", discussion: """
+  Requires Tart Guest Agent running in a guest VM.
+
+  Note that all non-vanilla Cirrus Labs VM images already have the Tart Guest Agent installed.
+  """)
 
   @Argument(help: "VM name", completion: .custom(completeLocalMachines))
   var name: String
@@ -66,8 +70,17 @@ struct Exec: AsyncParsableCommand {
     }
 
     // Execute a command in a running VM
+    do {
+      try await execute(channel)
+    } catch let error as GRPCConnectionPoolError {
+      throw RuntimeError.Generic("Failed to connect to the VM using its control socket: \(error.localizedDescription), is the Tart Guest Agent running?")
+    }
+  }
+
+  private func execute(_ channel: GRPCChannel) async throws {
     let agentAsyncClient = AgentAsyncClient(channel: channel)
-    let execCall = agentAsyncClient.makeExecCall()
+    let callOptions = CallOptions(timeLimit: .timeout(.seconds(1)))
+    let execCall = agentAsyncClient.makeExecCall(callOptions: callOptions)
 
     try await execCall.requestStream.send(.with {
       $0.type = .command(.with {
