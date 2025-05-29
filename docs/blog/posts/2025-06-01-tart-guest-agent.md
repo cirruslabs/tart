@@ -61,7 +61,7 @@ We’ve also introduced `--run-daemon` (which implies `--resize-disk`) and `--ru
 
 First, we'd like to thank our paid clients, without whom this feature wouldn't have been possible.
 
-[Become one now](http://../../licensing.md) and enjoy higher allowances for Tart VMs and Orchard workers—while helping ensure that our roadmap aligns with your company's needs.
+[Become one now](../../licensing.md) and enjoy higher allowances for Tart VMs and Orchard workers—while helping ensure that our roadmap aligns with your company's needs.
 
 In the near future we plan to implement:
 
