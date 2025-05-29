@@ -10,3 +10,4 @@
 "MD041": false # First line in file should be a top level heading
 "MD045": false # OK not to have a description for an image
 "MD046": false #  Code block style [Expected: fenced; Actual: indented]
+"MD059": false # It's OK to have "here" links
