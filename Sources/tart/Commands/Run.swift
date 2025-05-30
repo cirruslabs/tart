@@ -320,9 +320,6 @@ struct Run: AsyncParsableCommand {
       if !(config.platform is PlatformSuspendable) {
         throw ValidationError("You can only suspend macOS VMs")
       }
-      if dir.count > 0 {
-        throw ValidationError("Suspending VMs with shared directories is not supported")
-      }
 
       if noTrackpad {
         throw ValidationError("--no-trackpad cannot be used with --suspendable")
