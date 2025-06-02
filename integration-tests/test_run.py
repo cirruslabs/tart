@@ -15,7 +15,7 @@ def test_run(tart, run_opts):
     tart_run_process = tart.run_async(["run", vm_name] + run_opts)
 
     # Obtain the VM's IP
-    stdout, _ = tart.run(["ip", vm_name, "--wait", "120"])
+    stdout, _, _ = tart.run(["ip", vm_name, "--wait", "120"])
     ip = stdout.strip()
 
     # Connect to the VM over SSH and shutdown it
@@ -29,4 +29,4 @@ def test_run(tart, run_opts):
     assert tart_run_process.returncode == 0
 
     # Delete the VM
-    _, _ = tart.run(["delete", vm_name])
+    _, _, _ = tart.run(["delete", vm_name])
