@@ -745,10 +745,8 @@ struct MainApp: App {
           }
         }
       }.frame(
-        minWidth: CGFloat(vm!.config.display.width),
         idealWidth: CGFloat(vm!.config.display.width),
         maxWidth: .infinity,
-        minHeight: CGFloat(vm!.config.display.height),
         idealHeight: CGFloat(vm!.config.display.height),
         maxHeight: .infinity
       )
