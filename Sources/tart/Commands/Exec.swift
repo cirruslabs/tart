@@ -15,14 +15,14 @@ struct Exec: AsyncParsableCommand {
   Note that all non-vanilla Cirrus Labs VM images already have the Tart Guest Agent installed.
   """)
 
-  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
-  var name: String
-
   @Flag(name: [.customShort("i")], help: "Attach host's standard input to a remote command")
   var interactive: Bool = false
 
   @Flag(name: [.customShort("t")], help: "Allocate a remote pseudo-terminal (PTY)")
   var tty: Bool = false
+
+  @Argument(help: "VM name", completion: .custom(completeLocalMachines))
+  var name: String
 
   @Argument(parsing: .captureForPassthrough, help: "Command to execute")
   var command: [String]
