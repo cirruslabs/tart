@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
 version: 2
 
 project_name: tart
@@ -17,15 +18,25 @@ builds:
     goarch:
       - arm64
       - amd64
-    binary: tart.app/Contents/MacOS/tart
+    binary: tart
     prebuilt:
       path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
 
 universal_binaries:
   - name_template: tart.app/Contents/MacOS/tart
     replace: true
-    hooks:
-      post: gon gon.hcl
+
+notarize:
+  macos:
+    - enabled: '{{ isEnvSet "MACOS_CERTIFICATE" }}'
+      sign:
+        certificate: "{{.Env.MACOS_CERTIFICATE}}"
+        password: "password101"
+        entitlements: ./Resources/tart-prod.entitlements
+      notarize:
+        issuer_id: "9M2P8L4D89"
+        key_id: "hello@cirruslabs.org"
+        key: "{{.Env.AC_PASSWORD}}"
 
 archives:
   - name_template: "{{ .ProjectName }}"
