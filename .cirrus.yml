@@ -83,8 +83,9 @@ task:
     - security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k password101 build.keychain
     - xcrun notarytool store-credentials "notarytool" --apple-id "hello@cirruslabs.org" --team-id "9M2P8L4D89" --password $AC_PASSWORD
   install_script:
-    - brew install go goreleaser/tap/goreleaser-pro
+    - brew install go
     - brew install mitchellh/gon/gon
+    - brew install --cask goreleaser-pro
   info_script:
     - security find-identity -v
     - xcodebuild -version
@@ -121,8 +122,9 @@ task:
     - security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k password101 build.keychain
     - xcrun notarytool store-credentials "notarytool" --apple-id "hello@cirruslabs.org" --team-id "9M2P8L4D89" --password $AC_PASSWORD
   install_script:
-    - brew install go goreleaser/tap/goreleaser-pro getsentry/tools/sentry-cli
+    - brew install go getsentry/tools/sentry-cli
     - brew install mitchellh/gon/gon
+    - brew install --cask goreleaser-pro
   info_script:
     - security find-identity -v
     - xcodebuild -version
