@@ -92,6 +92,10 @@ extension VMDirectory {
 
     // Read VM's config and push it as blob
     let config = try VMConfig(fromURL: configURL)
+
+    // Add disk format label automatically
+    var enhancedLabels = labels
+    enhancedLabels["tart.disk.format"] = config.diskFormat.rawValue
     let configJSON = try JSONEncoder().encode(config)
     defaultLogger.appendNewLine("pushing config...")
     let configDigest = try await registry.pushBlob(fromData: configJSON, chunkSizeMb: chunkSizeMb)
@@ -121,7 +125,7 @@ extension VMDirectory {
     layers.append(OCIManifestLayer(mediaType: nvramMediaType, size: nvram.count, digest: nvramDigest))
 
     // Craft a stub OCI config for Docker Hub compatibility
-    let ociConfigContainer = OCIConfig.ConfigContainer(Labels: labels)
+    let ociConfigContainer = OCIConfig.ConfigContainer(Labels: enhancedLabels)
     let ociConfigJSON = try OCIConfig(architecture: config.arch, os: config.os, config: ociConfigContainer).toJSON()
     let ociConfigDigest = try await registry.pushBlob(fromData: ociConfigJSON, chunkSizeMb: chunkSizeMb)
     let manifest = OCIManifest(

@@ -143,6 +143,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       vmDir: VMDirectory,
       ipswURL: URL,
       diskSizeGB: UInt16,
+      diskFormat: DiskImageFormat = .raw,
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
@@ -175,14 +176,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       _ = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
 
       // Create disk
-      try vmDir.resizeDisk(diskSizeGB)
+      try vmDir.resizeDisk(diskSizeGB, format: diskFormat)
 
       name = vmDir.name
       // Create config
       config = VMConfig(
         platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
         cpuCountMin: requirements.minimumSupportedCPUCount,
-        memorySizeMin: requirements.minimumSupportedMemorySize
+        memorySizeMin: requirements.minimumSupportedMemorySize,
+        diskFormat: diskFormat
       )
       // allocate at least 4 CPUs because otherwise VMs are frequently freezing
       try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
@@ -224,15 +226,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   #endif
 
   @available(macOS 13, *)
-  static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
+  static func linux(vmDir: VMDirectory, diskSizeGB: UInt16, diskFormat: DiskImageFormat = .raw) async throws -> VM {
     // Create NVRAM
     _ = try VZEFIVariableStore(creatingVariableStoreAt: vmDir.nvramURL)
 
     // Create disk
-    try vmDir.resizeDisk(diskSizeGB)
+    try vmDir.resizeDisk(diskSizeGB, format: diskFormat)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024, diskFormat: diskFormat)
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)
@@ -385,12 +387,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     // Storage
     var attachment = try VZDiskImageStorageDeviceAttachment(
       url: diskURL,
-      readOnly: false,
-      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
-      //
-      // [1]: https://github.com/cirruslabs/tart/pull/675
-      cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
-      synchronizationMode: sync
+      readOnly: false
     )
 
     var devices: [VZStorageDeviceConfiguration] = [VZVirtioBlockDeviceConfiguration(attachment: attachment)]
