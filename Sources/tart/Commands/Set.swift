@@ -81,6 +81,10 @@ struct Set: AsyncParsableCommand {
     }
 
     if diskSize != nil {
+      // Check if the VM uses ASIF disk format
+      if vmConfig.diskFormat == .asif {
+        throw ValidationError("Cannot resize ASIF disk images. ASIF format does not support resizing after creation. Consider creating a new VM with the desired disk size.")
+      }
       try vmDir.resizeDisk(diskSize!)
     }
   }

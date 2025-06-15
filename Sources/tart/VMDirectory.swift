@@ -142,14 +142,23 @@ struct VMDirectory: Prunable {
     try vmConfig.save(toURL: configURL)
   }
 
-  func resizeDisk(_ sizeGB: UInt16) throws {
-    if !FileManager.default.fileExists(atPath: diskURL.path) {
-      FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
-    }
+  func resizeDisk(_ sizeGB: UInt16, format: DiskImageFormat = .raw) throws {
+    let diskExists = FileManager.default.fileExists(atPath: diskURL.path)
 
+    if diskExists {
+      // Existing disk - resize it
+      try resizeExistingDisk(sizeGB)
+    } else {
+      // New disk - create it with the specified format
+      try createDisk(sizeGB: sizeGB, format: format)
+    }
+  }
+
+  private func resizeExistingDisk(_ sizeGB: UInt16) throws {
     let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
     let currentDiskFileLength = try diskFileHandle.seekToEnd()
     let desiredDiskFileLength = UInt64(sizeGB) * 1000 * 1000 * 1000
+
     if desiredDiskFileLength < currentDiskFileLength {
       let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentDiskFileLength))
       let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredDiskFileLength))
@@ -159,6 +168,58 @@ struct VMDirectory: Prunable {
       try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
     }
     try diskFileHandle.close()
+  }
+
+  private func createDisk(sizeGB: UInt16, format: DiskImageFormat) throws {
+    switch format {
+    case .raw:
+      try createRawDisk(sizeGB: sizeGB)
+    case .asif:
+      try createASIFDisk(sizeGB: sizeGB)
+    }
+  }
+
+  private func createRawDisk(sizeGB: UInt16) throws {
+    // Create traditional raw disk image
+    FileManager.default.createFile(atPath: diskURL.path, contents: nil, attributes: nil)
+
+    let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
+    let desiredDiskFileLength = UInt64(sizeGB) * 1000 * 1000 * 1000
+    try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
+    try diskFileHandle.close()
+  }
+
+  private func createASIFDisk(sizeGB: UInt16) throws {
+    guard let diskutilURL = resolveBinaryPath("diskutil") else {
+      throw RuntimeError.FailedToCreateDisk("diskutil not found in PATH")
+    }
+
+    let process = Process()
+    process.executableURL = diskutilURL
+    process.arguments = [
+      "image", "create", "blank",
+      "--format", "ASIF",
+      "--size", "\(sizeGB)G",
+      "--volumeName", "Tart",
+      diskURL.path
+    ]
+
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = pipe
+
+    do {
+      try process.run()
+      process.waitUntilExit()
+
+      if process.terminationStatus != 0 {
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? "Unknown error"
+        throw RuntimeError.FailedToCreateDisk("Failed to create ASIF disk image: \(output)")
+      }
+    } catch {
+      throw RuntimeError.FailedToCreateDisk("Failed to execute diskutil: \(error)")
+    }
   }
 
   func delete() throws {
