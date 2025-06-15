@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:tart}",
+            "name": "Debug tart",
+            "program": "${workspaceFolder:tart}/.build/debug/tart",
+            "preLaunchTask": "swift: Build Debug tart"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:tart}",
+            "name": "Release tart",
+            "program": "${workspaceFolder:tart}/.build/release/tart",
+            "preLaunchTask": "swift: Build Release tart"
+        }
+    ]
+}
