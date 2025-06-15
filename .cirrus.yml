@@ -85,7 +85,7 @@ task:
   install_script:
     - brew install go
     - brew install mitchellh/gon/gon
-    - brew install --cask goreleaser-pro
+    - brew install --cask goreleaser/tap/goreleaser-pro
   info_script:
     - security find-identity -v
     - xcodebuild -version
@@ -124,7 +124,7 @@ task:
   install_script:
     - brew install go getsentry/tools/sentry-cli
     - brew install mitchellh/gon/gon
-    - brew install --cask goreleaser-pro
+    - brew install --cask goreleaser/tap/goreleaser-pro
   info_script:
     - security find-identity -v
     - xcodebuild -version
