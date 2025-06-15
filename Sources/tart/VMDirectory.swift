@@ -155,6 +155,17 @@ struct VMDirectory: Prunable {
   }
 
   private func resizeExistingDisk(_ sizeGB: UInt16) throws {
+    // Check if this is an ASIF disk by reading the VM config
+    let vmConfig = try VMConfig(fromURL: configURL)
+
+    if vmConfig.diskFormat == .asif {
+      try resizeASIFDisk(sizeGB)
+    } else {
+      try resizeRawDisk(sizeGB)
+    }
+  }
+
+  private func resizeRawDisk(_ sizeGB: UInt16) throws {
     let diskFileHandle = try FileHandle.init(forWritingTo: diskURL)
     let currentDiskFileLength = try diskFileHandle.seekToEnd()
     let desiredDiskFileLength = UInt64(sizeGB) * 1000 * 1000 * 1000
@@ -168,6 +179,123 @@ struct VMDirectory: Prunable {
       try diskFileHandle.truncate(atOffset: desiredDiskFileLength)
     }
     try diskFileHandle.close()
+  }
+
+  private func resizeASIFDisk(_ sizeGB: UInt16) throws {
+    guard let diskutilURL = resolveBinaryPath("diskutil") else {
+      throw RuntimeError.FailedToResizeDisk("diskutil not found in PATH")
+    }
+
+    // First, get current disk image info to check current size
+    let infoProcess = Process()
+    infoProcess.executableURL = diskutilURL
+    infoProcess.arguments = ["image", "info", "--plist", diskURL.path]
+
+    let infoPipe = Pipe()
+    infoProcess.standardOutput = infoPipe
+    infoProcess.standardError = infoPipe
+
+    do {
+      try infoProcess.run()
+      infoProcess.waitUntilExit()
+
+      let infoData = infoPipe.fileHandleForReading.readDataToEndOfFile()
+
+      if infoProcess.terminationStatus != 0 {
+        let output = String(data: infoData, encoding: .utf8) ?? "Unknown error"
+        throw RuntimeError.FailedToResizeDisk("Failed to get ASIF disk info: \(output)")
+      }
+
+      // Parse the plist to get current size
+      do {
+        let plist = try PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any]
+
+        if let plist = plist {
+          // Look for size information in the "Size Info" dictionary
+          var currentSizeBytes: UInt64?
+
+          // For ASIF images, the size is in the "Size Info" dictionary under "Total Bytes"
+          if let sizeInfo = plist["Size Info"] as? [String: Any],
+             let totalBytes = sizeInfo["Total Bytes"] as? UInt64 {
+            currentSizeBytes = totalBytes
+          } else if let sizeInfo = plist["Size Info"] as? [String: Any],
+                    let totalBytes = sizeInfo["Total Bytes"] as? Int64 {
+            currentSizeBytes = UInt64(totalBytes)
+          } else if let sizeInfo = plist["Size Info"] as? [String: Any],
+                    let totalBytes = sizeInfo["Total Bytes"] as? Int {
+            currentSizeBytes = UInt64(totalBytes)
+          } else {
+            // Fallback: try other possible keys for size
+            if let size = plist["Size"] as? UInt64 {
+              currentSizeBytes = size
+            } else if let size = plist["Size"] as? Int64 {
+              currentSizeBytes = UInt64(size)
+            } else if let size = plist["Size"] as? Int {
+              currentSizeBytes = UInt64(size)
+            }
+          }
+
+          if let currentSizeBytes = currentSizeBytes {
+            let desiredSizeBytes = UInt64(sizeGB) * 1000 * 1000 * 1000
+
+            if desiredSizeBytes < currentSizeBytes {
+              let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentSizeBytes))
+              let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredSizeBytes))
+              throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
+                "than the current disk size of \(currentLengthHuman)")
+            } else if desiredSizeBytes > currentSizeBytes {
+              // Resize the ASIF disk image using diskutil
+              try performASIFResize(sizeGB)
+            }
+            // If sizes are equal, no action needed
+          } else {
+            throw RuntimeError.FailedToResizeDisk("Could not find size information in disk image info")
+          }
+        } else {
+          let outputString = String(data: infoData, encoding: .utf8) ?? "Unable to decode output"
+          throw RuntimeError.FailedToResizeDisk("Failed to parse disk image info as plist. Output: \(outputString)")
+        }
+      } catch let error as RuntimeError {
+        throw error
+      } catch {
+        let outputString = String(data: infoData, encoding: .utf8) ?? "Unable to decode output"
+        throw RuntimeError.FailedToResizeDisk("Failed to parse disk image info: \(error). Output: \(outputString)")
+      }
+    } catch {
+      throw RuntimeError.FailedToResizeDisk("Failed to get disk image info: \(error)")
+    }
+  }
+
+  private func performASIFResize(_ sizeGB: UInt16) throws {
+    guard let diskutilURL = resolveBinaryPath("diskutil") else {
+      throw RuntimeError.FailedToResizeDisk("diskutil not found in PATH")
+    }
+
+    let process = Process()
+    process.executableURL = diskutilURL
+    process.arguments = [
+      "image", "resize",
+      "--size", "\(sizeGB)G",
+      diskURL.path
+    ]
+
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = pipe
+
+    do {
+      try process.run()
+      process.waitUntilExit()
+
+      let data = pipe.fileHandleForReading.readDataToEndOfFile()
+
+      if process.terminationStatus != 0 {
+        let output = String(data: data, encoding: .utf8) ?? "Unknown error"
+        throw RuntimeError.FailedToResizeDisk("Failed to resize ASIF disk image: \(output)")
+      }
+    } catch {
+      throw RuntimeError.FailedToResizeDisk("Failed to execute diskutil resize: \(error)")
+    }
   }
 
   private func createDisk(sizeGB: UInt16, format: DiskImageFormat) throws {

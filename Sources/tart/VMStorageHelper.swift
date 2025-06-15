@@ -61,6 +61,7 @@ enum RuntimeError : Error {
   case FailedToOpenBlockDevice(_ path: String, _ explanation: String)
   case InvalidDiskSize(_ message: String)
   case FailedToCreateDisk(_ message: String)
+  case FailedToResizeDisk(_ message: String)
   case FailedToUpdateAccessDate(_ message: String)
   case PIDLockFailed(_ message: String)
   case PIDLockMissing(_ message: String)
@@ -111,6 +112,8 @@ extension RuntimeError : CustomStringConvertible {
     case .InvalidDiskSize(let message):
       return message
     case .FailedToCreateDisk(let message):
+      return message
+    case .FailedToResizeDisk(let message):
       return message
     case .FailedToUpdateAccessDate(let message):
       return message
