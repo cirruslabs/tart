@@ -8,7 +8,7 @@ enum DiskImageFormat: String, CaseIterable, Codable {
   var displayName: String {
     switch self {
     case .raw:
-      return "RAW (UDIF read-write)"
+      return "RAW"
     case .asif:
       return "ASIF (Apple Sparse Image Format)"
     }
