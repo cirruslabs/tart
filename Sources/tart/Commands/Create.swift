@@ -19,7 +19,7 @@ struct Create: AsyncParsableCommand {
   @Option(help: ArgumentHelp("Disk size in GB"))
   var diskSize: UInt16 = 50
 
-  @Option(help: ArgumentHelp("Disk image format: raw (default) or asif", discussion: "ASIF format provides better performance but requires macOS 26 Tahoe or later"))
+  @Option(help: ArgumentHelp("Disk image format", discussion: "ASIF format provides better performance but requires macOS 26 Tahoe or later"))
   var diskFormat: DiskImageFormat = .raw
 
   func validate() throws {
