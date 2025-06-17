@@ -208,53 +208,50 @@ struct VMDirectory: Prunable {
 
       // Parse the plist to get current size
       do {
-        let plist = try PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any]
-
-        if let plist = plist {
-          // Look for size information in the "Size Info" dictionary
-          var currentSizeBytes: UInt64?
-
-          // For ASIF images, the size is in the "Size Info" dictionary under "Total Bytes"
-          if let sizeInfo = plist["Size Info"] as? [String: Any],
-             let totalBytes = sizeInfo["Total Bytes"] as? UInt64 {
-            currentSizeBytes = totalBytes
-          } else if let sizeInfo = plist["Size Info"] as? [String: Any],
-                    let totalBytes = sizeInfo["Total Bytes"] as? Int64 {
-            currentSizeBytes = UInt64(totalBytes)
-          } else if let sizeInfo = plist["Size Info"] as? [String: Any],
-                    let totalBytes = sizeInfo["Total Bytes"] as? Int {
-            currentSizeBytes = UInt64(totalBytes)
-          } else {
-            // Fallback: try other possible keys for size
-            if let size = plist["Size"] as? UInt64 {
-              currentSizeBytes = size
-            } else if let size = plist["Size"] as? Int64 {
-              currentSizeBytes = UInt64(size)
-            } else if let size = plist["Size"] as? Int {
-              currentSizeBytes = UInt64(size)
-            }
-          }
-
-          if let currentSizeBytes = currentSizeBytes {
-            let desiredSizeBytes = UInt64(sizeGB) * 1000 * 1000 * 1000
-
-            if desiredSizeBytes < currentSizeBytes {
-              let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentSizeBytes))
-              let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredSizeBytes))
-              throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
-                "than the current disk size of \(currentLengthHuman)")
-            } else if desiredSizeBytes > currentSizeBytes {
-              // Resize the ASIF disk image using diskutil
-              try performASIFResize(sizeGB)
-            }
-            // If sizes are equal, no action needed
-          } else {
-            throw RuntimeError.FailedToResizeDisk("Could not find size information in disk image info")
-          }
-        } else {
+        guard let plist = try PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] else {
           let outputString = String(data: infoData, encoding: .utf8) ?? "Unable to decode output"
           throw RuntimeError.FailedToResizeDisk("Failed to parse disk image info as plist. Output: \(outputString)")
         }
+        // Look for size information in the "Size Info" dictionary
+        var currentSizeBytes: UInt64?
+
+        // For ASIF images, the size is in the "Size Info" dictionary under "Total Bytes"
+        if let sizeInfo = plist["Size Info"] as? [String: Any],
+           let totalBytes = sizeInfo["Total Bytes"] as? UInt64 {
+          currentSizeBytes = totalBytes
+        } else if let sizeInfo = plist["Size Info"] as? [String: Any],
+                  let totalBytes = sizeInfo["Total Bytes"] as? Int64 {
+          currentSizeBytes = UInt64(totalBytes)
+        } else if let sizeInfo = plist["Size Info"] as? [String: Any],
+                  let totalBytes = sizeInfo["Total Bytes"] as? Int {
+          currentSizeBytes = UInt64(totalBytes)
+        } else {
+          // Fallback: try other possible keys for size
+          if let size = plist["Size"] as? UInt64 {
+            currentSizeBytes = size
+          } else if let size = plist["Size"] as? Int64 {
+            currentSizeBytes = UInt64(size)
+          } else if let size = plist["Size"] as? Int {
+            currentSizeBytes = UInt64(size)
+          }
+        }
+
+        guard let currentSizeBytes = currentSizeBytes else {
+          throw RuntimeError.FailedToResizeDisk("Could not find size information in disk image info")
+        }
+
+        let desiredSizeBytes = UInt64(sizeGB) * 1000 * 1000 * 1000
+
+        if desiredSizeBytes < currentSizeBytes {
+          let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentSizeBytes))
+          let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredSizeBytes))
+          throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
+            "than the current disk size of \(currentLengthHuman)")
+        } else if desiredSizeBytes > currentSizeBytes {
+          // Resize the ASIF disk image using diskutil
+          try performASIFResize(sizeGB)
+        }
+        // If sizes are equal, no action needed
       } catch let error as RuntimeError {
         throw error
       } catch {
