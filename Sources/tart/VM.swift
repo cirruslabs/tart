@@ -386,10 +386,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
 
     // Storage
     let defaultCachingMode: VZDiskImageCachingMode
-    if vmConfig.diskFormat == .asif {
-      // For ASIF disks, use .uncached mode to avoid compatibility issues
-      defaultCachingMode = .uncached
-    } else if vmConfig.os == .linux {
+    if vmConfig.os == .linux {
       // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
       // [1]: https://github.com/cirruslabs/tart/pull/675
       defaultCachingMode = .cached
