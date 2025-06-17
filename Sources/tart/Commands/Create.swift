@@ -34,12 +34,7 @@ struct Create: AsyncParsableCommand {
 
     // Validate disk format support
     if !diskFormat.isSupported {
-      throw ValidationError("Disk format '\(diskFormat.rawValue)' is not supported on this system. \(diskFormat.description)")
-    }
-
-    // Check if the format can be created on this system
-    if !diskFormat.canCreate {
-      throw ValidationError("Cannot create '\(diskFormat.rawValue)' disk images on this system. \(diskFormat.description)")
+      throw ValidationError("Disk format '\(diskFormat.rawValue)' is not supported on this system.")
     }
   }
 
