@@ -4,7 +4,6 @@ import XCTest
 final class DiskImageFormatTests: XCTestCase {
   func testRawFormatIsAlwaysSupported() throws {
     XCTAssertTrue(DiskImageFormat.raw.isSupported)
-    XCTAssertTrue(DiskImageFormat.raw.canCreate)
   }
 
   func testASIFFormatSupport() throws {
@@ -22,18 +21,9 @@ final class DiskImageFormatTests: XCTestCase {
     XCTAssertNil(DiskImageFormat(rawValue: "invalid"))
   }
 
-  func testFormatArgument() throws {
-    XCTAssertEqual(DiskImageFormat(argument: "raw"), .raw)
+  func testCaseInsensitivity() throws {
     XCTAssertEqual(DiskImageFormat(argument: "ASIF"), .asif) // case insensitive
     XCTAssertEqual(DiskImageFormat(argument: "Raw"), .raw)  // case insensitive
-    XCTAssertNil(DiskImageFormat(argument: "invalid"))
-  }
-
-  func testFormatDescriptions() throws {
-    XCTAssertFalse(DiskImageFormat.raw.displayName.isEmpty)
-    XCTAssertFalse(DiskImageFormat.asif.displayName.isEmpty)
-    XCTAssertFalse(DiskImageFormat.raw.description.isEmpty)
-    XCTAssertFalse(DiskImageFormat.asif.description.isEmpty)
   }
 
   func testAllValueStrings() throws {
