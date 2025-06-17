@@ -19,7 +19,7 @@ enum DiskImageFormat: String, CaseIterable, Codable {
     case .raw:
       return "Traditional disk image format, compatible with all macOS versions"
     case .asif:
-      return "High-performance sparse disk image format, requires macOS 15+ (creation requires macOS 26+)"
+      return "High-performance sparse disk image format, requires macOS 26 or newer"
     }
   }
 
