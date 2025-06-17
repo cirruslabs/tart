@@ -13,6 +13,7 @@ let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
 // Manifest annotations
 let uncompressedDiskSizeAnnotation = "org.cirruslabs.tart.uncompressed-disk-size"
 let uploadTimeAnnotation = "org.cirruslabs.tart.upload-time"
+let diskFormatLabelAnnotation = "org.cirruslabs.tart.disk.format"
 
 // Layer annotations
 let uncompressedSizeAnnotation = "org.cirruslabs.tart.uncompressed-size"
