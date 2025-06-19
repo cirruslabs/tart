@@ -1,5 +1,5 @@
 {
-  "originHash" : "90af6efa7ed1bbb0cd6985eb109c1e265a223a697b7fbaae2453206a892180e7",
+  "originHash" : "c5371137580239f6928cf64425e754e77680bf24430b50f02dad5558c23f68b0",
   "pins" : [
     {
       "identity" : "antlr4",
@@ -13,19 +13,19 @@
     {
       "identity" : "cirruslabs_tart-guest-agent_apple_swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://buf.build/gen/swift/git/1.28.2-00000000000000-dfeb75ad2b39.1/cirruslabs_tart-guest-agent_apple_swift.git",
+      "location" : "https://buf.build/gen/swift/git/1.28.2-00000000000000-17d7dedafb88.1/cirruslabs_tart-guest-agent_apple_swift.git",
       "state" : {
-        "revision" : "3e13bec2dd36788e80a2e5a2022d44d4a1f373cf",
-        "version" : "1.28.2-00000000000000-dfeb75ad2b39.1"
+        "revision" : "ccfae5de1917cdb0d7c5000008fa5ed0bad032bf",
+        "version" : "1.28.2-00000000000000-17d7dedafb88.1"
       }
     },
     {
       "identity" : "cirruslabs_tart-guest-agent_grpc_swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://buf.build/gen/swift/git/1.24.2-00000000000000-dfeb75ad2b39.1/cirruslabs_tart-guest-agent_grpc_swift.git",
+      "location" : "https://buf.build/gen/swift/git/1.24.2-00000000000000-17d7dedafb88.1/cirruslabs_tart-guest-agent_grpc_swift.git",
       "state" : {
-        "branch" : "1.24.2-00000000000000-dfeb75ad2b39.1",
-        "revision" : "5b6ff43b580fe435f0a174e137e2b197759a7170"
+        "branch" : "1.24.2-00000000000000-17d7dedafb88.1",
+        "revision" : "b8421f137325fe8de737ff5b61238f6f2131b2a8"
       }
     },
     {
