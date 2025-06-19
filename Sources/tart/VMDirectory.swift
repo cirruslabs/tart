@@ -2,6 +2,25 @@ import Foundation
 import Virtualization
 import CryptoKit
 
+// MARK: - Disk Image Info Structures
+struct DiskImageInfo: Codable {
+  let sizeInfo: SizeInfo?
+  let size: UInt64?
+
+  enum CodingKeys: String, CodingKey {
+    case sizeInfo = "Size Info"
+    case size = "Size"
+  }
+}
+
+struct SizeInfo: Codable {
+  let totalBytes: UInt64?
+
+  enum CodingKeys: String, CodingKey {
+    case totalBytes = "Total Bytes"
+  }
+}
+
 struct VMDirectory: Prunable {
   enum State: String {
     case Running = "running"
@@ -206,34 +225,19 @@ struct VMDirectory: Prunable {
         throw RuntimeError.FailedToResizeDisk("Failed to get ASIF disk info: \(output)")
       }
 
-      // Parse the plist to get current size
+      // Parse the plist using PropertyListDecoder
       do {
-        guard let plist = try PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] else {
-          let outputString = String(data: infoData, encoding: .utf8) ?? "Unable to decode output"
-          throw RuntimeError.FailedToResizeDisk("Failed to parse disk image info as plist. Output: \(outputString)")
-        }
-        // Look for size information in the "Size Info" dictionary
+        let diskImageInfo = try PropertyListDecoder().decode(DiskImageInfo.self, from: infoData)
+
+        // Extract current size from the decoded structure
         var currentSizeBytes: UInt64?
 
-        // For ASIF images, the size is in the "Size Info" dictionary under "Total Bytes"
-        if let sizeInfo = plist["Size Info"] as? [String: Any],
-           let totalBytes = sizeInfo["Total Bytes"] as? UInt64 {
+        // Try to get size from Size Info -> Total Bytes first
+        if let totalBytes = diskImageInfo.sizeInfo?.totalBytes {
           currentSizeBytes = totalBytes
-        } else if let sizeInfo = plist["Size Info"] as? [String: Any],
-                  let totalBytes = sizeInfo["Total Bytes"] as? Int64 {
-          currentSizeBytes = UInt64(totalBytes)
-        } else if let sizeInfo = plist["Size Info"] as? [String: Any],
-                  let totalBytes = sizeInfo["Total Bytes"] as? Int {
-          currentSizeBytes = UInt64(totalBytes)
-        } else {
-          // Fallback: try other possible keys for size
-          if let size = plist["Size"] as? UInt64 {
-            currentSizeBytes = size
-          } else if let size = plist["Size"] as? Int64 {
-            currentSizeBytes = UInt64(size)
-          } else if let size = plist["Size"] as? Int {
-            currentSizeBytes = UInt64(size)
-          }
+        } else if let size = diskImageInfo.size {
+          // Fallback to top-level Size field
+          currentSizeBytes = size
         }
 
         guard let currentSizeBytes = currentSizeBytes else {
