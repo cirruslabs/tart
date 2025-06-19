@@ -385,19 +385,13 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Storage
-    let defaultCachingMode: VZDiskImageCachingMode
-    if vmConfig.os == .linux {
-      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
-      // [1]: https://github.com/cirruslabs/tart/pull/675
-      defaultCachingMode = .cached
-    } else {
-      defaultCachingMode = .automatic
-    }
-
-    let attachment = try VZDiskImageStorageDeviceAttachment(
+    var attachment = try VZDiskImageStorageDeviceAttachment(
       url: diskURL,
       readOnly: false,
-      cachingMode: caching ?? defaultCachingMode,
+      // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
+      //
+      // [1]: https://github.com/cirruslabs/tart/pull/675
+      cachingMode: caching ?? (vmConfig.os == .linux ? .cached : .automatic),
       synchronizationMode: sync
     )
 
