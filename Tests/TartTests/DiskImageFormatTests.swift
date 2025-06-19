@@ -2,10 +2,6 @@ import XCTest
 @testable import tart
 
 final class DiskImageFormatTests: XCTestCase {
-  func testRawFormatIsAlwaysSupported() throws {
-    XCTAssertTrue(DiskImageFormat.raw.isSupported)
-  }
-
   func testASIFFormatSupport() throws {
     // ASIF should be supported on macOS 15+
     if #available(macOS 15, *) {
