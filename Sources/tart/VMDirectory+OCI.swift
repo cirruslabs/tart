@@ -95,7 +95,7 @@ extension VMDirectory {
 
     // Add disk format label automatically
     var labels = labels
-    labels[diskFormatLabelAnnotation] = config.diskFormat.rawValue
+    labels[diskFormatLabel] = config.diskFormat.rawValue
     let configJSON = try JSONEncoder().encode(config)
     defaultLogger.appendNewLine("pushing config...")
     let configDigest = try await registry.pushBlob(fromData: configJSON, chunkSizeMb: chunkSizeMb)
