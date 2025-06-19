@@ -345,6 +345,12 @@ struct Run: AsyncParsableCommand {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
 
+    // Validate disk format support
+    let vmConfig = try VMConfig(fromURL: vmDir.configURL)
+    if !vmConfig.diskFormat.isSupported {
+      throw ValidationError("Disk format '\(vmConfig.diskFormat.rawValue)' is not supported on this system.")
+    }
+
     let storageLock = try FileLock(lockURL: Config().tartHomeDir)
     try storageLock.lock()
     // check if there is a running VM with the same MAC address

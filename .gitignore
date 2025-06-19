@@ -8,6 +8,9 @@ tart.xcodeproj/
 # AppCode
 .idea/
 
+# VS Code
+.vscode/
+
 # Swift
 .build/
 

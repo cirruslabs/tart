@@ -92,6 +92,10 @@ extension VMDirectory {
 
     // Read VM's config and push it as blob
     let config = try VMConfig(fromURL: configURL)
+
+    // Add disk format label automatically
+    var labels = labels
+    labels[diskFormatLabel] = config.diskFormat.rawValue
     let configJSON = try JSONEncoder().encode(config)
     defaultLogger.appendNewLine("pushing config...")
     let configDigest = try await registry.pushBlob(fromData: configJSON, chunkSizeMb: chunkSizeMb)
