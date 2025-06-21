@@ -12,6 +12,21 @@ var vm: VM?
 struct IPNotFound: Error {
 }
 
+extension View {
+  /// Apply `transform` only if `condition` is true, otherwise leave self unchanged.
+  @ViewBuilder
+  func conditional<Content: View>(
+    _ condition: Bool,
+    _ transform: (Self) -> Content
+  ) -> some View {
+    if condition {
+      transform(self)
+    } else {
+      self
+    }
+  }
+}
+
 @available(macOS 14, *)
 extension VZDiskSynchronizationMode {
   public init(_ description: String) throws {
@@ -272,6 +287,9 @@ struct Run: AsyncParsableCommand {
     @Flag(help: ArgumentHelp("Don't add trackpad as a pointing device on macOS VMs"))
   #endif
   var noTrackpad: Bool = false
+
+  @Flag(help: "Hide the title bar and ignore safe area for fullscreen style.")
+  var hideTitleBar: Bool = false
 
   mutating func validate() throws {
     if vnc && vncExperimental {
@@ -726,16 +744,12 @@ struct Run: AsyncParsableCommand {
   private func runUI(_ suspendable: Bool, _ captureSystemKeys: Bool) {
     MainApp.suspendable = suspendable
     MainApp.capturesSystemKeys = captureSystemKeys
+    MainApp.hideTitleBar = hideTitleBar
     MainApp.main()
   }
 }
 
-struct MainApp: App {
-  static var suspendable: Bool = false
-  static var capturesSystemKeys: Bool = false
-
-  @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
-
+struct CommonScene: Scene {
   var body: some Scene {
     WindowGroup(vm!.name) {
       Group {
@@ -758,6 +772,7 @@ struct MainApp: App {
         idealHeight: CGFloat(vm!.config.display.height),
         maxHeight: .infinity
       )
+      .conditional(MainApp.hideTitleBar) { $0.ignoresSafeArea() }
     }.commands {
       // Remove some standard menu options
       CommandGroup(replacing: .help, addition: {})
@@ -786,6 +801,38 @@ struct MainApp: App {
           }
         }
       }
+    }
+  }
+}
+
+struct HideTitleBarApp: App {
+  @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+  var body: some Scene {
+    CommonScene()
+      .windowStyle(.hiddenTitleBar)
+  }
+}
+
+struct ShowTitleBarApp: App {
+  @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+  var body: some Scene {
+    CommonScene()
+  }
+}
+
+
+struct MainApp {
+  static var suspendable: Bool = false
+  static var capturesSystemKeys: Bool = false
+  static var hideTitleBar: Bool = false
+
+  static func main() {
+    if hideTitleBar {
+      HideTitleBarApp.main()
+    } else {
+      ShowTitleBarApp.main()
     }
   }
 }
