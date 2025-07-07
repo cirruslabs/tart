@@ -10,7 +10,7 @@ let package = Package(
     .executable(name: "tart", targets: ["tart"])
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.1"),
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.6.1"),
     .package(url: "https://github.com/mhdhejazi/Dynamic", branch: "master"),
     .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0"),
     .package(url: "https://github.com/malcommac/SwiftDate", from: "7.0.0"),
