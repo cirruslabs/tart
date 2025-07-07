@@ -27,12 +27,12 @@ class VMStorageOCI: PrunableStorage {
     return digest
   }
 
-  func open(_ name: RemoteName) throws -> VMDirectory {
+  func open(_ name: RemoteName, _ accessDate: Date = Date()) throws -> VMDirectory {
     let vmDir = VMDirectory(baseURL: vmURL(name))
 
     try vmDir.validate(userFriendlyName: name.description)
 
-    try vmDir.baseURL.updateAccessDate()
+    try vmDir.baseURL.updateAccessDate(accessDate)
 
     return vmDir
   }
@@ -179,6 +179,10 @@ class VMStorageOCI: PrunableStorage {
     if !exists(digestName) {
       let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
       let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description)
+
+      // Open an existing VM directory corresponding to this name, if any,
+      // marking it as outdated to speed up the garbage collection process
+      _ = try? open(name, Date(timeIntervalSince1970: 0))
 
       // Lock the temporary VM directory to prevent it's garbage collection
       let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
