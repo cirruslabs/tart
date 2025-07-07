@@ -29,6 +29,7 @@ Table of Contents
 
 1. Code should follow camel case
 2. Code should follow [SwiftFormat](https://github.com/nicklockwood/SwiftFormat#swift-package-manager-plugin) guidelines. You can auto-format the code by running the following command:
+
 ```bash
 swift package plugin --allow-writing-to-package-directory swiftformat --cache ignore .
 ```

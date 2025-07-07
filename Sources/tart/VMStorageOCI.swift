@@ -185,7 +185,7 @@ class VMStorageOCI: PrunableStorage {
         if let oldDigest = try? digest(name), oldDigest != digestName.reference.value {
           // Set the old digest's access date to epoch to prioritize it for pruning
           let oldDigestName = RemoteName(host: name.host, namespace: name.namespace,
-                  reference: Reference(digest: oldDigest))
+                                         reference: Reference(digest: oldDigest))
           let oldDigestURL = vmURL(oldDigestName)
           try? oldDigestURL.updateAccessDate(Date(timeIntervalSince1970: 0))
         }
