@@ -180,6 +180,17 @@ class VMStorageOCI: PrunableStorage {
       let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
       let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description)
 
+      // Check if there's an existing symlink pointing to a different digest
+      if exists(name) {
+        if let oldDigest = try? digest(name), oldDigest != digestName.reference.value {
+          // Set the old digest's access date to epoch to prioritize it for pruning
+          let oldDigestName = RemoteName(host: name.host, namespace: name.namespace,
+                  reference: Reference(digest: oldDigest))
+          let oldDigestURL = vmURL(oldDigestName)
+          try? oldDigestURL.updateAccessDate(Date(timeIntervalSince1970: 0))
+        }
+      }
+
       // Lock the temporary VM directory to prevent it's garbage collection
       let tmpVMDirLock = try FileLock(lockURL: tmpVMDir.baseURL)
       try tmpVMDirLock.lock()
