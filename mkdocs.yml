@@ -46,6 +46,7 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
+      abstract_chars_count: -1
   - social:
       cards_layout_dir: docs/layouts
       cards_layout: custom
