@@ -100,28 +100,61 @@ struct Exec: AsyncParsableCommand {
     try await withThrowingTaskGroup { group in
       // Stream host's standard input if interactive mode is enabled
       if interactive {
-        let stdinStream = AsyncStream<Data> { continuation in
+        let stdinStream = AsyncThrowingStream<Data, Error> { continuation in
           let handle = FileHandle.standardInput
 
-          handle.readabilityHandler = { handle in
-            let data = handle.availableData
+          if isRegularFile(handle.fileDescriptor) {
+            // Standard input can be a regular file when input redirection (<) is used,
+            // in which case the handle won't receive any new readability events, so we
+            // just read the file normally here in chunks and consider done with it
+            //
+            // Ideally this is best handled by using non-blocking I/O, but Swift's
+            // standard library only offers inefficient bytes[1] property and SwiftNIO's
+            // NIOFileSystem doesn't seem to support opening raw file descriptors.
+            //
+            // [1]: https://developer.apple.com/documentation/foundation/filehandle/bytes
+            while true {
+              do {
+                let data = try handle.read(upToCount: 64 * 1024)
+                if let data = data {
+                  continuation.yield(data)
+                } else {
+                  continuation.finish()
+                  break
+                }
+              } catch (let error) {
+                continuation.finish(throwing: error)
+                break
+              }
+            }
+          } else {
+            handle.readabilityHandler = { handle in
+              let data = handle.availableData
 
-            continuation.yield(data)
-
-            if data.isEmpty {
-              continuation.finish()
+              if data.isEmpty {
+                continuation.finish()
+              } else {
+                continuation.yield(data)
+              }
             }
           }
         }
 
         group.addTask {
-          for await stdinData in stdinStream {
+          for try await stdinData in stdinStream {
             try await execCall.requestStream.send(.with {
               $0.type = .standardInput(.with {
                 $0.data = stdinData
               })
             })
           }
+
+          // Signal EOF as we're done reading standard input
+          try await execCall.requestStream.send(.with {
+            $0.type = .standardInput(.with {
+              $0.data = Data()
+            })
+          })
         }
       }
 
@@ -177,4 +210,14 @@ struct Exec: AsyncParsableCommand {
       }
     }
   }
+}
+
+private func isRegularFile(_ fileDescriptor: Int32) -> Bool {
+  var stat = stat()
+
+  if fstat(fileDescriptor, &stat) != 0 {
+    return false
+  }
+
+  return (stat.st_mode & S_IFMT) == S_IFREG
 }
