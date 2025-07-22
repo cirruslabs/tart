@@ -74,7 +74,8 @@ task:
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
   install_script:
-    - brew install go goreleaser/tap/goreleaser-pro
+    - brew install go
+    - brew install --cask goreleaser/tap/goreleaser-pro
   goreleaser_script: goreleaser release --skip=publish --snapshot --clean
   always:
     dist_artifacts:
@@ -98,7 +99,8 @@ task:
     SENTRY_PROJECT: persistent-workers
     SENTRY_AUTH_TOKEN: ENCRYPTED[!9eaf2875d51b113e2f68598441ff8e6b2e53242e48fcb93633bd75a373fbe2e7caa900d837cc92f0b142b65579731644!]
   install_script:
-    - brew install go goreleaser/tap/goreleaser-pro getsentry/tools/sentry-cli
+    - brew install go getsentry/tools/sentry-cli
+    - brew install --cask goreleaser/tap/goreleaser-pro
   release_script: goreleaser
   upload_sentry_debug_files_script:
     - cd .build/arm64-apple-macosx/release/
