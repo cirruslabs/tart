@@ -37,6 +37,9 @@ struct Set: AsyncParsableCommand {
                              """))
   var diskSize: UInt16?
 
+  @Flag(inversion: .prefixedNo, help: ArgumentHelp("Whether to hide the title bar and ignore safe area for fullscreen style"))
+  var hideTitleBar: Bool? = nil
+
   func run() async throws {
     let vmDir = try VMStorageLocal().open(name)
     var vmConfig = try VMConfig(fromURL: vmDir.configURL)
@@ -59,6 +62,10 @@ struct Set: AsyncParsableCommand {
     }
 
     vmConfig.displayRefit = displayRefit
+
+    if let hideTitleBar = hideTitleBar {
+      vmConfig.hideTitleBar = hideTitleBar
+    }
 
     if randomMAC {
       vmConfig.macAddress = VZMACAddress.randomLocallyAdministered()
