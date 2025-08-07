@@ -18,9 +18,9 @@ steps:
 - command: uname -a
   plugins:
   - cirruslabs/tart#main:
-    image: ghcr.io/cirruslabs/macos-sonoma-base:latest
+    image: ghcr.io/cirruslabs/macos-sequoia-base:latest
 ```
 
-This will run `uname -r` in a macOS Tart VM cloned from `ghcr.io/cirruslabs/macos-sonoma-base:latest`.
+This will run `uname -r` in a macOS Tart VM cloned from `ghcr.io/cirruslabs/macos-sequoia-base:latest`.
 
 See plugin's [Configuration section](https://github.com/cirruslabs/tart-buildkite-plugin#configuration) for the full list of available options.

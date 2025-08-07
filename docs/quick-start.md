@@ -9,18 +9,18 @@ Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) 
 
 ```bash
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
-tart run sonoma-base
+tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
+tart run sequoia-base
 ```
 
 ??? info "Manual installation from a release archive"
     It's also possible to manually install `tart` binary from the latest released archive:
 
     ```bash
-    curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart-arm64.tar.gz
-    tar -xzvf tart-arm64.tar.gz
-    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sonoma-base:latest sonoma-base
-    ./tart.app/Contents/MacOS/tart run sonoma-base
+    curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
+    tar -xzvf tart.tar.gz
+    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
+    ./tart.app/Contents/MacOS/tart run sequoia-base
     ```
 
     Please note that `./tart.app/Contents/MacOS/tart` binary is required to be used in order to trick macOS
@@ -34,6 +34,10 @@ tart run sonoma-base
 
 The following macOS images are currently available:
 
+* macOS 15 (Sequoia)
+    * `ghcr.io/cirruslabs/macos-sequoia-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-sequoia-base:latest`
+    * `ghcr.io/cirruslabs/macos-sequoia-xcode:latest`
 * macOS 14 (Sonoma)
     * `ghcr.io/cirruslabs/macos-sonoma-vanilla:latest`
     * `ghcr.io/cirruslabs/macos-sonoma-base:latest`
@@ -82,7 +86,7 @@ These credentials work both for logging in via GUI, console (Linux) and SSH.
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip sonoma-base)
+ssh admin@$(tart ip sequoia-base)
 ```
 
 !!! tip "Running scripts inside Tart virtual machines"
@@ -91,8 +95,8 @@ ssh admin@$(tart ip sonoma-base)
 
     ```bash
     brew install cirruslabs/cli/sshpass
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) "uname -a"
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sonoma-base) < script.sh
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sequoia-base) "uname -a"
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sequoia-base) < script.sh
     ```
 
 ## Mounting directories

@@ -1,7 +1,7 @@
 use_compute_credits: true
 
 task:
-  name: Test on Sonoma
+  name: Test on Sequoia
   alias: test
   persistent_worker:
     labels:
@@ -80,6 +80,9 @@ task:
   install_script:
     - brew install go
     - brew install --cask goreleaser/tap/goreleaser-pro
+  info_script:
+    - xcodebuild -version
+    - swift -version
   goreleaser_script: goreleaser release --skip=publish --snapshot --clean
   always:
     dist_artifacts:
@@ -109,6 +112,9 @@ task:
   install_script:
     - brew install go getsentry/tools/sentry-cli
     - brew install --cask goreleaser/tap/goreleaser-pro
+  info_script:
+    - xcodebuild -version
+    - swift -version
   release_script: goreleaser
   upload_sentry_debug_files_script:
     - cd .build/arm64-apple-macosx/release/

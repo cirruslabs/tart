@@ -5,7 +5,7 @@ fileprivate func normalizeName(_ name: String) -> String {
   return name.replacingOccurrences(of: ":", with: "\\:")
 }
 
-func completeMachines(_ arguments: [String]) -> [String] {
+func completeMachines(_ arguments: [String], _ argumentIdx: Int, _ argumentPrefix: String) -> [String] {
   let localVMs = (try? VMStorageLocal().list().map { name, _ in
     normalizeName(name)
   }) ?? []
@@ -15,12 +15,12 @@ func completeMachines(_ arguments: [String]) -> [String] {
   return (localVMs + ociVMs)
 }
 
-func completeLocalMachines(_ arguments: [String]) -> [String] {
+func completeLocalMachines(_ arguments: [String], _ argumentIdx: Int, _ argumentPrefix: String) -> [String] {
   let localVMs = (try? VMStorageLocal().list()) ?? []
   return localVMs.map { name, _ in normalizeName(name) }
 }
 
-func completeRunningMachines(_ arguments: [String]) -> [String] {
+func completeRunningMachines(_ arguments: [String], _ argumentIdx: Int, _ argumentPrefix: String) -> [String] {
   let localVMs = (try? VMStorageLocal().list()) ?? []
   return localVMs
     .filter { _, vmDir in (try? vmDir.state() == .Running) ?? false}

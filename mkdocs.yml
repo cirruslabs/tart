@@ -46,6 +46,7 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
+      abstract_chars_count: -1
   - social:
       cards_layout_dir: docs/layouts
       cards_layout: custom
@@ -102,6 +103,7 @@ nav:
       - "Architecture and Security": orchard/architecture-and-security.md
       - "Deploying Controller": orchard/deploying-controller.md
       - "Deploying Workers": orchard/deploying-workers.md
+      - "Using Orchard CLI": orchard/using-orchard-cli.md
       - "Managing the Cluster": orchard/managing-cluster.md
       - "Integrating with the API": orchard/integration-guide.md
   - "FAQ": faq.md

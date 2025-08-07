@@ -25,6 +25,7 @@ enum CodingKeys: String, CodingKey {
   case macAddress
   case display
   case displayRefit
+  case diskFormat
 
   // macOS-specific keys
   case ecid
@@ -54,12 +55,14 @@ struct VMConfig: Codable {
   var macAddress: VZMACAddress
   var display: VMDisplayConfig = VMDisplayConfig()
   var displayRefit: Bool?
+  var diskFormat: DiskImageFormat = .raw
 
   init(
     platform: Platform,
     cpuCountMin: Int,
     memorySizeMin: UInt64,
-    macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered()
+    macAddress: VZMACAddress = VZMACAddress.randomLocallyAdministered(),
+    diskFormat: DiskImageFormat = .raw
   ) {
     self.os = platform.os()
     self.arch = CurrentArchitecture()
@@ -67,6 +70,7 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
     self.cpuCountMin = cpuCountMin
     self.memorySizeMin = memorySizeMin
+    self.diskFormat = diskFormat
     cpuCount = cpuCountMin
     memorySize = memorySizeMin
   }
@@ -124,6 +128,8 @@ struct VMConfig: Codable {
 
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
     displayRefit = try container.decodeIfPresent(Bool.self, forKey: .displayRefit)
+    let diskFormatString = try container.decodeIfPresent(String.self, forKey: .diskFormat) ?? "raw"
+    diskFormat = DiskImageFormat(rawValue: diskFormatString) ?? .raw
   }
 
   func encode(to encoder: Encoder) throws {
@@ -142,6 +148,7 @@ struct VMConfig: Codable {
     if let displayRefit = displayRefit {
       try container.encode(displayRefit, forKey: .displayRefit)
     }
+    try container.encode(diskFormat.rawValue, forKey: .diskFormat)
   }
 
   mutating func setCPU(cpuCount: Int) throws {

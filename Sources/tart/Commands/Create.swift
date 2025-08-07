@@ -10,7 +10,7 @@ struct Create: AsyncParsableCommand {
   @Argument(help: "VM name")
   var name: String
 
-  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file or URL (or \"latest\", to fetch the latest supported IPSW automatically)", valueName: "path"))
+  @Option(help: ArgumentHelp("create a macOS VM using path to the IPSW file or URL (or \"latest\", to fetch the latest supported IPSW automatically)", valueName: "path"), completion: .file())
   var fromIPSW: String?
 
   @Flag(help: "create a Linux VM")
@@ -18,6 +18,9 @@ struct Create: AsyncParsableCommand {
 
   @Option(help: ArgumentHelp("Disk size in GB"))
   var diskSize: UInt16 = 50
+
+  @Option(help: ArgumentHelp("Disk image format", discussion: "ASIF format provides better performance but requires macOS 26 Tahoe or later"))
+  var diskFormat: DiskImageFormat = .raw
 
   func validate() throws {
     if fromIPSW == nil && !linux {
@@ -28,6 +31,11 @@ struct Create: AsyncParsableCommand {
         throw ValidationError("Only Linux VMs are supported on Intel!")
       }
     #endif
+
+    // Validate disk format support
+    if !diskFormat.isSupported {
+      throw ValidationError("Disk format '\(diskFormat.rawValue)' is not supported on this system.")
+    }
   }
 
   func run() async throws {
@@ -58,12 +66,12 @@ struct Create: AsyncParsableCommand {
             ipswURL = URL(fileURLWithPath: NSString(string: fromIPSW).expandingTildeInPath)
           }
 
-          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize)
+          _ = try await VM(vmDir: tmpVMDir, ipswURL: ipswURL, diskSizeGB: diskSize, diskFormat: diskFormat)
         }
       #endif
 
       if linux {
-        _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize)
+        _ = try await VM.linux(vmDir: tmpVMDir, diskSizeGB: diskSize, diskFormat: diskFormat)
       }
 
       try VMStorageLocal().move(name, from: tmpVMDir)

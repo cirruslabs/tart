@@ -4,10 +4,10 @@ import Foundation
 struct Import: AsyncParsableCommand {
   static var configuration = CommandConfiguration(abstract: "Import VM from a compressed .tvm file")
 
-  @Argument(help: "Path to a file created with \"tart export\".")
+  @Argument(help: "Path to a file created with \"tart export\".", completion: .file())
   var path: String
 
-  @Argument(help: "Destination VM name.")
+  @Argument(help: "Destination VM name.", completion: .custom(completeLocalMachines))
   var name: String
 
   func validate() throws {

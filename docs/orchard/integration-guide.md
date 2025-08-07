@@ -85,7 +85,7 @@ def main():
   # Create VM
   response = requests.post("http://127.0.0.1:6120/v1/vms", auth=basic_auth, json={
     "name": vm_name,
-    "image": "ghcr.io/cirruslabs/macos-sonoma-base:latest",
+    "image": "ghcr.io/cirruslabs/macos-sequoia-base:latest",
     "cpu": 4,
     "memory": 4096,
     "startup_script": {
@@ -144,7 +144,7 @@ func main() {
     Meta: v1.Meta{
       Name: vmName,
     },
-    Image:  "ghcr.io/cirruslabs/macos-sonoma-base:latest",
+    Image:  "ghcr.io/cirruslabs/macos-sequoia-base:latest",
     CPU:    4,
     Memory: 4096,
     StartupScript: &v1.VMScript{

@@ -18,6 +18,7 @@ struct Root: AsyncParsableCommand {
       Login.self,
       Logout.self,
       IP.self,
+      Exec.self,
       Pull.self,
       Push.self,
       Import.self,
@@ -30,39 +31,6 @@ struct Root: AsyncParsableCommand {
     ])
 
   public static func main() async throws {
-    // Initialize Sentry
-    if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] {
-      SentrySDK.start { options in
-        options.dsn = dsn
-        options.releaseName = CI.release
-        options.tracesSampleRate = Float(
-          ProcessInfo.processInfo.environment["SENTRY_TRACES_SAMPLE_RATE"] ?? "1.0"
-        ) as NSNumber?
-
-        // By default only 5XX are captured
-        // Let's capture everything but 401 (unauthorized)
-        options.enableCaptureFailedRequests = true
-        options.failedRequestStatusCodes = [
-          HttpStatusCodeRange(min: 400, max: 400),
-          HttpStatusCodeRange(min: 402, max: 599)
-        ]
-      }
-    }
-    defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }
-
-    SentrySDK.configureScope { scope in
-      scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
-    }
-
-    // Enrich future events with Cirrus CI-specific tags
-    if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
-      SentrySDK.configureScope { scope in
-        for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
-          scope.setTag(value: value, key: key)
-        }
-      }
-    }
-
     // Add commands that are only available on specific macOS versions
     if #available(macOS 14, *) {
       configuration.subcommands.append(Suspend.self)
@@ -82,9 +50,42 @@ struct Root: AsyncParsableCommand {
     // Set line-buffered output for stdout
     setlinebuf(stdout)
 
-    // Parse and run command
     do {
+      // Parse command
       var command = try parseAsRoot()
+
+      // Initialize Sentry
+      if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] {
+        SentrySDK.start { options in
+          options.dsn = dsn
+          options.releaseName = CI.release
+          options.tracesSampleRate = Float(
+            ProcessInfo.processInfo.environment["SENTRY_TRACES_SAMPLE_RATE"] ?? "1.0"
+          ) as NSNumber?
+
+          // By default only 5XX are captured
+          // Let's capture everything but 401 (unauthorized)
+          options.enableCaptureFailedRequests = true
+          options.failedRequestStatusCodes = [
+            HttpStatusCodeRange(min: 400, max: 400),
+            HttpStatusCodeRange(min: 402, max: 599)
+          ]
+        }
+      }
+      defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }
+
+      SentrySDK.configureScope { scope in
+        scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
+      }
+
+      // Enrich future events with Cirrus CI-specific tags
+      if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
+        SentrySDK.configureScope { scope in
+          for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
+            scope.setTag(value: value, key: key)
+          }
+        }
+      }
 
       // Run garbage-collection before each command (shouldn't take too long)
       if type(of: command) != type(of: Pull()) && type(of: command) != type(of: Clone()){
@@ -95,12 +96,18 @@ struct Root: AsyncParsableCommand {
         }
       }
 
+      // Run command
       if var asyncCommand = command as? AsyncParsableCommand {
         try await asyncCommand.run()
       } else {
         try command.run()
       }
     } catch {
+      // Not an error, just a custom exit code from "tart exec"
+      if let execCustomExitCodeError = error as? ExecCustomExitCodeError {
+        Foundation.exit(execCustomExitCodeError.exitCode)
+      }
+
       // Capture the error into Sentry
       SentrySDK.capture(error: error)
       SentrySDK.flush(timeout: 2.seconds.timeInterval)

@@ -81,7 +81,7 @@ struct Run: AsyncParsableCommand {
   @Option(help: ArgumentHelp(
     "Attach an externally created serial console",
     discussion: "Alternative to `--serial` flag for programmatic integrations."
-  ))
+  ), completion: .file())
   var serialPath: String?
 
   @Flag(help: ArgumentHelp("Force open a UI window, even when VNC is enabled.", visibility: .private))
@@ -92,7 +92,7 @@ struct Run: AsyncParsableCommand {
 
   @Flag(help: ArgumentHelp(
     "Disable clipboard sharing between host and guest.",
-    discussion: "Only works with Linux-based guest operating systems."))
+    discussion: "Clipboard sharing requires spice-vdagent package on Linux and https://github.com/cirruslabs/tart-guest-agent on macOS."))
   var noClipboard: Bool = false
 
   #if arch(arm64)
@@ -117,7 +117,7 @@ struct Run: AsyncParsableCommand {
   var vncExperimental: Bool = false
 
   @Option(help: ArgumentHelp("""
-  Additional disk attachments with an optional read-only and synchronization options (e.g. --disk="disk.bin", --disk="ubuntu.iso:ro", --disk="/dev/disk0", --disk "ghcr.io/cirruslabs/xcode:16.0:ro" or --disk="nbd://localhost:10809/myDisk:sync=none")
+  Additional disk attachments with an optional read-only and synchronization options in the form of path[:options] (e.g. --disk="disk.bin", --disk="ubuntu.iso:ro", --disk="/dev/disk0", --disk "ghcr.io/cirruslabs/xcode:16.0:ro" or --disk="nbd://localhost:10809/myDisk:sync=none")
   """, discussion: """
   The disk attachment can be a:
 
@@ -138,8 +138,8 @@ struct Run: AsyncParsableCommand {
 
   To work around this pass TART_HOME explicitly:
 
-  sudo TART_HOME="$HOME/.tart" tart run sonoma --disk=/dev/disk0
-  """, valueName: "path[:options]"))
+  sudo TART_HOME="$HOME/.tart" tart run sequoia --disk=/dev/disk0
+  """, valueName: "path[:options]"), completion: .file())
   var disk: [String] = []
 
   #if arch(arm64)
@@ -158,7 +158,7 @@ struct Run: AsyncParsableCommand {
   #endif
   var rosettaTag: String?
 
-  @Option(help: ArgumentHelp("Additional directory shares with an optional read-only and mount tag options (e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")", discussion: """
+  @Option(help: ArgumentHelp("Additional directory shares with an optional read-only and mount tag options in the form of [name:]path[:options] (e.g. --dir=\"~/src/build\" or --dir=\"~/src/sources:ro\")", discussion: """
   Requires host to be macOS 13.0 (Ventura) or newer. macOS guests must be running macOS 13.0 (Ventura) or newer too.
 
   Options are comma-separated and are as follows:
@@ -170,7 +170,7 @@ struct Run: AsyncParsableCommand {
   Mount tag can be overridden by appending tag property to the directory share (e.g. --dir=\"~/src/build:tag=build\" or --dir=\"~/src/build:ro,tag=build\"). Then it can be mounted via "mount_virtiofs build ~/build" inside guest macOS and "mount -t virtiofs build ~/build" inside guest Linux.
 
   In case of passing multiple directories per mount tag it is required to prefix them with names e.g. --dir=\"build:~/src/build\" --dir=\"sources:~/src/sources:ro\". These names will be used as directory names under the mounting point inside guests. For the example above it will be "/Volumes/My Shared Files/build" and "/Volumes/My Shared Files/sources" respectively.
-  """, valueName: "[name:]path[:options]"))
+  """, valueName: "[name:]path[:options]"), completion: .directory)
   var dir: [String] = []
 
   @Flag(help: ArgumentHelp("Enable nested virtualization if possible"))
@@ -202,7 +202,7 @@ struct Run: AsyncParsableCommand {
   var netSoftnet: Bool = false
 
   @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
-  This option allows you bypass the private IPv4 address space restrctions imposed by --net-softnet.
+  This option allows you bypass the private IPv4 address space restrictions imposed by --net-softnet.
 
   For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
 
@@ -260,6 +260,11 @@ struct Run: AsyncParsableCommand {
   #endif
   var captureSystemKeys: Bool = false
 
+  #if arch(arm64)
+    @Flag(help: ArgumentHelp("Don't add trackpad as a pointing device on macOS VMs"))
+  #endif
+  var noTrackpad: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -290,7 +295,7 @@ struct Run: AsyncParsableCommand {
 
     if nested {
       if #unavailable(macOS 15) {
-        throw ValidationError("Nested virtualization is supported on hosts starting with macOS 15 (Sequia), and later.")
+        throw ValidationError("Nested virtualization is supported on hosts starting with macOS 15 (Sequoia), and later.")
       } else if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
         throw ValidationError("Nested virtualization is available for Mac with the M3 chip, and later.")
       }
@@ -307,8 +312,16 @@ struct Run: AsyncParsableCommand {
       if !(config.platform is PlatformSuspendable) {
         throw ValidationError("You can only suspend macOS VMs")
       }
-      if dir.count > 0 {
-        throw ValidationError("Suspending VMs with shared directories is not supported")
+
+      if noTrackpad {
+        throw ValidationError("--no-trackpad cannot be used with --suspendable")
+      }
+    }
+
+    if noTrackpad {
+      let config = try VMConfig.init(fromURL: vmDir.configURL)
+      if config.os != .darwin {
+        throw ValidationError("--no-trackpad can only be used with macOS VMs")
       }
     }
 
@@ -323,6 +336,12 @@ struct Run: AsyncParsableCommand {
   func run() async throws {
     let localStorage = VMStorageLocal()
     let vmDir = try localStorage.open(name)
+
+    // Validate disk format support
+    let vmConfig = try VMConfig(fromURL: vmDir.configURL)
+    if !vmConfig.diskFormat.isSupported {
+      throw ValidationError("Disk format '\(vmConfig.diskFormat.rawValue)' is not supported on this system.")
+    }
 
     let storageLock = try FileLock(lockURL: Config().tartHomeDir)
     try storageLock.lock()
@@ -373,7 +392,8 @@ struct Run: AsyncParsableCommand {
       audio: !noAudio,
       clipboard: !noClipboard,
       sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw),
-      caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw)
+      caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw),
+      noTrackpad: noTrackpad
     )
 
     let vncImpl: VNC? = try {
@@ -461,6 +481,12 @@ struct Run: AsyncParsableCommand {
           } else {
             print("Opening \(vncURL)...")
             NSWorkspace.shared.open(vncURL)
+          }
+        }
+
+        if #available(macOS 14, *) {
+          Task {
+            try await ControlSocket(vmDir.controlSocketURL).run()
           }
         }
 

@@ -26,6 +26,11 @@ struct Push: AsyncParsableCommand {
                              """))
   var chunkSize: Int = 0
 
+
+  @Option(name: [.customLong("label")], help: ArgumentHelp("additional metadata to attach to the OCI image configuration in key=value format",
+                                                           discussion: "Can be specified multiple times to attach multiple labels."))
+  var labels: [String] = []
+
   @Option(help: .hidden)
   var diskFormat: String = "v2"
 
@@ -81,7 +86,8 @@ struct Push: AsyncParsableCommand {
           references: references,
           chunkSizeMb: chunkSize,
           diskFormat: diskFormat,
-          concurrency: concurrency
+          concurrency: concurrency,
+          labels: parseLabels()
         )
         // Populate the local cache (if requested)
         if populateCache {
@@ -115,6 +121,28 @@ struct Push: AsyncParsableCommand {
     return RemoteName(host: registry.host!, namespace: registry.namespace,
                       reference: Reference(digest: digest))
   }
+
+  // Helper method to convert labels array to dictionary
+  func parseLabels() -> [String: String] {
+    var result = [String: String]()
+
+    for label in labels {
+      let parts = label.trimmingCharacters(in: .whitespaces).split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+
+      let key = parts.count > 0 ? String(parts[0]) : ""
+      let value = parts.count > 1 ? String(parts[1]) : ""
+
+      // It sometimes makes sense to provide an empty value,
+      // but not an empty key
+      if key.isEmpty {
+        continue
+      }
+
+      result[key] = value
+    }
+
+    return result
+  }  
 }
 
 extension Collection where Element == RemoteName {

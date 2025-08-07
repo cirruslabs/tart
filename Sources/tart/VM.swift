@@ -50,7 +50,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        audio: Bool = true,
        clipboard: Bool = true,
        sync: VZDiskImageSynchronizationMode = .full,
-       caching: VZDiskImageCachingMode? = nil
+       caching: VZDiskImageCachingMode? = nil,
+       noTrackpad: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -71,7 +72,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 audio: audio,
                                                 clipboard: clipboard,
                                                 sync: sync,
-                                                caching: caching
+                                                caching: caching,
+                                                noTrackpad: noTrackpad
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -141,6 +143,7 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       vmDir: VMDirectory,
       ipswURL: URL,
       diskSizeGB: UInt16,
+      diskFormat: DiskImageFormat = .raw,
       network: Network = NetworkShared(),
       additionalStorageDevices: [VZStorageDeviceConfiguration] = [],
       directorySharingDevices: [VZDirectorySharingDeviceConfiguration] = [],
@@ -173,14 +176,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       _ = try VZMacAuxiliaryStorage(creatingStorageAt: vmDir.nvramURL, hardwareModel: requirements.hardwareModel)
 
       // Create disk
-      try vmDir.resizeDisk(diskSizeGB)
+      try vmDir.resizeDisk(diskSizeGB, format: diskFormat)
 
       name = vmDir.name
       // Create config
       config = VMConfig(
         platform: Darwin(ecid: VZMacMachineIdentifier(), hardwareModel: requirements.hardwareModel),
         cpuCountMin: requirements.minimumSupportedCPUCount,
-        memorySizeMin: requirements.minimumSupportedMemorySize
+        memorySizeMin: requirements.minimumSupportedMemorySize,
+        diskFormat: diskFormat
       )
       // allocate at least 4 CPUs because otherwise VMs are frequently freezing
       try config.setCPU(cpuCount: max(4, requirements.minimumSupportedCPUCount))
@@ -222,15 +226,15 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
   #endif
 
   @available(macOS 13, *)
-  static func linux(vmDir: VMDirectory, diskSizeGB: UInt16) async throws -> VM {
+  static func linux(vmDir: VMDirectory, diskSizeGB: UInt16, diskFormat: DiskImageFormat = .raw) async throws -> VM {
     // Create NVRAM
     _ = try VZEFIVariableStore(creatingVariableStoreAt: vmDir.nvramURL)
 
     // Create disk
-    try vmDir.resizeDisk(diskSizeGB)
+    try vmDir.resizeDisk(diskSizeGB, format: diskFormat)
 
     // Create config
-    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024)
+    let config = VMConfig(platform: Linux(), cpuCountMin: 4, memorySizeMin: 4096 * 1024 * 1024, diskFormat: diskFormat)
     try config.save(toURL: vmDir.configURL)
 
     return try VM(vmDir: vmDir)
@@ -244,6 +248,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     } else {
       try await start(recovery)
     }
+  }
+
+  @MainActor
+  func connect(toPort: UInt32) async throws -> VZVirtioSocketConnection {
+    guard let socketDevice = virtualMachine.socketDevices.first else {
+      throw RuntimeError.VMSocketFailed(toPort, ", VM has no socket devices configured")
+    }
+
+    guard let virtioSocketDevice = socketDevice as? VZVirtioSocketDevice else {
+      throw RuntimeError.VMSocketFailed(toPort, ", expected VM's first socket device to have a type of VZVirtioSocketDevice, got \(type(of: socketDevice)) instead")
+    }
+
+    return try await virtioSocketDevice.connect(toPort: toPort)
   }
 
   func run() async throws {
@@ -298,7 +315,8 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     audio: Bool = true,
     clipboard: Bool = true,
     sync: VZDiskImageSynchronizationMode = .full,
-    caching: VZDiskImageCachingMode? = nil
+    caching: VZDiskImageCachingMode? = nil,
+    noTrackpad: Bool = false
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -339,7 +357,11 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       configuration.pointingDevices = platformSuspendable.pointingDevicesSuspendable()
     } else {
       configuration.keyboards = vmConfig.platform.keyboards()
-      configuration.pointingDevices = vmConfig.platform.pointingDevices()
+      if noTrackpad {
+        configuration.pointingDevices = vmConfig.platform.pointingDevicesSimplified()
+      } else {
+        configuration.pointingDevices = vmConfig.platform.pointingDevices()
+      }
     }
 
     // Networking
@@ -351,17 +373,19 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     }
 
     // Clipboard sharing via Spice agent
-    if clipboard && vmConfig.os == .linux {
+    if clipboard {
       let spiceAgentConsoleDevice = VZVirtioConsoleDeviceConfiguration()
       let spiceAgentPort = VZVirtioConsolePortConfiguration()
       spiceAgentPort.name = VZSpiceAgentPortAttachment.spiceAgentPortName
-      spiceAgentPort.attachment = VZSpiceAgentPortAttachment()
+      let spiceAgentPortAttachment = VZSpiceAgentPortAttachment()
+      spiceAgentPortAttachment.sharesClipboard = true
+      spiceAgentPort.attachment = spiceAgentPortAttachment
       spiceAgentConsoleDevice.ports[0] = spiceAgentPort
       configuration.consoleDevices.append(spiceAgentConsoleDevice)
     }
 
     // Storage
-    let attachment: VZDiskImageStorageDeviceAttachment =  try VZDiskImageStorageDeviceAttachment(
+    var attachment = try VZDiskImageStorageDeviceAttachment(
       url: diskURL,
       readOnly: false,
       // When not specified, use "cached" caching mode for Linux VMs to prevent file-system corruption[1]
@@ -390,15 +414,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     //
     // A dummy console device useful for implementing
     // host feature checks in the guest agent software.
-    if !suspendable {
-      let consolePort = VZVirtioConsolePortConfiguration()
-      consolePort.name = "tart-version-\(CI.version)"
+    let consolePort = VZVirtioConsolePortConfiguration()
+    consolePort.name = "tart-version-\(CI.version)"
 
-      let consoleDevice = VZVirtioConsoleDeviceConfiguration()
-      consoleDevice.ports[0] = consolePort
+    let consoleDevice = VZVirtioConsoleDeviceConfiguration()
+    consoleDevice.ports[0] = consolePort
 
-      configuration.consoleDevices.append(consoleDevice)
-    }
+    configuration.consoleDevices.append(consoleDevice)
+
+    // Socket device
+    configuration.socketDevices = [VZVirtioSocketDeviceConfiguration()]
 
     try configuration.validate()
 

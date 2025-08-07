@@ -18,7 +18,7 @@ task:
   name: hello
   macos_instance:
     # can be a remote or a local virtual machine
-    image: ghcr.io/cirruslabs/macos-sonoma-base:latest
+    image: ghcr.io/cirruslabs/macos-sequoia-base:latest
   hello_script:
     - echo "Hello from within a Tart VM!"
     - echo "Here is my CPU info:"
@@ -50,7 +50,7 @@ exposes it via [`artifacts` instruction](https://cirrus-ci.org/guide/writing-tas
 task:
   name: Build
   macos_instance:
-    image: ghcr.io/cirruslabs/macos-sonoma-xcode:latest
+    image: ghcr.io/cirruslabs/macos-sequoia-xcode:latest
   build_script: swift build --product tart
   binary_artifacts:
     path: .build/debug/tart

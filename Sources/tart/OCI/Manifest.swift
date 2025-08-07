@@ -14,6 +14,9 @@ let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
 let uncompressedDiskSizeAnnotation = "org.cirruslabs.tart.uncompressed-disk-size"
 let uploadTimeAnnotation = "org.cirruslabs.tart.upload-time"
 
+// Manifest labels
+let diskFormatLabel = "org.cirruslabs.tart.disk.format"
+
 // Layer annotations
 let uncompressedSizeAnnotation = "org.cirruslabs.tart.uncompressed-size"
 let uncompressedContentDigestAnnotation = "org.cirruslabs.tart.uncompressed-content-digest"
@@ -66,6 +69,11 @@ struct OCIManifest: Codable, Equatable {
 struct OCIConfig: Codable {
   var architecture: Architecture = .arm64
   var os: OS = .darwin
+  var config: ConfigContainer?
+
+  struct ConfigContainer: Codable {
+    var Labels: [String: String]?
+  }
 
   func toJSON() throws -> Data {
     try Config.jsonEncoder().encode(self)

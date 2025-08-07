@@ -77,6 +77,57 @@ sudo rm /var/db/dhcpd_leases
 
 And no worries, this file will be re-created on the next `tart run`.
 
+## Unsupported DHCP client identifiers
+
+Due to the limitations of the macOS built-in DHCP server, `tart ip` is unable to correctly report the IP addresses for VMs using DHCP client identifiers that are not based on VMs link-layer addresses (MAC addresses).
+
+By default, when [no `--resolver=arp` is specified](#resolving-the-vms-ip-when-using-bridged-networking), `tart ip` reads the `/var/db/dhcpd_leases` file and tries to find the freshest entry that matches the VM's MAC address (based on the `hw_address` field).
+
+However, things starts to break when the VM uses a [DUID-EN](https://metebalci.com/blog/a-note-on-dhcpv6-duid-and-prefix-delegation#duid-types) identifier, for example. One of the notorious examples of this being Ubuntu, using this type of identifier by default on latest versions.  This results in the `/var/db/dhcpd_leases` entry for Ubuntu appearing as follows:
+
+```ini
+{
+    name=ubuntu
+    ip_address=192.168.64.3
+    hw_address=ff,f1:f5:dd:7f:0:2:0:0:ab:11:cb:fb:30:b0:97:b6:3a:67
+    identifier=ff,f1:f5:dd:7f:0:2:0:0:ab:11:cb:fb:30:b0:97:b6:3a:67
+    lease=0x678e2ce7
+}
+```
+
+Because the macOS built-in DHCP server overwrites the `hw_address` with the `identifier`, it leaves no information about the VM's MAC address to the `tart ip`.
+
+To avoid this issue, make sure that your VM only sends a DHCP client identifier (option 61) with link-layer address (MAC address) or that it doesn't send this option at all.
+
+For the aforementioned Ubuntu, the solution is outlined in the section [How to integrate with Windows DHCP Server](https://netplan.readthedocs.io/en/stable/examples/#how-to-integrate-with-windows-dhcp-server) of Canonical Netplan's documentation:
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp3s0:
+      dhcp4: yes
+      dhcp-identifier: mac
+```
+
+## Resolving the VM's IP when using bridged networking
+
+When running `tart run` with `--net-bridged`, you need to invoke `tart ip` differently, because the macOS built-in DHCP server won't have any information about the VM's IP-address:
+
+```shell
+tart ip --resolver=arp <VM>
+```
+
+This causes the `tart ip` to consult the host's ARP table instead of the `/var/db/dhcpd_leases` file.
+
+Note that this method of resolving the IP heavily relies on the level of VM's activity on the network, namely, exchanging ARP requests between the guest and the host.
+
+This is normally not an issue for macOS VMs, but on Linux VMs you might need to install Samba, which includes a [NetBIOS name server](https://www.samba.org/samba/docs/current/man-html/nmbd.8.html) and exhibits the same behavior as macOS, resulting in the population of the ARP table of the host OS:
+
+```shell
+sudo apt-get install samba
+```
+
 ## Running login/clone/pull/push commands over SSH
 
 When invoking the Tart in an SSH session, you might get error like this:
@@ -126,3 +177,70 @@ export TART_NO_AUTO_PRUNE=
 ```shell
 TART_NO_AUTO_PRUNE= tart pull ...
 ```
+
+## Disk resizing
+
+Disk resizing works on most cloud-ready Linux distributions out-of-the box (e.g. Ubuntu Cloud Images have the `cloud-initramfs-growroot` package installed that runs on boot) and on the rest of the distributions by running the `growpart` or `resize2fs` commands.
+
+For macOS, however, things are a bit more complicated, and you generally have two options: automated and manual resizing.
+
+For the automated option, you can use [Packer](https://www.packer.io/) with the [Packer builder for Tart VMs](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart). The latter has two has configuration directives related to the disk resizing behavior:
+
+* [`disk_size_gb`](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart#configuration-reference) — controls the target disk size in gigabytes
+* [`recovery_partition`](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart#configuration-reference) — controls what to do with the recovery partition when resizing the disk
+    * you can either keep, delete or relocate it to the end of the disk
+
+For the manual approach, you have to remove the recovery partition first, repair the disk and the resize the APFS container.
+
+To do this, first we'll need to identify the primary disk and the APFS containers by running the command below from within a VM:
+
+```shell
+diskutil list physical
+```
+
+For example, the output might look like this:
+
+```plain
+/dev/disk0 (internal, physical):
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:      GUID_partition_scheme                        *100.0 GB   disk0
+   1:             Apple_APFS_ISC Container disk1         524.3 MB   disk0s1
+   2:                 Apple_APFS Container disk3         44.1 GB    disk0s2
+   3:        Apple_APFS_Recovery Container disk2         5.4 GB     disk0s3
+                    (free space)                         50.0 GB    -
+```
+
+In the output, you'll normally see:
+
+* a single physical disk (`disk0`)
+* APFS container with the system partition which we're going to resize (`disk0s2`)
+* APFS container with the recovery partition which we're going to delete (`disk0s3`)
+* `(free space)` which we'll put to use
+
+To proceed, boot the VM in recovery mode using `tart run --recovery` and choose the "Options" item:
+
+![](assets/images/faq/tart-run-recovery-options.png){width="640" .center}
+
+When the recovery OS boots, open the Terminal app:
+
+![](assets/images/faq/tart-run-recovery-terminal.png){width="720" .center}
+
+In Terminal app, invoke the command below to remove the recovery partition:
+
+```shell
+diskutil eraseVolume free free disk0s3
+```
+
+Now, repair the disk:
+
+```shell
+yes | diskutil repairDisk disk0
+```
+
+Finally, resize the system APFS container to take all the remaining space:
+
+```shell
+diskutil apfs resizeContainer disk0s2 0
+```
+
+Now, you can shut down and `tart run` as you'd normally do.
