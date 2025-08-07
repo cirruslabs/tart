@@ -28,15 +28,15 @@ universal_binaries:
 
 notarize:
   macos:
-    - enabled: '{{ isEnvSet "MACOS_CERTIFICATE" }}'
+    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
       sign:
-        certificate: "{{.Env.MACOS_CERTIFICATE}}"
-        password: "password101"
+        certificate: "{{.Env.MACOS_SIGN_P12}}"
+        password: "{{.Env.MACOS_SIGN_PASSWORD}}"
         entitlements: ./Resources/tart-prod.entitlements
       notarize:
-        issuer_id: "9M2P8L4D89"
-        key_id: "hello@cirruslabs.org"
-        key: "{{.Env.AC_PASSWORD}}"
+        issuer_id: "{{.Env.MACOS_NOTARY_ISSUER_ID}}"
+        key_id: "{{.Env.MACOS_NOTARY_KEY_ID}}"
+        key: "{{.Env.MACOS_NOTARY_KEY}}"
 
 archives:
   - name_template: "{{ .ProjectName }}"
