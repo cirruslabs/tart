@@ -87,11 +87,13 @@ struct Exec: AsyncParsableCommand {
         $0.args = Array(command.dropFirst(1))
         $0.interactive = interactive
         $0.tty = tty
-        $0.terminalSize = .with {
-          let (width, height) = try! Term.GetSize()
+        if tty {
+          $0.terminalSize = .with {
+            let (width, height) = try! Term.GetSize()
 
-          $0.cols = UInt32(width)
-          $0.rows = UInt32(height)
+            $0.cols = UInt32(width)
+            $0.rows = UInt32(height)
+          }
         }
       })
     })
