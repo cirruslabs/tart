@@ -31,6 +31,9 @@ struct Clone: AsyncParsableCommand {
   @Flag(help: .hidden)
   var deduplicate: Bool = false
 
+  @Option(help: ArgumentHelp("limit automatic pruning to n gigabytes", valueName: "n"))
+  var pruneLimit: UInt = 100
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -77,7 +80,7 @@ struct Clone: AsyncParsableCommand {
       // So, once we clone the VM let's try to claim the rest of space for the VM to run without errors.
       let unallocatedBytes = try sourceVM.sizeBytes() - sourceVM.allocatedSizeBytes()
       // Avoid reclaiming an excessive amount of disk space.
-      let reclaimBytes = min(unallocatedBytes, 100 * 1024 * 1024 * 1024)
+      let reclaimBytes = min(unallocatedBytes, UInt64(pruneLimit) * 1024 * 1024 * 1024)
       if reclaimBytes > 0 {
         try Prune.reclaimIfNeeded(UInt64(reclaimBytes), sourceVM)
       }
