@@ -76,8 +76,10 @@ struct Clone: AsyncParsableCommand {
       //
       // So, once we clone the VM let's try to claim the rest of space for the VM to run without errors.
       let unallocatedBytes = try sourceVM.sizeBytes() - sourceVM.allocatedSizeBytes()
-      if unallocatedBytes > 0 {
-        try Prune.reclaimIfNeeded(UInt64(unallocatedBytes), sourceVM)
+      // Avoid reclaiming an excessive amount of disk space.
+      let reclaimBytes = min(unallocatedBytes, 100 * 1024 * 1024 * 1024)
+      if reclaimBytes > 0 {
+        try Prune.reclaimIfNeeded(UInt64(reclaimBytes), sourceVM)
       }
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
