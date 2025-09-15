@@ -1,5 +1,5 @@
 import Foundation
-import Sentry
+import OpenTelemetryApi
 import Retry
 
 class VMStorageOCI: PrunableStorage {
@@ -141,9 +141,10 @@ class VMStorageOCI: PrunableStorage {
   }
 
   func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, deduplicate: Bool) async throws {
-    SentrySDK.configureScope { scope in
-      scope.setContext(value: ["imageName": name.description], key: "OCI")
-    }
+    // Record image name for diagnostics
+    Telemetry.addEvent("OCI.pull.start", attributes: [
+      "imageName": .string(name.description)
+    ])
 
     defaultLogger.appendNewLine("pulling manifest...")
 
@@ -177,7 +178,7 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
-      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
+      let transaction = Telemetry.startTransaction(name: name.description, operation: "pull", bindToScope: true)
       let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description)
 
       // Open an existing VM directory corresponding to this name, if any,
@@ -190,9 +191,9 @@ class VMStorageOCI: PrunableStorage {
 
       // Try to reclaim some cache space if we know the VM size in advance
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
-        SentrySDK.configureScope { scope in
-          scope.setContext(value: ["imageUncompressedDiskSize": uncompressedDiskSize], key: "OCI")
-        }
+        Telemetry.addEvent("OCI.pull.uncompressed_size", attributes: [
+          "bytes": .int(Int(uncompressedDiskSize))
+        ])
 
         let otherVMFilesSize: UInt64 = 128 * 1024 * 1024
 
@@ -227,7 +228,7 @@ class VMStorageOCI: PrunableStorage {
         try move(digestName, from: tmpVMDir)
         transaction.finish()
       }, onCancel: {
-        transaction.finish(status: SentrySpanStatus.cancelled)
+        transaction.finish(status: .cancelled)
         try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
       })
     } else {

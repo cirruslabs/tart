@@ -1,6 +1,6 @@
 import ArgumentParser
 import Dispatch
-import Sentry
+import OpenTelemetryApi
 import SwiftUI
 import SwiftDate
 
@@ -109,9 +109,10 @@ struct Prune: AsyncParsableCommand {
       return
     }
 
-    SentrySDK.configureScope { scope in
-      scope.setContext(value: ["requiredBytes": requiredBytes], key: "Prune")
-    }
+    // Record desired reclaim size as an event context
+    Telemetry.addEvent("Prune.required", attributes: [
+      "requiredBytes": .int(Int(requiredBytes))
+    ])
 
     // Figure out how much disk space is available
     let attrs = try Config().tartCacheDir.resourceValues(forKeys: [
@@ -123,18 +124,17 @@ struct Prune: AsyncParsableCommand {
       UInt64(attrs.volumeAvailableCapacityForImportantUsage!)
     )
 
-    SentrySDK.configureScope { scope in
-      scope.setContext(value: [
-        "volumeAvailableCapacity": attrs.volumeAvailableCapacity!,
-        "volumeAvailableCapacityForImportantUsage": attrs.volumeAvailableCapacityForImportantUsage!,
-        "volumeAvailableCapacityCalculated": volumeAvailableCapacityCalculated
-      ], key: "Prune")
-    }
+    Telemetry.addEvent("Prune.capacity", attributes: [
+      "volumeAvailableCapacity": .int(Int(attrs.volumeAvailableCapacity!)),
+      "volumeAvailableCapacityForImportantUsage": .int(Int(attrs.volumeAvailableCapacityForImportantUsage!)),
+      "volumeAvailableCapacityCalculated": .int(Int(volumeAvailableCapacityCalculated))
+    ])
 
     if volumeAvailableCapacityCalculated <= 0 {
-      SentrySDK.capture(message: "Zero volume capacity reported") { scope in
-        scope.setLevel(.warning)
-      }
+      Telemetry.addEvent("Prune.warning", attributes: [
+        "message": .string("Zero volume capacity reported"),
+        "level": .string("warning")
+      ])
 
       return
     }
@@ -149,7 +149,7 @@ struct Prune: AsyncParsableCommand {
   }
 
   private static func reclaimIfPossible(_ reclaimBytes: UInt64, _ initiator: Prunable? = nil) throws {
-    let transaction = SentrySDK.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
+    let transaction = Telemetry.startTransaction(name: "Pruning cache", operation: "prune", bindToScope: true)
     defer { transaction.finish() }
 
     let prunableStorages: [PrunableStorage] = [VMStorageOCI(), try IPSWCache()]
@@ -177,13 +177,16 @@ struct Prune: AsyncParsableCommand {
         continue
       }
 
-      try SentrySDK.span?.setData(value: prunable.allocatedSizeBytes(), key: prunable.url.path)
+      Telemetry.addEvent("Prune.prunable", attributes: [
+        "path": .string(prunable.url.path),
+        "size_bytes": .int(try prunable.allocatedSizeBytes())
+      ])
 
       cacheReclaimedBytes += try prunable.allocatedSizeBytes()
 
       try prunable.delete()
     }
 
-    SentrySDK.span?.setMeasurement(name: "gc_disk_reclaimed", value: cacheReclaimedBytes as NSNumber, unit: MeasurementUnitInformation.byte);
+    Telemetry.setAttribute("gc_disk_reclaimed", .int(cacheReclaimedBytes))
   }
 }

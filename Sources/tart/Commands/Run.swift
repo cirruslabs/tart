@@ -4,7 +4,7 @@ import Darwin
 import Dispatch
 import SwiftUI
 import Virtualization
-import Sentry
+import OpenTelemetryApi
 import System
 
 var vm: VM?
@@ -498,9 +498,9 @@ struct Run: AsyncParsableCommand {
 
         Foundation.exit(0)
       } catch {
-        // Capture the error into Sentry
-        SentrySDK.capture(error: error)
-        SentrySDK.flush(timeout: 2.seconds.timeInterval)
+        // Record the error into OpenTelemetry
+        Telemetry.recordError(error)
+        Telemetry.flush()
 
         fputs("\(error)\n", stderr)
 
