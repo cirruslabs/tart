@@ -4,7 +4,7 @@ import Darwin
 import Dispatch
 import SwiftUI
 import Virtualization
-import OpenTelemetryApi
+// Telemetry integration is encapsulated in Telemetry.swift
 import System
 
 var vm: VM?

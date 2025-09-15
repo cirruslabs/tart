@@ -1,6 +1,4 @@
 import Foundation
-
-#if canImport(OpenTelemetryApi)
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import OpenTelemetryProtocolExporterCommon
@@ -8,52 +6,33 @@ import OpenTelemetryProtocolExporterGrpc
 import OpenTelemetryProtocolExporterHttp
 import GRPC
 import NIO
-#endif
 
-enum TelemetrySpanStatus {
-  case cancelled
-}
+enum TelemetrySpanStatus { case cancelled }
 
 final class TelemetrySpan {
-  #if canImport(OpenTelemetryApi)
-  private let span: Span?
-  #else
-  private let span: Any? = nil
-  #endif
+  private let span: Span
 
-  init(_ span: Any?) {
-    #if canImport(OpenTelemetryApi)
-    self.span = span as? Span
-    #endif
-  }
+  init(_ span: Span) { self.span = span }
 
   func finish(status: TelemetrySpanStatus? = nil) {
-    #if canImport(OpenTelemetryApi)
-    if let span = span {
-      if let status = status {
-        switch status {
-        case .cancelled:
-          span.status = .error(description: "cancelled")
-        }
-      }
-      span.end()
-      if Telemetry.currentSpan === span {
-        Telemetry.currentSpan = nil
+    if let status = status {
+      switch status {
+      case .cancelled:
+        span.status = .error(description: "cancelled")
       }
     }
-    #endif
+    span.end()
+    if Telemetry.currentSpan === span {
+      Telemetry.currentSpan = nil
+    }
   }
 }
 
 enum Telemetry {
-  #if canImport(OpenTelemetryApi)
   static var tracer: Tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: "tart", instrumentationVersion: CI.version)
   static var currentSpan: Span?
   private static var eventLoopGroup: EventLoopGroup?
   private static var providerSdk: TracerProviderSdk?
-  #else
-  static var currentSpan: Any?
-  #endif
 
   // Configure OpenTelemetry when OTEL_EXPORTER_OTLP_ENDPOINT is set.
   static func bootstrapFromEnv() {
@@ -61,7 +40,6 @@ enum Telemetry {
       return
     }
 
-    #if canImport(OpenTelemetryApi)
     let resource = buildResource()
 
     // Build exporter configuration
@@ -94,22 +72,18 @@ enum Telemetry {
     providerSdk = provider
     OpenTelemetry.registerTracerProvider(tracerProvider: provider)
     tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: "tart", instrumentationVersion: CI.version)
-    #endif
   }
 
   // Flush spans quickly on shutdown
   static func flush() {
-    #if canImport(OpenTelemetryApi)
     providerSdk?.forceFlush(timeout: 5)
     if let group = eventLoopGroup {
       try? group.syncShutdownGracefully()
       eventLoopGroup = nil
     }
-    #endif
   }
 
   static func startTransaction(name: String, operation: String? = nil, bindToScope: Bool = false) -> TelemetrySpan {
-    #if canImport(OpenTelemetryApi)
     let builder = tracer.spanBuilder(spanName: name)
     if let op = operation {
       builder.setSpanKind(spanKind: .internal)
@@ -120,37 +94,27 @@ enum Telemetry {
       currentSpan = span
     }
     return TelemetrySpan(span)
-    #else
-    return TelemetrySpan(nil)
-    #endif
   }
 
   static func recordError(_ error: Error) {
-    #if canImport(OpenTelemetryApi)
     let span = currentSpan ?? tracer.spanBuilder(spanName: "error").startSpan()
     span.recordException(error)
     span.status = .error(description: String(describing: error))
     if currentSpan == nil {
       span.end()
     }
-    #endif
   }
 
   static func addEvent(_ name: String, attributes: [String: AttributeValue] = [:]) {
-    #if canImport(OpenTelemetryApi)
     currentSpan?.addEvent(name: name, attributes: attributes)
-    #endif
   }
 
   static func setAttribute(_ key: String, _ value: AttributeValue) {
-    #if canImport(OpenTelemetryApi)
     currentSpan?.setAttribute(key: key, value: value)
-    #endif
   }
 
   // Build a Resource with service + environment tags
   private static func buildResource() -> Resource {
-    #if canImport(OpenTelemetryApi)
     var attributes: [String: AttributeValue] = [
       "service.name": .string("tart"),
       "service.version": .string(CI.version),
@@ -165,9 +129,6 @@ enum Telemetry {
     }
 
     return Resource(attributes: attributes)
-    #else
-    return Resource()
-    #endif
   }
 
   private static func parseTags(_ raw: String) -> [(String, String)] {

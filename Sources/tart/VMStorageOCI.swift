@@ -1,5 +1,5 @@
 import Foundation
-import OpenTelemetryApi
+// Telemetry integration is encapsulated in Telemetry.swift
 import Retry
 
 class VMStorageOCI: PrunableStorage {

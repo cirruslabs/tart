@@ -1,6 +1,6 @@
 import Compression
 import Foundation
-import OpenTelemetryApi
+// Telemetry integration is encapsulated in Telemetry.swift
 
 enum OCIError: Error {
   case ShouldBeExactlyOneLayer

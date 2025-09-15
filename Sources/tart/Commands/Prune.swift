@@ -1,6 +1,6 @@
 import ArgumentParser
 import Dispatch
-import OpenTelemetryApi
+// Telemetry integration is encapsulated in Telemetry.swift
 import SwiftUI
 import SwiftDate
 

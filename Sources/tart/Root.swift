@@ -1,7 +1,7 @@
 import ArgumentParser
 import Darwin
 import Foundation
-import OpenTelemetryApi
+// Telemetry integration is encapsulated in Telemetry.swift
 
 @main
 struct Root: AsyncParsableCommand {
