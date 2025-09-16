@@ -1,16 +1,54 @@
 import Foundation
 
 class DockerConfigCredentialsProvider: CredentialsProvider {
+
   func retrieve(host: String) throws -> (String, String)? {
-    let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
-    if !FileManager.default.fileExists(atPath: dockerConfigURL.path) {
+    guard let configFileURL = try configFileURL else {
       return nil
     }
-    let config = try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: dockerConfigURL))
 
-    if let credentialsFromAuth = config.auths?[host]?.decodeCredentials() {
-      return credentialsFromAuth
+    let config = try JSONDecoder().decode(DockerConfig.self, from: Data(contentsOf: configFileURL))
+    return try retrieveCredentials(for: host, from: config)
+  }
+
+  // MARK: - Private
+  private var configFileURLFromEnvironment: URL? {
+    get throws {
+      guard let configPathFromEnvironment = ProcessInfo.processInfo.environment["TART_DOCKER_CONFIG"] else {
+        return nil
+      }
+
+      let url = URL(filePath: configPathFromEnvironment)
+
+      guard FileManager.default.fileExists(atPath: configPathFromEnvironment) else {
+        throw NSError.fileNotFoundError(url: url, message: "Registry authentication failed. Could not find docker configuration at '\(configPathFromEnvironment)'.")
+      }
+
+      return url
     }
+  }
+
+  private var dockerConfigFileURL: URL? {
+    let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
+
+    guard FileManager.default.fileExists(atPath: url.path) else {
+      return nil
+    }
+
+    return url
+  }
+
+  private var configFileURL: URL? {
+    get throws {
+      return try configFileURLFromEnvironment ?? dockerConfigFileURL
+    }
+  }
+
+  private func retrieveCredentials(for host: String, from config: DockerConfig) throws -> (String, String)? {
+    if let credentials = config.auths?[host]?.decodeCredentials() {
+      return credentials
+    }
+
     if let helperProgram = try config.findCredHelper(host: host) {
       return try executeHelper(binaryName: "docker-credential-\(helperProgram)", host: host)
     }
