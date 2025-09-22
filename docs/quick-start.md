@@ -95,8 +95,8 @@ ssh admin@$(tart ip sequoia-base)
 
     ```bash
     brew install cirruslabs/cli/sshpass
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sequoia-base) "uname -a"
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" admin@$(tart ip sequoia-base) < script.sh
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip sequoia-base) "uname -a"
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip sequoia-base) < script.sh
     ```
 
 ## Mounting directories
