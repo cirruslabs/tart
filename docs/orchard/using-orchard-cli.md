@@ -75,3 +75,12 @@ orchard create vm --resources bandwidth-mbps=7500 <NAME>
 However, after this VM is scheduled, the 10 Gbps Mac Studio will only be able to accommodate one more VM (due to internal Apple EULA limit for macOS virtualization) with `bandwidth-mbps=2500` or less.
 
 After the VM finishes, the unused resources will be available again.
+
+## Automatic resources
+
+In addition to manually specifying resources when starting a worker, the following resources are discovered and set automatically by the worker for convenience:
+
+* `org.cirruslabs.logical-cores` — number of logical cores on the host
+* `org.cirruslabs.memory-mib` — total memory in MiB (mebibytes) on the host
+
+Note that the values for these resources are scraped only once at worker startup.
