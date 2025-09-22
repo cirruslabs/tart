@@ -1,6 +1,8 @@
 import Foundation
 
 class DockerConfigCredentialsProvider: CredentialsProvider {
+  let userFriendlyName = "Docker configuration credentials provider"
+
   func retrieve(host: String) throws -> (String, String)? {
     let dockerConfigURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".docker").appendingPathComponent("config.json")
     if !FileManager.default.fileExists(atPath: dockerConfigURL.path) {

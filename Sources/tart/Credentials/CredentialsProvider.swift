@@ -5,6 +5,7 @@ enum CredentialsProviderError: Error {
 }
 
 protocol CredentialsProvider {
+  var userFriendlyName: String { get }
   func retrieve(host: String) throws -> (String, String)?
   func store(host: String, user: String, password: String) throws
 }
