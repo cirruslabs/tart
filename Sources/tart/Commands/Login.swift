@@ -64,6 +64,8 @@ struct Login: AsyncParsableCommand {
 }
 
 fileprivate class DictionaryCredentialsProvider: CredentialsProvider {
+  let userFriendlyName = "static dictionary credentials provider"
+
   var credentials: Dictionary<String, (String, String)>
 
   init(_ credentials: Dictionary<String, (String, String)>) {
