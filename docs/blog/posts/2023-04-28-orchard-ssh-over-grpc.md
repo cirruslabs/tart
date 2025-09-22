@@ -64,7 +64,7 @@ We’ve also initially considered using [Yamux](https://github.com/hashicorp/yam
 
 First of all, we’ve made the new port-forwarding functionality available for integrations via the Orchard’s REST API:
 
-![OpenAPI documentation for Orchard's port-forwarding endpoint](/assets/images/orchard-port-forwarding-api.png)
+![OpenAPI documentation for Orchard's port-forwarding endpoint](../../assets/images/orchard-port-forwarding-api.png)
 
 All you need is to use a WebSocket client when accessing this endpoint to make it work.
 

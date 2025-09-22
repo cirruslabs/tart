@@ -53,7 +53,7 @@ Here's other command-line arguments associated with this functionality:
 * `--insecure-ssh-no-client-auth` — allow SSH clients to connect to the controller's SSH server without authentication, thus only authenticating on the target worker/VM's SSH server
     * useful when you already have strong credentials on your VMs, and you want to share these VMs to others without additionally giving out Orchard Cluster credentials
 
-Check out our [Jumping through the hoops: SSH jump host functionality in Orchard](/blog/2024/06/20/jumping-through-the-hoops-ssh-jump-host-functionality-in-orchard/) blog post for more information.
+Check out our [Jumping through the hoops: SSH jump host functionality in Orchard](../blog/posts/2024-06-20-jumping-through-the-hoops.md) blog post for more information.
 
 ## Deployment Methods
 
