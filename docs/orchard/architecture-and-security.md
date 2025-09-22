@@ -4,7 +4,7 @@ Orchard cluster consists of three components:
 
 * Controller — responsible for managing the cluster and scheduling of resources 
 * Worker — responsible for executing the VMs
-* Client — responsible for creating, modifying and removing the resources on the Controller, can either be an [Orchard CLI](/orchard/using-orchard-cli) or [an API consumer](/orchard/integration-guide)
+* Client — responsible for creating, modifying and removing the resources on the Controller, can either be an [Orchard CLI](using-orchard-cli.md) or [an API consumer](integration-guide.md)
 
 At the moment, only one Controller instance is currently supported, while you can deploy one or more Workers and run any number of Clients.
 
@@ -14,7 +14,7 @@ In terms of networking requirements, only Controller needs to be directly access
 
 When an Orchard Client or a Worker connects to the Controller, they need to establish trust and verify that they're talking to the right Controller, so that no [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) is possible.
 
-Similarly to web-browsers (that rely on the [public key infrastructure](https://en.wikipedia.org/wiki/Public_key_infrastructure)) and SSH (which relies on semi-automated fingerprint verification), Orchard combines these two traits in a hybrid approach by defaulting to automatic PKI verification (can be disabled by [`--no-pki`](#--no-pki-override)) and falling-back to a manual verification for self-signed certificates.
+Similarly to web-browsers (that rely on the [public key infrastructure](https://en.wikipedia.org/wiki/Public_key_infrastructure)) and SSH (which relies on semi-automated fingerprint verification), Orchard combines these two traits in a hybrid approach by defaulting to automatic PKI verification (can be disabled by [`--no-pki`](#-no-pki-override)) and falling-back to a manual verification for self-signed certificates.
 
 This hybrid approach is needed because the Controller can be configured in two ways:
 
@@ -29,7 +29,7 @@ Below we'll explain how Orchard client and Worker secure the connection when acc
 
 Client is associated with the Controller using a `orchard context create` command, which works as follows:
 
-* Client attempts to connect to the Controller and validate its certificate using host's root CA set (can be disabled with [`--no-pki`](#--no-pki-override))
+* Client attempts to connect to the Controller and validate its certificate using host's root CA set (can be disabled with [`--no-pki`](#-no-pki-override))
 * if the Client encounters a  *Controller with a publicly valid certificate*, that would be the last step and the association would succeed
 * if the Client is dealing with *Controller with a self-signed certificate*, the Client will do another connection attempt to probe the Controller's certificate
 * the probed Controller's certificate fingerprint is then presented to the user, and if the user agrees to trust it, the Client then considers that certificate to be trusted for a given context
@@ -53,7 +53,7 @@ The way Worker connects to the Controller using the `orchard worker run` command
 * when the Bootstrap Token contains the Controller's certificate:
     * the Orchard Worker will try to connect to the Controller with a trusted CA set containing only that certificate
 * when the Bootstrap Token has no Controller's certificate:
-    * the Orchard Worker will try the PKI approach (can be disabled with [`--no-pki`](#--no-pki-override) to effectively prevent the Worker from connecting) and fail if certificate verification using PKI is not possible
+    * the Orchard Worker will try the PKI approach (can be disabled with [`--no-pki`](#-no-pki-override) to effectively prevent the Worker from connecting) and fail if certificate verification using PKI is not possible
 
 ### `--no-pki` override
 

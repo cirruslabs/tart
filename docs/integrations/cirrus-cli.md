@@ -33,7 +33,7 @@ brew install cirruslabs/cli/cirrus
 cirrus run
 ```
 
-![](/assets/images/TartCirrusCLI.gif)
+![](../assets/images/TartCirrusCLI.gif)
 
 [Cirrus CI](https://cirrus-ci.org/) already leverages Tart to power its macOS cloud infrastructure. The `.cirrus.yml`
 config from above will just work in Cirrus CI and your tasks will be executed inside Tart VMs in our cloud.

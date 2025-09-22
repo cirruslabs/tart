@@ -17,7 +17,7 @@ with preconfigured Tart installation that is optimized to work within AWS infras
 EC2 Mac Instances is a gem of engineering powered by AWS Nitro devices. Just imagine there is a physical Mac Mini with
 a plugged in Nitro device that can push the physical power button!
 
-![EC2 M2 Pro](/blog/images/ec2-mac2-m2pro.png)
+![EC2 M2 Pro](../images/ec2-mac2-m2pro.png)
 
 This clever synergy between Apple Hardware and Nitro System allows seamless integration with VPC networking and booting macOS from an EBS volume.
 

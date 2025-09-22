@@ -34,7 +34,7 @@ than recently announced Apple Silicon GitHub-manged runners that cost $0.16 per 
 Now lets take a look at the new Cirrus Runners dashboard of a real customers that run their workflows on Cirrus Runners
 and **practically pushing the price performance pretty close to the theoretical minimum**.
 
-![Cirrus Runners Dashboard](/blog/images/runners-price-performance-2.png)
+![Cirrus Runners Dashboard](../images/runners-price-performance-2.png)
 
 As you can see above Cirrus Runners Dashboard focuses on 4 core metrics:
 
@@ -50,7 +50,7 @@ we can see that the downside of such great price performance is that jobs are wa
 Here is another example of Cirrus Runners Dashboard for a different customer that has a slightly higher price performance of $0.017 per minute
 but at the same time doesn't experience queue time at all. **Note that $0.017 is still 10 times cheaper than GitHub-managed Apple Silicon runners**.
 
-![Cirrus Runners Dashboard](/blog/images/runners-price-performance-3.png)
+![Cirrus Runners Dashboard](../images/runners-price-performance-3.png)
 
 ## Conclusion
 
