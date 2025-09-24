@@ -45,8 +45,8 @@ struct Clone: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let ociStorage = VMStorageOCI()
-    let localStorage = VMStorageLocal()
+    let ociStorage = try VMStorageOCI()
+    let localStorage = try VMStorageLocal()
 
     if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet

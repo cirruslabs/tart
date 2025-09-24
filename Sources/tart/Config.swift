@@ -9,7 +9,8 @@ struct Config {
     var tartHomeDir: URL
 
     if let customTartHome = ProcessInfo.processInfo.environment["TART_HOME"] {
-      tartHomeDir = URL(fileURLWithPath: customTartHome)
+      tartHomeDir = URL(fileURLWithPath: customTartHome, isDirectory: true)
+      try Self.validateTartHome(url: tartHomeDir)
     } else {
       tartHomeDir = FileManager.default
         .homeDirectoryForCurrentUser
@@ -48,5 +49,24 @@ struct Config {
 
   static func jsonDecoder() -> JSONDecoder {
     JSONDecoder()
+  }
+
+  private static func validateTartHome(url: URL) throws {
+    let descendingURLs = sequence(first: url) { current in
+      let next = current.deletingLastPathComponent()
+      return next == current ? nil : next
+    }.reversed()
+
+    for descendingURL in descendingURLs {
+      if FileManager.default.fileExists(atPath: descendingURL.path) {
+        continue
+      }
+
+      do {
+        try FileManager.default.createDirectory(at: descendingURL, withIntermediateDirectories: false)
+      } catch {
+        throw RuntimeError.Generic("TART_HOME is invalid: \(descendingURL.path) does not exist, yet we can't create it: \(error.localizedDescription)")
+      }
+    }
   }
 }

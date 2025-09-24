@@ -39,7 +39,7 @@ struct Push: AsyncParsableCommand {
   var populateCache: Bool = false
 
   func run() async throws {
-    let ociStorage = VMStorageOCI()
+    let ociStorage = try VMStorageOCI()
     let localVMDir = try VMStorageHelper.open(localName)
     let lock = try localVMDir.lock()
     if try !lock.trylock() {
