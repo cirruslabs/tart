@@ -54,10 +54,13 @@ struct Config {
   private static func validateTartHome(url: URL) throws {
     let descendingURLs = sequence(first: url) { current in
       let next = current.deletingLastPathComponent()
+      print(current)
       return next == current ? nil : next
-    }.reversed()
+    }
 
-    for descendingURL in descendingURLs {
+    print(descendingURLs)
+
+    for descendingURL in descendingURLs.reversed() {
       if FileManager.default.fileExists(atPath: descendingURL.path) {
         continue
       }
