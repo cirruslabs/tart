@@ -301,7 +301,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
     let vmDir = try localStorage.open(name)
     if try vmDir.state() == .Suspended {
       suspendable = true
@@ -334,7 +334,7 @@ struct Run: AsyncParsableCommand {
 
   @MainActor
   func run() async throws {
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
     let vmDir = try localStorage.open(name)
 
     // Validate disk format support

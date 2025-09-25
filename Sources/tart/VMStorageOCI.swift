@@ -3,7 +3,11 @@ import Sentry
 import Retry
 
 class VMStorageOCI: PrunableStorage {
-  let baseURL = try! Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
+  let baseURL: URL
+
+  init() throws {
+    baseURL = try Config().tartCacheDir.appendingPathComponent("OCIs", isDirectory: true)
+  }
 
   private func vmURL(_ name: RemoteName) -> URL {
     baseURL.appendingRemoteName(name)

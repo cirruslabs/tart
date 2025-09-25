@@ -92,7 +92,7 @@ struct Root: AsyncParsableCommand {
         do {
           try Config().gc()
         } catch {
-          fputs("Failed to perform garbage collection!\n\(error)\n", stderr)
+          fputs("Failed to perform garbage collection: \(error)\n", stderr)
         }
       }
 
