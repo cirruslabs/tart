@@ -34,7 +34,7 @@ Then from within a virtual machine you can access the service using the router's
 or by running the following command in the Terminal:
 
 ```shell
-netstat -nr | grep default | head -n 1 | awk '{print $2}'
+netstat -nr | awk '/default/{print $2; exit}'
 ```
 
 Note: that accessing host is only possible with the default NAT network. If you are running your virtual machines with
