@@ -4,18 +4,28 @@ public class ProgressObserver: NSObject {
   @objc var progressToObserve: Progress
   var observation: NSKeyValueObservation?
   var lastTimeUpdated = Date.now
+  private var lastRenderedLine: String?
 
   public init(_ progress: Progress) {
     progressToObserve = progress
   }
 
   func log(_ renderer: Logger) {
-    renderer.appendNewLine(ProgressObserver.lineToRender(progressToObserve))
+    let initialLine = ProgressObserver.lineToRender(progressToObserve)
+    renderer.appendNewLine(initialLine)
+    lastRenderedLine = initialLine
     observation = observe(\.progressToObserve.fractionCompleted) { progress, _ in
       let currentTime = Date.now
       if self.progressToObserve.isFinished || currentTime.timeIntervalSince(self.lastTimeUpdated) >= 1.0 {
         self.lastTimeUpdated = currentTime
-        renderer.updateLastLine(ProgressObserver.lineToRender(self.progressToObserve))
+        let line = ProgressObserver.lineToRender(self.progressToObserve)
+        // Skip identical renders so non-interactive logs only see new percent values.
+        if line == self.lastRenderedLine {
+          return
+        }
+
+        self.lastRenderedLine = line
+        renderer.updateLastLine(line)
       }
     }
   }
