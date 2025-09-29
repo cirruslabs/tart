@@ -20,7 +20,7 @@ public class ProgressObserver: NSObject {
         self.lastTimeUpdated = currentTime
         let line = ProgressObserver.lineToRender(self.progressToObserve)
         // Skip identical renders so non-interactive logs only see new percent values.
-        guard line != self.lastRenderedLine else {
+        if line == self.lastRenderedLine {
           return
         }
 
