@@ -27,7 +27,7 @@ Logging in graphically will automatically create the `login.keychain`. Afterward
     * this will maintain a running user session (GUI) even after the machine reboots
     * moreover, you can still lock the screen (either manually [or automatically](https://support.apple.com/guide/mac-help/change-lock-screen-settings-on-mac-mh11784/mac)), however, the security benefit of this is questionable
 * use `security unlock-keychain login.keychain` to unlock the login keychain via the terminal
-    * this commands also supports the `-p` command-line argument, which allows you to supply a password and unlock non-interactively
+    * this command also supports the `-p` command-line argument, which allows you to supply a password and unlock non-interactively
 
 ### Create and unlock the login keychain via the terminal
 
