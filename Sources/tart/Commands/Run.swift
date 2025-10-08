@@ -134,11 +134,12 @@ struct Run: AsyncParsableCommand {
 
   Learn how to create a disk image using Disk Utility here: https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
 
-  To work with block devices, the easiest way is to modify their permissions (e.g. by using "sudo chown $USER /dev/diskX") or to run the Tart binary as root, which affects locating Tart VMs.
+  To work with block devices, the easiest way is to modify their permissions to be accessible to the current user:
 
-  To work around this pass TART_HOME explicitly:
+  sudo chown $USER /dev/diskX
+  tart run sequoia --disk=/dev/diskX
 
-  sudo TART_HOME="$HOME/.tart" tart run sequoia --disk=/dev/disk0
+  Warning: after running the chown command above, all software running under the current user will be able to access /dev/diskX. If that violates your threat model, we recommend avoiding mounting block devices altogether.
   """, valueName: "path[:options]"), completion: .file())
   var disk: [String] = []
 
