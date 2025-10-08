@@ -5,6 +5,42 @@ title: Frequently Asked Questions
 description: Advanced configuration and troubleshooting tips for advanced configurations.
 ---
 
+## Headless machines
+
+Starting from macOS 15 (Sequoia), there's an undocumented requirement from [Virtualization.Framework](https://developer.apple.com/documentation/virtualization) (which Tart uses) to have an unlocked `login.keychain` available at the times when running a VM.
+
+Without an existing and unlocked `login.keychain`, the VM won't start with errors like:
+
+* `SecKeyCreateRandomKey_ios failed`
+* `Failed to generate keypair`
+* `Interaction is not allowed with the Security Server`
+
+Below you'll find a couple of workarounds for this behavior.
+
+### Log in via GUI at least once
+
+Connect to the headless machine via [Screen Sharing](https://support.apple.com/guide/mac-help/share-the-screen-of-another-mac-mh14066/mac) and log in to a Mac user account. If you haven't done already, you can enable Screen Sharing [via the terminal](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-mac-instance.html#mac-instance-vnc).
+
+Logging in graphically will automatically create the `login.keychain`. Afterward, you have two options:
+
+* configure [automatic log in to a Mac user account](https://support.apple.com/en-us/102316)
+    * this will maintain a running user session (GUI) even after the machine reboots
+    * moreover, you can still lock the screen (either manually [or automatically](https://support.apple.com/guide/mac-help/change-lock-screen-settings-on-mac-mh11784/mac)), however, the security benefit of this is questionable
+* use `security unlock-keychain login.keychain` to unlock the login keychain via the terminal
+    * this command also supports the `-p` command-line argument, which allows you to supply a password and unlock non-interactively
+
+### Create and unlock the login keychain via the terminal
+
+Compared to the previous approach, this one is fully automated, but might stop working at some point in the future:
+
+```shell
+security create-keychain -p '' login.keychain
+security unlock-keychain -p '' login.keychain
+security login-keychain -s login.keychain
+```
+
+Note that this will create a `login.keychain` with an empty password. Consider supplying a different value to `-p` or omitting the `-p` to enter the password interactively. 
+
 ## Troubleshooting crashes
 
 If you experience a crash or encounter another error while using the tart executable, you can collect debug information to assist with troubleshooting. Run the following command in a separate terminal window to gather logs from the Tart process and the macOS Virtualization subsystem:
@@ -143,12 +179,12 @@ This is because Tart uses [Keychain](https://en.wikipedia.org/wiki/Keychain_(sof
 To unlock the Keychain in an SSH session, run the following command, which will ask for your user's password:
 
 ```shell
-security unlock-keychain
+security unlock-keychain login.keychain
 ```
 
-This command also supports the `-p` command-line argument that allows you to supply the password and unlock non-interactively, which is great for scripts.
+This command also supports the `-p` command-line argument that allows you to supply a password and unlock non-interactively, which is great for scripts.
 
-If that doesn't work for you for some reason, you can pass the credentials via the environment variables, see [Registry Authorization](integrations/vm-management.md#registry-authorization) for more details on how to do that.
+Alternatively, you can pass the credentials via the environment variables, see [Registry Authorization](integrations/vm-management.md#registry-authorization) for more details on how to do that.
 
 ## How is Tart different from Anka?
 
