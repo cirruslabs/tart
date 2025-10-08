@@ -39,7 +39,7 @@ security unlock-keychain -p '' login.keychain
 security login-keychain -s login.keychain
 ```
 
-Note that this will create a `login.keychain` with  an empty password. Consider supplying a different value to `-p` or omitting the `-p` to enter the password interactively. 
+Note that this will create a `login.keychain` with an empty password. Consider supplying a different value to `-p` or omitting the `-p` to enter the password interactively. 
 
 ## Troubleshooting crashes
 
