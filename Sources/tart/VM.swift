@@ -51,7 +51,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
        clipboard: Bool = true,
        sync: VZDiskImageSynchronizationMode = .full,
        caching: VZDiskImageCachingMode? = nil,
-       noTrackpad: Bool = false
+       noTrackpad: Bool = false,
+       noPointer: Bool = false,
+       noKeyboard: Bool = false
   ) throws {
     name = vmDir.name
     config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -73,7 +75,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
                                                 clipboard: clipboard,
                                                 sync: sync,
                                                 caching: caching,
-                                                noTrackpad: noTrackpad
+                                                noTrackpad: noTrackpad,
+                                                noPointer: noPointer,
+                                                noKeyboard: noKeyboard
     )
     virtualMachine = VZVirtualMachine(configuration: configuration)
 
@@ -316,7 +320,9 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
     clipboard: Bool = true,
     sync: VZDiskImageSynchronizationMode = .full,
     caching: VZDiskImageCachingMode? = nil,
-    noTrackpad: Bool = false
+    noTrackpad: Bool = false,
+    noPointer: Bool = false,
+    noKeyboard: Bool = false
   ) throws -> VZVirtualMachineConfiguration {
     let configuration = VZVirtualMachineConfiguration()
 
@@ -356,8 +362,16 @@ class VM: NSObject, VZVirtualMachineDelegate, ObservableObject {
       configuration.keyboards = platformSuspendable.keyboardsSuspendable()
       configuration.pointingDevices = platformSuspendable.pointingDevicesSuspendable()
     } else {
-      configuration.keyboards = vmConfig.platform.keyboards()
-      if noTrackpad {
+
+      if noKeyboard {
+        configuration.keyboards = []
+      } else {
+        configuration.keyboards = vmConfig.platform.keyboards()
+      }
+
+      if noPointer {
+        configuration.pointingDevices = []
+      } else if noTrackpad {
         configuration.pointingDevices = vmConfig.platform.pointingDevicesSimplified()
       } else {
         configuration.pointingDevices = vmConfig.platform.pointingDevices()

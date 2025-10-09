@@ -266,6 +266,12 @@ struct Run: AsyncParsableCommand {
   #endif
   var noTrackpad: Bool = false
 
+  @Flag(help: ArgumentHelp("Disable the pointer"))
+  var noPointer: Bool = false
+
+  @Flag(help: ArgumentHelp("Disable the keyboard"))
+  var noKeyboard: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
@@ -317,7 +323,14 @@ struct Run: AsyncParsableCommand {
       if noTrackpad {
         throw ValidationError("--no-trackpad cannot be used with --suspendable")
       }
+      if noKeyboard {
+        throw ValidationError("--no-keyboard cannot be used with --suspendable")
+      }
+      if noPointer {
+        throw ValidationError("--no-pointer cannot be used with --suspendable")
+      }
     }
+
 
     if noTrackpad {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -394,7 +407,9 @@ struct Run: AsyncParsableCommand {
       clipboard: !noClipboard,
       sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw),
       caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw),
-      noTrackpad: noTrackpad
+      noTrackpad: noTrackpad,
+      noPointer: noPointer,
+      noKeyboard: noKeyboard
     )
 
     let vncImpl: VNC? = try {
