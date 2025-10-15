@@ -17,6 +17,9 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
   var display: VMDisplayConfig?
 
+  @Option(name: [.customLong("display-units")], help: ArgumentHelp("Units for VM display resolution: 'point' or 'pixel'", discussion: "Use 'point' to leverage Screen.main-backed scaling on macOS (Darwin). Use 'pixel' to specify exact device pixels and bypass Screen.main-backed behavior on macOS. Linux behavior is unaffected."))
+  var displayUnits: VMDisplayConfig.ResolutionUnit?
+
   @Flag(inversion: .prefixedNo, help: ArgumentHelp("Whether to automatically reconfigure the VM's display to fit the window"))
   var displayRefit: Bool? = nil
 
@@ -58,6 +61,10 @@ struct Set: AsyncParsableCommand {
       }
     }
 
+    if let units = displayUnits {
+      vmConfig.display.unit = units
+    }
+
     vmConfig.displayRefit = displayRefit
 
     if randomMAC {
@@ -95,5 +102,18 @@ extension VMDisplayConfig: ExpressibleByArgument {
       width: parts[safe: 0] ?? 0,
       height: parts[safe: 1] ?? 0
     )
+  }
+}
+
+extension VMDisplayConfig.ResolutionUnit: ExpressibleByArgument {
+  public init?(argument: String) {
+    switch argument.lowercased() {
+    case "point", "points":
+      self = .points
+    case "pixel", "pixels":
+      self = .pixels
+    default:
+      return nil
+    }
   }
 }

@@ -1,5 +1,49 @@
 import Virtualization
 
+/*
+ Darwin uses `.points` to leverage Screen.main backing scale when assigning the display resolution.
+ This allows setting a "points" resolution that scales appropriately on retina or non-retina displays.
+ Conversely, `.pixels` avoids the backing behavior and sets the resolution in actual device pixels.
+ Linux behavior remains unaffected by this distinction here; platform-specific handling is done where display devices are created.
+*/
+
+struct VMDisplayConfig: Codable {
+  enum ResolutionUnit: String, Codable {
+    case points
+    case pixels
+  }
+
+  var width: Int = 1024
+  var height: Int = 768
+
+  var unit: ResolutionUnit = .points
+
+  init(width: Int = 1024, height: Int = 768, unit: ResolutionUnit = .points) {
+    self.width = width
+    self.height = height
+    self.unit = unit
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case width
+    case height
+    case unit
+  }
+
+  init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      self.width = try container.decodeIfPresent(Int.self, forKey: .width) ?? 1024
+      self.height = try container.decodeIfPresent(Int.self, forKey: .height) ?? 768
+      self.unit = try container.decodeIfPresent(ResolutionUnit.self, forKey: .unit) ?? .points
+  }
+}
+
+extension VMDisplayConfig: CustomStringConvertible {
+  var description: String {
+    "\(width)x\(height)"
+  }
+}
+
 class LessThanMinimalResourcesError: NSObject, LocalizedError {
   var userExplanation: String
 
@@ -24,23 +68,13 @@ enum CodingKeys: String, CodingKey {
   case memorySize
   case macAddress
   case display
+  case displayUnit
   case displayRefit
   case diskFormat
 
   // macOS-specific keys
   case ecid
   case hardwareModel
-}
-
-struct VMDisplayConfig: Codable {
-  var width: Int = 1024
-  var height: Int = 768
-}
-
-extension VMDisplayConfig: CustomStringConvertible {
-  var description: String {
-    "\(width)x\(height)"
-  }
 }
 
 struct VMConfig: Codable {
@@ -127,6 +161,11 @@ struct VMConfig: Codable {
     self.macAddress = macAddress
 
     display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
+    // Maintain backward compatibility with older configs that stored the unit outside or not at all
+    let displayUnitString = try container.decodeIfPresent(String.self, forKey: .displayUnit)
+    if let displayUnitString, let unit = VMDisplayConfig.ResolutionUnit(rawValue: displayUnitString) {
+      display.unit = unit
+    }
     displayRefit = try container.decodeIfPresent(Bool.self, forKey: .displayRefit)
     let diskFormatString = try container.decodeIfPresent(String.self, forKey: .diskFormat) ?? "raw"
     diskFormat = DiskImageFormat(rawValue: diskFormatString) ?? .raw
@@ -145,6 +184,8 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
+    // Encode display unit redundantly at top level for compatibility, to be removed in a future migration
+    try container.encode(display.unit.rawValue, forKey: .displayUnit)
     if let displayRefit = displayRefit {
       try container.encode(displayRefit, forKey: .displayRefit)
     }

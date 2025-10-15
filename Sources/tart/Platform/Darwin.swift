@@ -82,14 +82,10 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
     func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration {
       let result = VZMacGraphicsDeviceConfiguration()
 
-      // Only create the resized screen if we can find a main screen and
-      // display refitting has not been explicitly opted out of through a
-      // tart set call on the virtual machine configuration.
-      //
-      // This ensures that for use cases like headless CI we skip this block
-      // as display refitting should be disabled for all headless use cases.
-      let shouldRefitDisplayByDefault = true
-      if let hostMainScreen = NSScreen.main, vmConfig.displayRefit ?? shouldRefitDisplayByDefault {
+      // When the unit is `.points`, prefer Screen.main-backed configuration to preserve scaling behavior on Retina/non-Retina.
+      // When the unit is `.pixels`, intentionally bypass Screen.main-backed behavior to use exact device pixels.
+      // This logic is Darwin-specific; Linux code paths are unaffected.
+      if vmConfig.display.unit == .points, let hostMainScreen = NSScreen.main {
         let vmScreenSize = NSSize(width: vmConfig.display.width, height: vmConfig.display.height)
         result.displays = [
           VZMacGraphicsDisplayConfiguration(for: hostMainScreen, sizeInPoints: vmScreenSize)
@@ -150,3 +146,4 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
   }
 
 #endif
+
