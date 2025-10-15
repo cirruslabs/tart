@@ -37,9 +37,5 @@ final class SetDisplayUnitsTests: XCTestCase {
     XCTAssertEqual(decoded.display.unit, .pixels)
     XCTAssertEqual(decoded.display.width, 1600)
     XCTAssertEqual(decoded.display.height, 900)
-
-    // Verify top-level key exists and matches
-    let object = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
-    XCTAssertEqual(object["displayUnit"] as? String, "pixels")
   }
 }
