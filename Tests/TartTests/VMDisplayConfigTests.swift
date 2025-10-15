@@ -54,31 +54,23 @@ final class VMDisplayConfigTests: XCTestCase {
   // Test backward compatibility with JSON that omits display.unit entirely.
   // Uses non-default width and height to ensure Codable path is exercised, not defaults.
   func testDecodingOldConfigWithoutDisplayUnitDefaultsToPoints() throws {
-    var config = makeLinuxVMConfig()
-    config.display = VMDisplayConfig(width: 1600, height: 900, unit: .pixels)
+    // Simulate an older VMDisplayConfig JSON that did not specify the `unit` field.
+    // Ensure that decoding defaults `unit` to `.points` while preserving width/height.
+    let legacyDisplayJSON: [String: Any] = [
+      "width": 1600,
+      "height": 900
+    ]
 
-    // Encode a valid config first
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    var data = try encoder.encode(config)
+    // Encode the legacy dictionary to Data
+    let data = try JSONSerialization.data(withJSONObject: legacyDisplayJSON, options: [])
 
-    // Decode to a dictionary we can manipulate
-    var object = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
-
-    // Remove the embedded unit from display to simulate older config
-    if var display = object["display"] as? [String: Any] {
-      display.removeValue(forKey: "unit")
-      object["display"] = display
-    }
-
-    // Re-encode the modified JSON
-    data = try JSONSerialization.data(withJSONObject: object, options: [])
-
+    // Decode directly to VMDisplayConfig
     let decoder = JSONDecoder()
-    let decoded = try decoder.decode(VMConfig.self, from: data)
+    let decodedDisplay = try decoder.decode(VMDisplayConfig.self, from: data)
 
-    XCTAssertEqual(decoded.display.unit, .points)
-    XCTAssertEqual(decoded.display.width, 1600)
-    XCTAssertEqual(decoded.display.height, 900)
+    XCTAssertEqual(decodedDisplay.unit, .points)
+    XCTAssertEqual(decodedDisplay.width, 1600)
+    XCTAssertEqual(decodedDisplay.height, 900)
   }
 }
+

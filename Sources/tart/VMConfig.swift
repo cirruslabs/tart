@@ -59,7 +59,6 @@ enum CodingKeys: String, CodingKey {
   case memorySize
   case macAddress
   case display
-  case displayUnit
   case displayRefit
   case diskFormat
 
@@ -153,12 +152,6 @@ struct VMConfig: Codable {
 
     display =
       try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
-    // Maintain backward compatibility with older configs that stored the unit outside or not at all
-    let displayUnitString = try container.decodeIfPresent(String.self, forKey: .displayUnit)
-    if let displayUnitString, let unit = VMDisplayConfig.ResolutionUnit(rawValue: displayUnitString)
-    {
-      display.unit = unit
-    }
     displayRefit = try container.decodeIfPresent(Bool.self, forKey: .displayRefit)
     let diskFormatString = try container.decodeIfPresent(String.self, forKey: .diskFormat) ?? "raw"
     diskFormat = DiskImageFormat(rawValue: diskFormatString) ?? .raw
@@ -177,8 +170,6 @@ struct VMConfig: Codable {
     try container.encode(memorySize, forKey: .memorySize)
     try container.encode(macAddress.string, forKey: .macAddress)
     try container.encode(display, forKey: .display)
-    // Encode display unit redundantly at top level for compatibility, to be removed in a future migration
-    try container.encode(display.unit.rawValue, forKey: .displayUnit)
     if let displayRefit = displayRefit {
       try container.encode(displayRefit, forKey: .displayRefit)
     }
