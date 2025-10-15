@@ -1,12 +1,5 @@
 import Virtualization
 
-/*
- Darwin uses `.points` to leverage Screen.main backing scale when assigning the display resolution.
- This allows setting a "points" resolution that scales appropriately on retina or non-retina displays.
- Conversely, `.pixels` avoids the backing behavior and sets the resolution in actual device pixels.
- Linux behavior remains unaffected by this distinction here; platform-specific handling is done where display devices are created.
-*/
-
 struct VMDisplayConfig: Codable {
   enum ResolutionUnit: String, Codable {
     case points
@@ -31,10 +24,10 @@ struct VMDisplayConfig: Codable {
   }
 
   init(from decoder: Decoder) throws {
-      let container = try decoder.container(keyedBy: CodingKeys.self)
-      self.width = try container.decodeIfPresent(Int.self, forKey: .width) ?? 1024
-      self.height = try container.decodeIfPresent(Int.self, forKey: .height) ?? 768
-      self.unit = try container.decodeIfPresent(ResolutionUnit.self, forKey: .unit) ?? .points
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.width = try container.decodeIfPresent(Int.self, forKey: .width) ?? 1024
+    self.height = try container.decodeIfPresent(Int.self, forKey: .height) ?? 768
+    self.unit = try container.decodeIfPresent(ResolutionUnit.self, forKey: .unit) ?? .points
   }
 }
 
@@ -52,9 +45,7 @@ class LessThanMinimalResourcesError: NSObject, LocalizedError {
   }
 
   override var description: String {
-    get {
-      "LessThanMinimalResourcesError: \(userExplanation)"
-    }
+    "LessThanMinimalResourcesError: \(userExplanation)"
   }
 }
 
@@ -160,10 +151,12 @@ struct VMConfig: Codable {
     }
     self.macAddress = macAddress
 
-    display = try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
+    display =
+      try container.decodeIfPresent(VMDisplayConfig.self, forKey: .display) ?? VMDisplayConfig()
     // Maintain backward compatibility with older configs that stored the unit outside or not at all
     let displayUnitString = try container.decodeIfPresent(String.self, forKey: .displayUnit)
-    if let displayUnitString, let unit = VMDisplayConfig.ResolutionUnit(rawValue: displayUnitString) {
+    if let displayUnitString, let unit = VMDisplayConfig.ResolutionUnit(rawValue: displayUnitString)
+    {
       display.unit = unit
     }
     displayRefit = try container.decodeIfPresent(Bool.self, forKey: .displayRefit)
@@ -194,13 +187,15 @@ struct VMConfig: Codable {
 
   mutating func setCPU(cpuCount: Int) throws {
     if os == .darwin && cpuCount < cpuCountMin {
-      throw LessThanMinimalResourcesError("VM should have \(cpuCountMin) CPU cores"
-        + " at minimum (requested \(cpuCount))")
+      throw LessThanMinimalResourcesError(
+        "VM should have \(cpuCountMin) CPU cores"
+          + " at minimum (requested \(cpuCount))")
     }
 
     if cpuCount < VZVirtualMachineConfiguration.minimumAllowedCPUCount {
-      throw LessThanMinimalResourcesError("VM should have \(VZVirtualMachineConfiguration.minimumAllowedCPUCount) CPU cores"
-        + " at minimum (requested \(cpuCount))")
+      throw LessThanMinimalResourcesError(
+        "VM should have \(VZVirtualMachineConfiguration.minimumAllowedCPUCount) CPU cores"
+          + " at minimum (requested \(cpuCount))")
     }
 
     self.cpuCount = cpuCount
@@ -208,13 +203,15 @@ struct VMConfig: Codable {
 
   mutating func setMemory(memorySize: UInt64) throws {
     if os == .darwin && memorySize < memorySizeMin {
-      throw LessThanMinimalResourcesError("VM should have \(memorySizeMin) bytes"
-        + " of memory at minimum (requested \(memorySize))")
+      throw LessThanMinimalResourcesError(
+        "VM should have \(memorySizeMin) bytes"
+          + " of memory at minimum (requested \(memorySize))")
     }
 
     if memorySize < VZVirtualMachineConfiguration.minimumAllowedMemorySize {
-      throw LessThanMinimalResourcesError("VM should have \(VZVirtualMachineConfiguration.minimumAllowedMemorySize) bytes"
-        + " of memory at minimum (requested \(memorySize))")
+      throw LessThanMinimalResourcesError(
+        "VM should have \(VZVirtualMachineConfiguration.minimumAllowedMemorySize) bytes"
+          + " of memory at minimum (requested \(memorySize))")
     }
 
     self.memorySize = memorySize
