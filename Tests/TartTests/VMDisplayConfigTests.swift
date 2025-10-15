@@ -50,12 +50,11 @@ final class VMDisplayConfigTests: XCTestCase {
         XCTAssertEqual(decoded.display.height, 911)
     }
 
-    // Test backward compatibility with JSON that omits display.unit but has top-level displayUnit.
+    // Test backward compatibility with JSON that omits display.unit entirely.
     // Uses non-default width and height to ensure Codable path is exercised, not defaults.
-    // We build a valid config JSON and then inject a top-level displayUnit, while removing the embedded unit.
-    func testTopLevelDisplayUnitCompatibility() throws {
+    func testDecodingOldConfigWithoutDisplayUnitDefaultsToPoints() throws {
         var config = makeLinuxVMConfig()
-        config.display = VMDisplayConfig(width: 2222, height: 1234, unit: .points)
+        config.display = VMDisplayConfig(width: 1600, height: 900, unit: .pixels)
 
         // Encode a valid config first
         let encoder = JSONEncoder()
@@ -71,17 +70,14 @@ final class VMDisplayConfigTests: XCTestCase {
             object["display"] = display
         }
 
-        // Add top-level displayUnit = "pixels"
-        object["displayUnit"] = "pixels"
-
         // Re-encode the modified JSON
         data = try JSONSerialization.data(withJSONObject: object, options: [])
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(VMConfig.self, from: data)
 
-        XCTAssertEqual(decoded.display.unit, .pixels)
-        XCTAssertEqual(decoded.display.width, 2222)
-        XCTAssertEqual(decoded.display.height, 1234)
+        XCTAssertEqual(decoded.display.unit, .points)
+        XCTAssertEqual(decoded.display.width, 1600)
+        XCTAssertEqual(decoded.display.height, 900)
     }
 }
