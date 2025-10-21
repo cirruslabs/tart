@@ -82,7 +82,7 @@ struct UnsupportedHostOSError: Error, CustomStringConvertible {
     func graphicsDevice(vmConfig: VMConfig) -> VZGraphicsDeviceConfiguration {
       let result = VZMacGraphicsDeviceConfiguration()
 
-      if let hostMainScreen = NSScreen.main {
+      if (vmConfig.display.unit ?? .point) == .point, let hostMainScreen = NSScreen.main {
         let vmScreenSize = NSSize(width: vmConfig.display.width, height: vmConfig.display.height)
         result.displays = [
           VZMacGraphicsDisplayConfiguration(for: hostMainScreen, sizeInPoints: vmScreenSize)

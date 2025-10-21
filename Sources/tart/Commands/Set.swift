@@ -14,7 +14,7 @@ struct Set: AsyncParsableCommand {
   @Option(help: "VM memory size in megabytes")
   var memory: UInt64?
 
-  @Option(help: "VM display resolution in a format of <width>x<height>. For example, 1200x800")
+  @Option(help: "VM display resolution in a format of WIDTHxHEIGHT[pt|px]. For example, 1200x800, 1200x800pt or 1920x1080px. Units are treated as hints and default to \"pt\" (points) for macOS VMs and \"px\" (pixels) for Linux VMs when not specified.")
   var display: VMDisplayConfig?
 
   @Flag(inversion: .prefixedNo, help: ArgumentHelp("Whether to automatically reconfigure the VM's display to fit the window"))
@@ -88,12 +88,24 @@ struct Set: AsyncParsableCommand {
 
 extension VMDisplayConfig: ExpressibleByArgument {
   public init(argument: String) {
+    var argument = argument
+    var unit: Unit? = nil
+
+    if argument.hasSuffix(Unit.pixel.rawValue) {
+      argument = String(argument.dropLast(Unit.pixel.rawValue.count))
+      unit = Unit.pixel
+    } else if argument.hasSuffix(Unit.point.rawValue) {
+      argument = String(argument.dropLast(Unit.point.rawValue.count))
+      unit = Unit.point
+    }
+
     let parts = argument.components(separatedBy: "x").map {
       Int($0) ?? 0
     }
     self = VMDisplayConfig(
       width: parts[safe: 0] ?? 0,
-      height: parts[safe: 1] ?? 0
+      height: parts[safe: 1] ?? 0,
+      unit: unit,
     )
   }
 }
