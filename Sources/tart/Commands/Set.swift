@@ -56,6 +56,7 @@ struct Set: AsyncParsableCommand {
       if (display.height > 0) {
         vmConfig.display.height = display.height
       }
+      vmConfig.display.unit = display.unit
     }
 
     vmConfig.displayRefit = displayRefit
