@@ -202,14 +202,27 @@ struct Run: AsyncParsableCommand {
                            """))
   var netSoftnet: Bool = false
 
-  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation (e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
   This option allows you bypass the private IPv4 address space restrictions imposed by --net-softnet.
 
-  For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
+  For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or with --net-softnet-allow=0.0.0.0/0 to completely disable the destination based restrictions, including VMs bridge isolation.
+
+  When used with --net-softnet-block, the longest prefix match always wins. In case the same prefix is both allowed and blocked, blocking takes precedence.
 
   Implies --net-softnet.
   """, valueName: "comma-separated CIDRs"))
   var netSoftnetAllow: String?
+
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to block the traffic to when using Softnet isolation (e.g. --net-softnet-block=66.66.0.0/16)", discussion: """
+  This option allows you to tighten the IPv4 address space restrictions imposed by --net-softnet even further.
+
+  For example --net-softnet-block=0.0.0.0/0 may be used to establish a default deny policy that is further relaxed with --net-softnet-allow.
+
+  When used with --net-softnet-allow, the longest prefix match always wins. In case the same prefix is both allowed and blocked, blocking takes precedence.
+
+  Implies --net-softnet.
+  """, valueName: "comma-separated CIDRs"))
+  var netSoftnetBlock: String?
 
   @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", discussion: """
   Options are comma-separated and are as follows:
@@ -278,7 +291,7 @@ struct Run: AsyncParsableCommand {
     }
 
     // Automatically enable --net-softnet when any of its related options are specified
-    if netSoftnetAllow != nil || netSoftnetExpose != nil {
+    if netSoftnetAllow != nil || netSoftnetBlock != nil || netSoftnetExpose != nil {
       netSoftnet = true
     }
 
@@ -608,6 +621,10 @@ struct Run: AsyncParsableCommand {
 
     if let netSoftnetAllow = netSoftnetAllow {
       softnetExtraArguments += ["--allow", netSoftnetAllow]
+    }
+
+    if let netSoftnetBlock = netSoftnetBlock {
+      softnetExtraArguments += ["--block", netSoftnetBlock]
     }
 
     if let netSoftnetExpose = netSoftnetExpose {
