@@ -26,6 +26,7 @@ enum CodingKeys: String, CodingKey {
   case display
   case displayRefit
   case diskFormat
+  case hideTitleBar
 
   // macOS-specific keys
   case ecid
@@ -66,6 +67,7 @@ struct VMConfig: Codable {
   var display: VMDisplayConfig = VMDisplayConfig()
   var displayRefit: Bool?
   var diskFormat: DiskImageFormat = .raw
+  var hideTitleBar: Bool = false
 
   init(
     platform: Platform,
@@ -140,6 +142,7 @@ struct VMConfig: Codable {
     displayRefit = try container.decodeIfPresent(Bool.self, forKey: .displayRefit)
     let diskFormatString = try container.decodeIfPresent(String.self, forKey: .diskFormat) ?? "raw"
     diskFormat = DiskImageFormat(rawValue: diskFormatString) ?? .raw
+    hideTitleBar = try container.decodeIfPresent(Bool.self, forKey: .hideTitleBar) ?? false
   }
 
   func encode(to encoder: Encoder) throws {
@@ -159,6 +162,7 @@ struct VMConfig: Codable {
       try container.encode(displayRefit, forKey: .displayRefit)
     }
     try container.encode(diskFormat.rawValue, forKey: .diskFormat)
+    try container.encode(hideTitleBar, forKey: .hideTitleBar)
   }
 
   mutating func setCPU(cpuCount: Int) throws {
