@@ -39,6 +39,6 @@ The specific financial terms of the settlement and the identity of the counterpa
 **About Cirrus Labs:** Cirrus Labs, Inc. is a bootstrapped developer-infrastructure company founded in 2017. Our offerings among others include Tart and Cirrus Runners,
 and our software is used by teams at category-leading companies including Atlassian, Figma, Zendesk, Sentry and many more.
 
-Learn more at https://tart.run/ and https://cirrus-runners.app/.
+Learn more at [https://tart.run/](https://tart.run/) and [https://cirrus-runners.app/](https://cirrus-runners.app/).
 
 **Contact:** [hello@cirruslabs.org](mailto:hello@cirruslabs.org)
