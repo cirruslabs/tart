@@ -20,7 +20,7 @@ freely available on GitHub under the Fair Source License, a source-available lic
 Many large enterprises that need to exceed those limits support continued development through paid licenses. Cirrus Labs also uses Tart to power [Cirrus Runners](https://cirrus-runners.app/)
 — a drop‑in replacement for macOS and Linux runners for GitHub Actions — offered at a fixed monthly price for unlimited usage.
 
-Cirrus Labs discovered that, **despite a prior licensing request that Cirrus Labs declined due to a conflict of interest**, the company used Tart in a manner that exceeded the license’s free‑use limits,
+Cirrus Labs discovered that, **despite a prior licensing request that was declined due to a conflict of interest**, another company used Tart in a manner that exceeded the license’s free‑use limits,
 in order to create a competing product.
 
 After several months of negotiations, the matter was settled and a settlement payment to Cirrus Labs was agreed upon.
