@@ -70,20 +70,30 @@ struct Root: AsyncParsableCommand {
             HttpStatusCodeRange(min: 400, max: 400),
             HttpStatusCodeRange(min: 402, max: 599)
           ]
+
+          // https://github.com/cirruslabs/tart/issues/1163
+          options.enableAppLaunchProfiling = false
+          options.configureProfiling = {
+            $0.profileAppStarts = false
+          }
+        }
+
+        SentrySDK.configureScope { scope in
+          scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
+        }
+
+        // Enrich future events with Cirrus CI-specific tags
+        if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
+          SentrySDK.configureScope { scope in
+            for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
+              scope.setTag(value: value, key: key)
+            }
+          }
         }
       }
-      defer { SentrySDK.flush(timeout: 2.seconds.timeInterval) }
-
-      SentrySDK.configureScope { scope in
-        scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
-      }
-
-      // Enrich future events with Cirrus CI-specific tags
-      if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
-        SentrySDK.configureScope { scope in
-          for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
-            scope.setTag(value: value, key: key)
-          }
+      defer {
+        if ProcessInfo.processInfo.environment["SENTRY_DSN"] != nil {
+          SentrySDK.flush(timeout: 2.seconds.timeInterval)
         }
       }
 
@@ -109,8 +119,10 @@ struct Root: AsyncParsableCommand {
       }
 
       // Capture the error into Sentry
-      SentrySDK.capture(error: error)
-      SentrySDK.flush(timeout: 2.seconds.timeInterval)
+      if ProcessInfo.processInfo.environment["SENTRY_DSN"] != nil {
+        SentrySDK.capture(error: error)
+        SentrySDK.flush(timeout: 2.seconds.timeInterval)
+      }
 
       // Handle a non-ArgumentParser's exception that requires a specific exit code to be set
       if let errorWithExitCode = error as? HasExitCode {
