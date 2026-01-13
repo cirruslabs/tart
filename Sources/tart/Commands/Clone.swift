@@ -31,6 +31,9 @@ struct Clone: AsyncParsableCommand {
   @Flag(help: .hidden)
   var deduplicate: Bool = false
 
+  @Option(help: ArgumentHelp("limit automatic pruning to n gigabytes", valueName: "n"))
+  var pruneLimit: UInt = 100
+
   func validate() throws {
     if newName.contains("/") {
       throw ValidationError("<new-name> should be a local name")
@@ -42,8 +45,8 @@ struct Clone: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let ociStorage = VMStorageOCI()
-    let localStorage = VMStorageLocal()
+    let ociStorage = try VMStorageOCI()
+    let localStorage = try VMStorageLocal()
 
     if let remoteName = try? RemoteName(sourceName), !ociStorage.exists(remoteName) {
       // Pull the VM in case it's OCI-based and doesn't exist locally yet
@@ -76,8 +79,10 @@ struct Clone: AsyncParsableCommand {
       //
       // So, once we clone the VM let's try to claim the rest of space for the VM to run without errors.
       let unallocatedBytes = try sourceVM.sizeBytes() - sourceVM.allocatedSizeBytes()
-      if unallocatedBytes > 0 {
-        try Prune.reclaimIfNeeded(UInt64(unallocatedBytes), sourceVM)
+      // Avoid reclaiming an excessive amount of disk space.
+      let reclaimBytes = min(unallocatedBytes, Int(pruneLimit) * 1024 * 1024 * 1024)
+      if reclaimBytes > 0 {
+        try Prune.reclaimIfNeeded(UInt64(reclaimBytes), sourceVM)
       }
     }, onCancel: {
       try? FileManager.default.removeItem(at: tmpVMDir.baseURL)

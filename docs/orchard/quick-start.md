@@ -4,7 +4,7 @@ a couple of VMs is not enough anymore for your needs? This is where [Orchard](ht
 comes in to play!
 
 It allows you to orchestrate multiple Tart-capable hosts from either an Orchard CLI (which we demonstrate below)
-or [through the API](/orchard/integration-guide).
+or [through the API](integration-guide.md).
 
 The easiest way to start is to run Orchard in local development mode:
 
@@ -18,7 +18,7 @@ test both the CLI functionality and the API from a tool like cURL or programming
 authenticate requests.
 
 Note that in production deployments, these two components are started separately and enable security by default. Please
-refer to [Deploying Controller](/orchard/deploying-controller) and [Deploying Workers](/orchard/deploying-workers) for
+refer to [Deploying Controller](deploying-controller.md) and [Deploying Workers](deploying-workers.md) for
 more information.
 
 ## Creating Virtual Machines
@@ -92,10 +92,10 @@ orchard delete vm sequoia-base
 In addition to controlling the Orchard via the CLI arguments, there are environment variables that may be beneficial
 both when automating Orchard and in daily use:
 
-| Variable name                   | Description                                                                                                                                                                                                                                                                                                                                                                  |
-|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ORCHARD_HOME`                  | Override Orchard's home directory. Useful when running multiple Orchard instances on the same host and when testing.                                                                                                                                                                                                                                                         |
-| `ORCHARD_LICENSE_TIER`          | The default license limit only allows connecting 4 Orchard Workers to the Orchard Controller. If you've purchased a [Gold Tier License](/licensing/), set this variable to `gold` to increase the limit to 20 Orchard Workers. And if you've purchased a [Platinum Tier License](/licensing/), set this variable to `platinum` to increase the limit to 200 Orchard Workers. |
-| `ORCHARD_URL`                   | Override controller URL on per-command basis.                                                                                                                                                                                                                                                                                                                                |
-| `ORCHARD_SERVICE_ACCOUNT_NAME`  | Override service account name (used for controller API auth) on per-command basis.                                                                                                                                                                                                                                                                                           |
-| `ORCHARD_SERVICE_ACCOUNT_TOKEN` | Override service account token (used for controller API auth) on per-command basis.                                                                                                                                                                                                                                                                                          |
+| Variable name                   | Description                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ORCHARD_HOME`                  | Override Orchard's home directory. Useful when running multiple Orchard instances on the same host and when testing.                                                                                                                                                                                                                                                                 |
+| `ORCHARD_LICENSE_TIER`          | The default license limit only allows connecting 4 Orchard Workers to the Orchard Controller. If you've purchased a [Gold Tier License](../licensing.md), set this variable to `gold` to increase the limit to 20 Orchard Workers. And if you've purchased a [Platinum Tier License](../licensing.md), set this variable to `platinum` to increase the limit to 200 Orchard Workers. |
+| `ORCHARD_URL`                   | Override controller URL on per-command basis.                                                                                                                                                                                                                                                                                                                                        |
+| `ORCHARD_SERVICE_ACCOUNT_NAME`  | Override service account name (used for controller API auth) on per-command basis.                                                                                                                                                                                                                                                                                                   |
+| `ORCHARD_SERVICE_ACCOUNT_TOKEN` | Override service account token (used for controller API auth) on per-command basis.                                                                                                                                                                                                                                                                                                  |

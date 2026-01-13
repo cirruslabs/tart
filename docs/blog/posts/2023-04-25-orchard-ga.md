@@ -89,6 +89,6 @@ orchard dev
 This will launch a development cluster with a single worker on your machine. Refer to [Orchard documentation](https://github.com/cirruslabs/orchard#creating-virtual-machines)
 on how to create your first virtual machine and access it.
 
-In a [separate blog post](/blog/2023/04/28/ssh-over-grpc-or-how-orchard-simplifies-accessing-vms-in-private-networks/)
+In a [separate blog post](2023-04-28-orchard-ssh-over-grpc.md)
 we’ll cover how Orchard implements seamless SSH access over a gRPC connection. Stay tuned and please don’t hesitate to
 [reach out](https://github.com/cirruslabs/orchard/discussions/landing)! 

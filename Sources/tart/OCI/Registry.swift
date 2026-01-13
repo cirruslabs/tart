@@ -429,8 +429,12 @@ class Registry {
     }
 
     for provider in credentialsProviders {
-      if let (user, password) = try provider.retrieve(host: host) {
-        return (user, password)
+      do {
+        if let (user, password) = try provider.retrieve(host: host) {
+          return (user, password)
+        }
+      } catch (let e) {
+        print("Failed to retrieve credentials using \(provider.userFriendlyName), authentication may fail: \(e)")
       }
     }
     return nil

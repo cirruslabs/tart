@@ -21,7 +21,7 @@ enum DiskImageFormat: String, CaseIterable, Codable {
     case .raw:
       return true
     case .asif:
-      if #available(macOS 15, *) {
+      if #available(macOS 26, *) {
         return true
       } else {
         return false

@@ -17,7 +17,7 @@ struct Rename: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
 
     if !localStorage.exists(name) {
       throw ValidationError("failed to rename a non-existent local VM: \(name)")

@@ -6,6 +6,8 @@ enum StdinCredentialsError: Error {
 }
 
 class StdinCredentials {
+  let userFriendlyName = "standard input credentials provider"
+
   static func retrieve() throws -> (String, String) {
     let user = try readStdinCredential(name: "username", prompt: "User: ", isSensitive: false)
     let password = try readStdinCredential(name: "password", prompt: "Password: ", isSensitive: true)

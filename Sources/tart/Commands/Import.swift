@@ -17,7 +17,7 @@ struct Import: AsyncParsableCommand {
   }
 
   func run() async throws {
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
 
     // Create a temporary VM directory to which we will load the export file
     let tmpVMDir = try VMDirectory.temporary()

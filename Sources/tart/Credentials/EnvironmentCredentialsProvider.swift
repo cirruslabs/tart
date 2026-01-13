@@ -1,6 +1,8 @@
 import Foundation
 
 class EnvironmentCredentialsProvider: CredentialsProvider {
+  let userFriendlyName = "environment variable credentials provider"
+
   func retrieve(host: String) throws -> (String, String)? {
     if let tartRegistryHostname = ProcessInfo.processInfo.environment["TART_REGISTRY_HOSTNAME"],
        tartRegistryHostname != host {

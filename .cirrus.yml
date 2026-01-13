@@ -1,7 +1,7 @@
 use_compute_credits: true
 
 task:
-  name: Test on Sequoia
+  name: Test
   alias: test
   persistent_worker:
     labels:

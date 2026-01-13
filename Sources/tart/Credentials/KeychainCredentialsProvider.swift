@@ -1,6 +1,8 @@
 import Foundation
 
 class KeychainCredentialsProvider: CredentialsProvider {
+  let userFriendlyName = "Keychain credentials provider"
+
   func retrieve(host: String) throws -> (String, String)? {
     let query: [String: Any] = [kSecClass as String: kSecClassInternetPassword,
                                 kSecAttrProtocol as String: kSecAttrProtocolHTTPS,

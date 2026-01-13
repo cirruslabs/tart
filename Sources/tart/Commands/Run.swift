@@ -149,11 +149,12 @@ struct Run: AsyncParsableCommand {
 
   Learn how to create a disk image using Disk Utility here: https://support.apple.com/en-gb/guide/disk-utility/dskutl11888/mac
 
-  To work with block devices, the easiest way is to modify their permissions (e.g. by using "sudo chown $USER /dev/diskX") or to run the Tart binary as root, which affects locating Tart VMs.
+  To work with block devices, the easiest way is to modify their permissions to be accessible to the current user:
 
-  To work around this pass TART_HOME explicitly:
+  sudo chown $USER /dev/diskX
+  tart run sequoia --disk=/dev/diskX
 
-  sudo TART_HOME="$HOME/.tart" tart run sequoia --disk=/dev/disk0
+  Warning: after running the chown command above, all software running under the current user will be able to access /dev/diskX. If that violates your threat model, we recommend avoiding mounting block devices altogether.
   """, valueName: "path[:options]"), completion: .file())
   var disk: [String] = []
 
@@ -216,14 +217,27 @@ struct Run: AsyncParsableCommand {
                            """))
   var netSoftnet: Bool = false
 
-  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation\n(e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to allow the traffic to when using Softnet isolation (e.g. --net-softnet-allow=192.168.0.0/24)", discussion: """
   This option allows you bypass the private IPv4 address space restrictions imposed by --net-softnet.
 
-  For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or to completely disable the destination based restrictions with --net-softnet-allow=0.0.0.0/0.
+  For example, you can allow the VM to communicate with the local network with e.g. --net-softnet-allow=10.0.0.0/16 or with --net-softnet-allow=0.0.0.0/0 to completely disable the destination based restrictions, including VMs bridge isolation.
+
+  When used with --net-softnet-block, the longest prefix match always wins. In case the same prefix is both allowed and blocked, blocking takes precedence.
 
   Implies --net-softnet.
   """, valueName: "comma-separated CIDRs"))
   var netSoftnetAllow: String?
+
+  @Option(help: ArgumentHelp("Comma-separated list of CIDRs to block the traffic to when using Softnet isolation (e.g. --net-softnet-block=66.66.0.0/16)", discussion: """
+  This option allows you to tighten the IPv4 address space restrictions imposed by --net-softnet even further.
+
+  For example --net-softnet-block=0.0.0.0/0 may be used to establish a default deny policy that is further relaxed with --net-softnet-allow.
+
+  When used with --net-softnet-allow, the longest prefix match always wins. In case the same prefix is both allowed and blocked, blocking takes precedence.
+
+  Implies --net-softnet.
+  """, valueName: "comma-separated CIDRs"))
+  var netSoftnetBlock: String?
 
   @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", discussion: """
   Options are comma-separated and are as follows:
@@ -280,13 +294,19 @@ struct Run: AsyncParsableCommand {
   #endif
   var noTrackpad: Bool = false
 
+  @Flag(help: ArgumentHelp("Disable the pointer"))
+  var noPointer: Bool = false
+
+  @Flag(help: ArgumentHelp("Disable the keyboard"))
+  var noKeyboard: Bool = false
+
   mutating func validate() throws {
     if vnc && vncExperimental {
       throw ValidationError("--vnc and --vnc-experimental are mutually exclusive")
     }
 
     // Automatically enable --net-softnet when any of its related options are specified
-    if netSoftnetAllow != nil || netSoftnetExpose != nil {
+    if netSoftnetAllow != nil || netSoftnetBlock != nil || netSoftnetExpose != nil {
       netSoftnet = true
     }
 
@@ -316,7 +336,7 @@ struct Run: AsyncParsableCommand {
       }
     }
 
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
     let vmDir = try localStorage.open(name)
     if try vmDir.state() == .Suspended {
       suspendable = true
@@ -331,7 +351,14 @@ struct Run: AsyncParsableCommand {
       if noTrackpad {
         throw ValidationError("--no-trackpad cannot be used with --suspendable")
       }
+      if noKeyboard {
+        throw ValidationError("--no-keyboard cannot be used with --suspendable")
+      }
+      if noPointer {
+        throw ValidationError("--no-pointer cannot be used with --suspendable")
+      }
     }
+
 
     if noTrackpad {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
@@ -349,7 +376,7 @@ struct Run: AsyncParsableCommand {
 
   @MainActor
   func run() async throws {
-    let localStorage = VMStorageLocal()
+    let localStorage = try VMStorageLocal()
     let vmDir = try localStorage.open(name)
 
     // Validate disk format support
@@ -408,7 +435,9 @@ struct Run: AsyncParsableCommand {
       clipboard: !noClipboard,
       sync: VZDiskImageSynchronizationMode(diskOptions.syncModeRaw),
       caching: VZDiskImageCachingMode(diskOptions.cachingModeRaw),
-      noTrackpad: noTrackpad
+      noTrackpad: noTrackpad,
+      noPointer: noPointer,
+      noKeyboard: noKeyboard
     )
 
     let vncImpl: VNC? = try {
@@ -607,6 +636,10 @@ struct Run: AsyncParsableCommand {
 
     if let netSoftnetAllow = netSoftnetAllow {
       softnetExtraArguments += ["--allow", netSoftnetAllow]
+    }
+
+    if let netSoftnetBlock = netSoftnetBlock {
+      softnetExtraArguments += ["--block", netSoftnetBlock]
     }
 
     if let netSoftnetExpose = netSoftnetExpose {

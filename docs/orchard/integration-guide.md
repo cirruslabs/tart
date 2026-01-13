@@ -2,7 +2,7 @@ Orchard has a REST API that follows [OpenAPI specification](https://swagger.io/s
 
 You can run `orchard dev` locally and navigate to `http://127.0.0.1:6120/v1/` for interactive documentation.
 
-![](/assets/images/orchard/orchard-api-documentation-browser.png)
+![](../assets/images/orchard/orchard-api-documentation-browser.png)
 
 ## Using the API
 

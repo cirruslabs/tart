@@ -33,14 +33,24 @@ enum CodingKeys: String, CodingKey {
   case hardwareModel
 }
 
-struct VMDisplayConfig: Codable {
+struct VMDisplayConfig: Codable, Equatable {
+  enum Unit: String, Codable {
+    case point = "pt"
+    case pixel = "px"
+  }
+
   var width: Int = 1024
   var height: Int = 768
+  var unit: Unit?
 }
 
 extension VMDisplayConfig: CustomStringConvertible {
   var description: String {
-    "\(width)x\(height)"
+    if let unit {
+      "\(width)x\(height)\(unit.rawValue)"
+    } else {
+      "\(width)x\(height)"
+    }
   }
 }
 
