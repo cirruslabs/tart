@@ -12,7 +12,12 @@ class OTel {
   static let shared = OTel()
 
   init() {
-    spanExporter = OtlpHttpTraceExporter()
+    if let endpointRaw = ProcessInfo.processInfo.environment["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"],
+       let endpoint = URL(string: endpointRaw) {
+      spanExporter = OtlpHttpTraceExporter(endpoint: endpoint)
+    } else {
+      spanExporter = OtlpHttpTraceExporter()
+    }
     spanProcessor = SimpleSpanProcessor(spanExporter: spanExporter)
     tracerProvider = TracerProviderBuilder().add(spanProcessor: spanProcessor).build()
     OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
