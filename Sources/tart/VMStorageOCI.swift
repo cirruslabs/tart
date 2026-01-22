@@ -1,5 +1,5 @@
 import Foundation
-import Sentry
+import OpenTelemetryApi
 import Retry
 
 class VMStorageOCI: PrunableStorage {
@@ -145,9 +145,10 @@ class VMStorageOCI: PrunableStorage {
   }
 
   func pull(_ name: RemoteName, registry: Registry, concurrency: UInt, deduplicate: Bool) async throws {
-    SentrySDK.configureScope { scope in
-      scope.setContext(value: ["imageName": name.description], key: "OCI")
-    }
+    OpenTelemetry.instance.contextProvider.activeSpan?.setAttribute(
+      key: "oci.image-name",
+      value: .string(name.description)
+    )
 
     defaultLogger.appendNewLine("pulling manifest...")
 
@@ -181,7 +182,9 @@ class VMStorageOCI: PrunableStorage {
     }
 
     if !exists(digestName) {
-      let transaction = SentrySDK.startTransaction(name: name.description, operation: "pull", bindToScope: true)
+      let span = OTel.shared.tracer.spanBuilder(spanName: "pull").setActive(true).startSpan()
+      defer { span.end() }
+
       let tmpVMDir = try VMDirectory.temporaryDeterministic(key: name.description)
 
       // Open an existing VM directory corresponding to this name, if any,
@@ -194,9 +197,10 @@ class VMStorageOCI: PrunableStorage {
 
       // Try to reclaim some cache space if we know the VM size in advance
       if let uncompressedDiskSize = manifest.uncompressedDiskSize() {
-        SentrySDK.configureScope { scope in
-          scope.setContext(value: ["imageUncompressedDiskSize": uncompressedDiskSize], key: "OCI")
-        }
+        OpenTelemetry.instance.contextProvider.activeSpan?.setAttribute(
+          key: "oci.image-uncompressed-disk-size-bytes",
+          value: .int(Int(uncompressedDiskSize))
+        )
 
         let otherVMFilesSize: UInt64 = 128 * 1024 * 1024
 
@@ -229,9 +233,7 @@ class VMStorageOCI: PrunableStorage {
           return .throw
         }
         try move(digestName, from: tmpVMDir)
-        transaction.finish()
       }, onCancel: {
-        transaction.finish(status: SentrySpanStatus.cancelled)
         try? FileManager.default.removeItem(at: tmpVMDir.baseURL)
       })
     } else {
