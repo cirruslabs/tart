@@ -11,6 +11,8 @@ task:
   build_script:
     - swift build
   test_script:
+    # Add /usr/sbin to PATH, otherwise testDiskutilInfo() fails to locate "diskutil"
+    - export PATH=$PATH:/usr/sbin
     - swift test
   integration_test_script:
     - codesign --sign - --entitlements Resources/tart-dev.entitlements --force .build/debug/tart

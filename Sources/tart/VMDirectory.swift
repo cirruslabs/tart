@@ -2,25 +2,6 @@ import Foundation
 import Virtualization
 import CryptoKit
 
-// MARK: - Disk Image Info Structures
-struct DiskImageInfo: Codable {
-  let sizeInfo: SizeInfo?
-  let size: UInt64?
-
-  enum CodingKeys: String, CodingKey {
-    case sizeInfo = "Size Info"
-    case size = "Size"
-  }
-}
-
-struct SizeInfo: Codable {
-  let totalBytes: UInt64?
-
-  enum CodingKeys: String, CodingKey {
-    case totalBytes = "Total Bytes"
-  }
-}
-
 struct VMDirectory: Prunable {
   enum State: String {
     case Running = "running"
@@ -201,69 +182,28 @@ struct VMDirectory: Prunable {
   }
 
   private func resizeASIFDisk(_ sizeGB: UInt16) throws {
-    guard let diskutilURL = resolveBinaryPath("diskutil") else {
-      throw RuntimeError.FailedToResizeDisk("diskutil not found in PATH")
-    }
-
-    // First, get current disk image info to check current size
-    let infoProcess = Process()
-    infoProcess.executableURL = diskutilURL
-    infoProcess.arguments = ["image", "info", "--plist", diskURL.path]
-
-    let infoPipe = Pipe()
-    infoProcess.standardOutput = infoPipe
-    infoProcess.standardError = infoPipe
-
     do {
-      try infoProcess.run()
-      infoProcess.waitUntilExit()
+      let diskImageInfo = try Diskutil.imageInfo(diskURL)
 
-      let infoData = infoPipe.fileHandleForReading.readDataToEndOfFile()
+      let currentSizeBytes = try diskImageInfo.totalBytes()
+      let desiredSizeBytes = UInt64(sizeGB) * 1000 * 1000 * 1000
 
-      if infoProcess.terminationStatus != 0 {
-        let output = String(data: infoData, encoding: .utf8) ?? "Unknown error"
-        throw RuntimeError.FailedToResizeDisk("Failed to get ASIF disk info: \(output)")
-      }
+      if desiredSizeBytes < currentSizeBytes {
+        let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentSizeBytes))
+        let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredSizeBytes))
 
-      // Parse the plist using PropertyListDecoder
-      do {
-        let diskImageInfo = try PropertyListDecoder().decode(DiskImageInfo.self, from: infoData)
-
-        // Extract current size from the decoded structure
-        var currentSizeBytes: UInt64?
-
-        // Try to get size from Size Info -> Total Bytes first
-        if let totalBytes = diskImageInfo.sizeInfo?.totalBytes {
-          currentSizeBytes = totalBytes
-        } else if let size = diskImageInfo.size {
-          // Fallback to top-level Size field
-          currentSizeBytes = size
-        }
-
-        guard let currentSizeBytes = currentSizeBytes else {
-          throw RuntimeError.FailedToResizeDisk("Could not find size information in disk image info")
-        }
-
-        let desiredSizeBytes = UInt64(sizeGB) * 1000 * 1000 * 1000
-
-        if desiredSizeBytes < currentSizeBytes {
-          let currentLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(currentSizeBytes))
-          let desiredLengthHuman = ByteCountFormatter().string(fromByteCount: Int64(desiredSizeBytes))
-          throw RuntimeError.InvalidDiskSize("new disk size of \(desiredLengthHuman) should be larger " +
-            "than the current disk size of \(currentLengthHuman)")
-        } else if desiredSizeBytes > currentSizeBytes {
-          // Resize the ASIF disk image using diskutil
-          try performASIFResize(sizeGB)
-        }
+        throw RuntimeError.InvalidDiskSize("New disk size of \(desiredLengthHuman) should be larger " +
+          "than the current disk size of \(currentLengthHuman)")
+      } else if desiredSizeBytes > currentSizeBytes {
+        // Resize the ASIF disk image using diskutil
+        try performASIFResize(sizeGB)
+      } else {
         // If sizes are equal, no action needed
-      } catch let error as RuntimeError {
-        throw error
-      } catch {
-        let outputString = String(data: infoData, encoding: .utf8) ?? "Unable to decode output"
-        throw RuntimeError.FailedToResizeDisk("Failed to parse disk image info: \(error). Output: \(outputString)")
       }
+    } catch let error as RuntimeError {
+      throw error
     } catch {
-      throw RuntimeError.FailedToResizeDisk("Failed to get disk image info: \(error)")
+      throw RuntimeError.FailedToResizeDisk("\(error)")
     }
   }
 
@@ -304,7 +244,7 @@ struct VMDirectory: Prunable {
     case .raw:
       try createRawDisk(sizeGB: sizeGB)
     case .asif:
-      try createASIFDisk(sizeGB: sizeGB)
+      try Diskutil.imageCreate(diskURL: diskURL, sizeGB: sizeGB)
     }
   }
 
@@ -318,38 +258,6 @@ struct VMDirectory: Prunable {
     try diskFileHandle.close()
   }
 
-  private func createASIFDisk(sizeGB: UInt16) throws {
-    guard let diskutilURL = resolveBinaryPath("diskutil") else {
-      throw RuntimeError.FailedToCreateDisk("diskutil not found in PATH")
-    }
-
-    let process = Process()
-    process.executableURL = diskutilURL
-    process.arguments = [
-      "image", "create", "blank",
-      "--format", "ASIF",
-      "--size", "\(sizeGB)G",
-      "--volumeName", "Tart",
-      diskURL.path
-    ]
-
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = pipe
-
-    do {
-      try process.run()
-      process.waitUntilExit()
-
-      if process.terminationStatus != 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? "Unknown error"
-        throw RuntimeError.FailedToCreateDisk("Failed to create ASIF disk image: \(output)")
-      }
-    } catch {
-      throw RuntimeError.FailedToCreateDisk("Failed to execute diskutil: \(error)")
-    }
-  }
 
   func delete() throws {
     let lock = try lock()
@@ -389,6 +297,21 @@ struct VMDirectory: Prunable {
 
   func sizeGB() throws -> Int {
     try sizeBytes() / 1000 / 1000 / 1000
+  }
+
+  func diskSizeBytes() throws -> Int {
+    let vmConfig = try VMConfig(fromURL: configURL)
+
+    return switch vmConfig.diskFormat {
+    case .raw:
+      try sizeBytes()
+    case .asif:
+      try Diskutil.imageInfo(diskURL).totalBytes()
+    }
+  }
+
+  func diskSizeGB() throws -> Int {
+    try diskSizeBytes() / 1000 / 1000 / 1000
   }
 
   func markExplicitlyPulled() {
