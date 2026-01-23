@@ -819,6 +819,12 @@ struct MainApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+  func applicationDidFinishLaunching(_ : Notification) {
+    let nsApp = NSApplication.shared
+    nsApp.setActivationPolicy(.regular)
+    nsApp.activate(ignoringOtherApps: true)
+  }
+
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
     if (kill(getpid(), MainApp.suspendable ? SIGUSR1 : SIGINT) == 0) {
       return .terminateLater
