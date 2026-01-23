@@ -4,29 +4,43 @@ import OpenTelemetrySdk
 import OpenTelemetryProtocolExporterHttp
 
 class OTel {
-  let spanExporter: SpanExporter
-  let spanProcessor: SpanProcessor
-  let tracerProvider: TracerProviderSdk
+  let tracerProvider: TracerProviderSdk?
   let tracer: Tracer
 
   static let shared = OTel()
 
   init() {
+    tracerProvider = Self.initializeTracing()
+    tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: "tart", instrumentationVersion: CI.version)
+  }
+
+  static func initializeTracing() -> TracerProviderSdk? {
+    guard let _ = ProcessInfo.processInfo.environment["TRACEPARENT"] else {
+      return nil
+    }
+
+    let spanExporter: SpanExporter
     if let endpointRaw = ProcessInfo.processInfo.environment["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"],
        let endpoint = URL(string: endpointRaw) {
       spanExporter = OtlpHttpTraceExporter(endpoint: endpoint)
     } else {
       spanExporter = OtlpHttpTraceExporter()
     }
-    spanProcessor = SimpleSpanProcessor(spanExporter: spanExporter)
-    tracerProvider = TracerProviderBuilder().add(spanProcessor: spanProcessor).build()
+    let spanProcessor = SimpleSpanProcessor(spanExporter: spanExporter)
+    let tracerProvider = TracerProviderBuilder().add(spanProcessor: spanProcessor).build()
+
     OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
 
-    tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: "tart", instrumentationVersion: CI.version)
+    return tracerProvider
   }
 
   func flush() {
     OpenTelemetry.instance.contextProvider.activeSpan?.end()
+
+    guard let tracerProvider else {
+      // No tracing was initialized, so just ending a span is enough
+      return
+    }
 
     tracerProvider.forceFlush()
 
