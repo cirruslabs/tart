@@ -1,14 +1,14 @@
-name: Build
+name: Build (Cached)
 
 on:
-  push:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build
+    name: Build tart (cached)
     runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
