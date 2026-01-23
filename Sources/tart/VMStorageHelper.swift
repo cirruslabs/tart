@@ -169,14 +169,3 @@ extension RuntimeError : HasExitCode {
     }
   }
 }
-
-// Customize error description for Sentry[1]
-//
-// [1]: https://docs.sentry.io/platforms/apple/guides/ios/usage/#customizing-error-descriptions
-extension RuntimeError : CustomNSError {
-  var errorUserInfo: [String : Any] {
-    [
-      NSDebugDescriptionErrorKey: description,
-    ]
-  }
-}

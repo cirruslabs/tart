@@ -4,7 +4,7 @@ import Darwin
 import Dispatch
 import SwiftUI
 import Virtualization
-import Sentry
+import OpenTelemetryApi
 import System
 
 var vm: VM?
@@ -525,14 +525,15 @@ struct Run: AsyncParsableCommand {
           try vncImpl.stop()
         }
 
+        OTel.shared.flush()
         Foundation.exit(0)
       } catch {
-        // Capture the error into Sentry
-        SentrySDK.capture(error: error)
-        SentrySDK.flush(timeout: 2.seconds.timeInterval)
+        // Capture the error into OpenTelemetry
+        OpenTelemetry.instance.contextProvider.activeSpan?.recordException(error)
 
         fputs("\(error)\n", stderr)
 
+        OTel.shared.flush()
         Foundation.exit(1)
       }
     }
@@ -566,12 +567,14 @@ struct Run: AsyncParsableCommand {
             } else {
               print(RuntimeError.SuspendFailed("this functionality is only supported on macOS 14 (Sonoma) or newer"))
 
+              OTel.shared.flush()
               Foundation.exit(1)
             }
           #endif
         } catch (let e) {
           print(RuntimeError.SuspendFailed(e.localizedDescription))
 
+          OTel.shared.flush()
           Foundation.exit(1)
         }
       }

@@ -1,7 +1,9 @@
 import ArgumentParser
 import Darwin
 import Foundation
-import Sentry
+import OpenTelemetryApi
+import OpenTelemetrySdk
+import OpenTelemetryProtocolExporterHttp
 
 @main
 struct Root: AsyncParsableCommand {
@@ -50,50 +52,27 @@ struct Root: AsyncParsableCommand {
     // Set line-buffered output for stdout
     setlinebuf(stdout)
 
+    defer { OTel.shared.flush() }
+
     do {
       // Parse command
       var command = try parseAsRoot()
 
-      // Initialize Sentry
-      if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] {
-        SentrySDK.start { options in
-          options.dsn = dsn
-          options.releaseName = CI.release
-          options.tracesSampleRate = Float(
-            ProcessInfo.processInfo.environment["SENTRY_TRACES_SAMPLE_RATE"] ?? "1.0"
-          ) as NSNumber?
+      // Create a root span for the command we're about to run
+      let span = OTel.shared.tracer.spanBuilder(spanName: type(of: command)._commandName).startSpan()
+      defer { span.end() }
+      OpenTelemetry.instance.contextProvider.setActiveSpan(span)
 
-          // By default only 5XX are captured
-          // Let's capture everything but 401 (unauthorized)
-          options.enableCaptureFailedRequests = true
-          options.failedRequestStatusCodes = [
-            HttpStatusCodeRange(min: 400, max: 400),
-            HttpStatusCodeRange(min: 402, max: 599)
-          ]
-
-          // https://github.com/cirruslabs/tart/issues/1163
-          options.enableAppLaunchProfiling = false
-          options.configureProfiling = {
-            $0.profileAppStarts = false
-          }
-        }
-
-        SentrySDK.configureScope { scope in
-          scope.setExtra(value: ProcessInfo.processInfo.arguments, key: "Command-line arguments")
-        }
-
-        // Enrich future events with Cirrus CI-specific tags
-        if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
-          SentrySDK.configureScope { scope in
-            for (key, value) in tags.split(separator: ",").compactMap({ parseCirrusSentryTag($0) }) {
-              scope.setTag(value: value, key: key)
-            }
-          }
-        }
+      // Enrich root command span with command's arguments
+      let commandLineArguments = ProcessInfo.processInfo.arguments.map { argument in
+        AttributeValue.string(argument)
       }
-      defer {
-        if ProcessInfo.processInfo.environment["SENTRY_DSN"] != nil {
-          SentrySDK.flush(timeout: 2.seconds.timeInterval)
+      span.setAttribute(key: "Command-line arguments", value: .array(AttributeArray(values: commandLineArguments)))
+
+      // Enrich root command span with Cirrus CI-specific tags
+      if let tags = ProcessInfo.processInfo.environment["CIRRUS_SENTRY_TAGS"] {
+        for (key, value) in tags.split(separator: ",").compactMap(splitEnvironmentVariable) {
+          span.setAttribute(key: key, value: .string(value))
         }
       }
 
@@ -115,19 +94,18 @@ struct Root: AsyncParsableCommand {
     } catch {
       // Not an error, just a custom exit code from "tart exec"
       if let execCustomExitCodeError = error as? ExecCustomExitCodeError {
+        OTel.shared.flush()
         Foundation.exit(execCustomExitCodeError.exitCode)
       }
 
-      // Capture the error into Sentry
-      if ProcessInfo.processInfo.environment["SENTRY_DSN"] != nil {
-        SentrySDK.capture(error: error)
-        SentrySDK.flush(timeout: 2.seconds.timeInterval)
-      }
+      // Capture the error into OpenTelemetry
+      OpenTelemetry.instance.contextProvider.activeSpan?.recordException(error)
 
       // Handle a non-ArgumentParser's exception that requires a specific exit code to be set
       if let errorWithExitCode = error as? HasExitCode {
         fputs("\(error)\n", stderr)
 
+        OTel.shared.flush()
         Foundation.exit(errorWithExitCode.exitCode)
       }
 
@@ -136,7 +114,7 @@ struct Root: AsyncParsableCommand {
     }
   }
 
-  private static func parseCirrusSentryTag(_ tag: String.SubSequence) -> (String, String)? {
+  private static func splitEnvironmentVariable(_ tag: String.SubSequence) -> (String, String)? {
     let splits = tag.split(separator: "=", maxSplits: 1)
     if splits.count != 2 {
       return nil

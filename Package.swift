@@ -17,15 +17,17 @@ let package = Package(
     .package(url: "https://github.com/antlr/antlr4", exact: "4.13.2"),
     .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.2.0")),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.6"),
-    .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.51.1"),
     .package(url: "https://github.com/cfilipov/TextTable", branch: "master"),
     .package(url: "https://github.com/sersoft-gmbh/swift-sysctl.git", from: "1.8.0"),
     .package(url: "https://github.com/orchetect/SwiftRadix", from: "1.3.1"),
     .package(url: "https://github.com/groue/Semaphore", from: "0.0.8"),
     .package(url: "https://github.com/fumoboy007/swift-retry", from: "0.2.3"),
     .package(url: "https://github.com/jozefizso/swift-xattr", from: "3.0.0"),
-    .package(url: "https://github.com/grpc/grpc-swift.git", .upToNextMajor(from: "1.24.2")),
-    .package(url: "https://buf.build/gen/swift/git/1.24.2-00000000000000-17d7dedafb88.1/cirruslabs_tart-guest-agent_grpc_swift.git", revision: "1.24.2-00000000000000-17d7dedafb88.1"),
+    .package(url: "https://github.com/grpc/grpc-swift.git", .upToNextMajor(from: "1.27.0")),
+    .package(url: "https://buf.build/gen/swift/git/1.27.1-20260114140118-bd09c26a260f.1/cirruslabs_tart-guest-agent_grpc_swift.git", branch: "main"),
+    .package(url: "https://github.com/open-telemetry/opentelemetry-swift", branch: "main"),
+    .package(url: "https://github.com/open-telemetry/opentelemetry-swift-core", from: "2.3.0"),
+
   ],
   targets: [
     .executableTarget(name: "tart", dependencies: [
@@ -35,7 +37,6 @@ let package = Package(
       .product(name: "SwiftDate", package: "SwiftDate"),
       .product(name: "Antlr4Static", package: "Antlr4"),
       .product(name: "Atomics", package: "swift-atomics"),
-      .product(name: "Sentry", package: "sentry-cocoa"),
       .product(name: "TextTable", package: "TextTable"),
       .product(name: "Sysctl", package: "swift-sysctl"),
       .product(name: "SwiftRadix", package: "SwiftRadix"),
@@ -44,6 +45,9 @@ let package = Package(
       .product(name: "XAttr", package: "swift-xattr"),
       .product(name: "GRPC", package: "grpc-swift"),
       .product(name: "Cirruslabs_TartGuestAgent_Grpc_Swift", package: "cirruslabs_tart-guest-agent_grpc_swift"),
+      .product(name: "OpenTelemetryApi", package: "opentelemetry-swift-core"),
+      .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift-core"),
+      .product(name: "OpenTelemetryProtocolExporterHTTP", package: "opentelemetry-swift"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",

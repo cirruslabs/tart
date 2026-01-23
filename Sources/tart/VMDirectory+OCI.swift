@@ -1,6 +1,6 @@
 import Compression
 import Foundation
-import Sentry
+import OpenTelemetryApi
 
 enum OCIError: Error {
   case ShouldBeExactlyOneLayer
@@ -43,7 +43,10 @@ extension VMDirectory {
     }
 
     let diskCompressedSize = layers.map { Int64($0.size) }.reduce(0, +)
-    SentrySDK.span?.setMeasurement(name: "compressed_disk_size", value: diskCompressedSize as NSNumber, unit: MeasurementUnitInformation.byte)
+    OpenTelemetry.instance.contextProvider.activeSpan?.setAttribute(
+      key: "compressed_disk_size_bytes",
+      value: .int(Int(diskCompressedSize))
+    )
 
     let prettyDiskSize = String(format: "%.1f", Double(diskCompressedSize) / 1_000_000_000.0)
     defaultLogger.appendNewLine("pulling disk (\(prettyDiskSize) GB compressed)...")

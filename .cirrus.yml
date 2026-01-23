@@ -23,6 +23,7 @@ task:
     - source venv/bin/activate
     - pip install -r requirements.txt
     - pytest --verbose --junit-xml=pytest-junit.xml
+    - go test -v ./...
   pytest_junit_result_artifacts:
     path: "integration-tests/pytest-junit.xml"
     format: junit
