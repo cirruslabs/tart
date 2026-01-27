@@ -11,7 +11,9 @@ import (
     "testing"
 
     "github.com/stretchr/testify/require"
+    semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
     tracepkg "go.opentelemetry.io/proto/otlp/collector/trace/v1"
+    v1 "go.opentelemetry.io/proto/otlp/common/v1"
     "google.golang.org/protobuf/proto"
 )
 
@@ -70,7 +72,13 @@ func TestOpenTelemetry(t *testing.T) {
     resourceSpans := traces[0].GetResourceSpans()
     require.Len(t, resourceSpans, 1)
 
-    scopeSpans := resourceSpans[0].GetScopeSpans()
+    // Ensure that service name and version resources are set
+    resourceSpan := resourceSpans[0]
+    stringAttributes := stringAttributesToMap(resourceSpan.GetResource().GetAttributes())
+    require.Equal(t, "tart", stringAttributes[string(semconv.ServiceNameKey)])
+    require.Equal(t, "SNAPSHOT", stringAttributes[string(semconv.ServiceVersionKey)])
+
+    scopeSpans := resourceSpan.GetScopeSpans()
     require.Len(t, scopeSpans, 1)
 
     spans := scopeSpans[0].GetSpans()
@@ -81,14 +89,21 @@ func TestOpenTelemetry(t *testing.T) {
     require.Equal(t, "list", span.Name)
 
     // Ensure that CIRRUS_SENTRY_TAGS are propagated
-    stringAttributes := map[string]string{}
-    for _, attribute := range span.GetAttributes() {
-        stringAttributes[attribute.GetKey()] = attribute.GetValue().GetStringValue()
-    }
+    stringAttributes = stringAttributesToMap(span.GetAttributes())
     require.Equal(t, stringAttributes["A"], "B")
     require.Equal(t, stringAttributes["C"], "D")
 
     // Ensure that W3C Trace Context is propagated
     require.Equal(t, "00000000000000000000000000000001", hex.EncodeToString(span.GetTraceId()))
     require.Equal(t, "0000000000000001", hex.EncodeToString(span.GetParentSpanId()))
+}
+
+func stringAttributesToMap(attributes []*v1.KeyValue) map[string]string {
+    result := map[string]string{}
+
+    for _, attribute := range attributes {
+        result[attribute.GetKey()] = attribute.GetValue().GetStringValue()
+    }
+
+    return result
 }

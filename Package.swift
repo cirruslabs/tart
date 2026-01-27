@@ -48,6 +48,7 @@ let package = Package(
       .product(name: "OpenTelemetryApi", package: "opentelemetry-swift-core"),
       .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift-core"),
       .product(name: "OpenTelemetryProtocolExporterHTTP", package: "opentelemetry-swift"),
+      .product(name: "ResourceExtension", package: "opentelemetry-swift"),
     ], exclude: [
       "OCI/Reference/Makefile",
       "OCI/Reference/Reference.g4",
