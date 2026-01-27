@@ -2,6 +2,7 @@ import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import OpenTelemetryProtocolExporterHttp
+import ResourceExtension
 
 class OTel {
   let tracerProvider: TracerProviderSdk?
@@ -19,6 +20,13 @@ class OTel {
       return nil
     }
 
+    var resource = DefaultResources().get()
+
+    resource.merge(other: Resource(attributes: [
+      SemanticConventions.Service.name.rawValue: .string("tart"),
+      SemanticConventions.Service.version.rawValue: .string(CI.version)
+    ]))
+
     let spanExporter: SpanExporter
     if let endpointRaw = ProcessInfo.processInfo.environment["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"],
        let endpoint = URL(string: endpointRaw) {
@@ -27,7 +35,10 @@ class OTel {
       spanExporter = OtlpHttpTraceExporter()
     }
     let spanProcessor = SimpleSpanProcessor(spanExporter: spanExporter)
-    let tracerProvider = TracerProviderBuilder().add(spanProcessor: spanProcessor).build()
+    let tracerProvider = TracerProviderBuilder()
+      .add(spanProcessor: spanProcessor)
+      .with(resource: resource)
+      .build()
 
     OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
 
