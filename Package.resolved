@@ -1,5 +1,5 @@
 {
-  "originHash" : "3a442857650816096c3d714a7dfa5847651ee6427bf098ae7fdbb6578509ddc6",
+  "originHash" : "5b17565466d26bfaa0fcb1b0ee11405dfe2c43ba46b7a7e30e9742537dadbad0",
   "pins" : [
     {
       "identity" : "antlr4",
@@ -49,10 +49,10 @@
     {
       "identity" : "opentelemetry-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/open-telemetry/opentelemetry-swift",
+      "location" : "https://github.com/edigaryev/opentelemetry-swift",
       "state" : {
-        "branch" : "main",
-        "revision" : "a9b620766cced177bfc4089bbc47860859550473"
+        "branch" : "use-feedback-handler",
+        "revision" : "2040f383e2a8b0a568a7617d147f8f1e23abb298"
       }
     },
     {

@@ -25,7 +25,7 @@ let package = Package(
     .package(url: "https://github.com/jozefizso/swift-xattr", from: "3.0.0"),
     .package(url: "https://github.com/grpc/grpc-swift.git", .upToNextMajor(from: "1.27.0")),
     .package(url: "https://buf.build/gen/swift/git/1.27.1-20260114140118-bd09c26a260f.1/cirruslabs_tart-guest-agent_grpc_swift.git", branch: "main"),
-    .package(url: "https://github.com/open-telemetry/opentelemetry-swift", branch: "main"),
+    .package(url: "https://github.com/edigaryev/opentelemetry-swift", branch: "use-feedback-handler"),
     .package(url: "https://github.com/open-telemetry/opentelemetry-swift-core", from: "2.3.0"),
 
   ],
