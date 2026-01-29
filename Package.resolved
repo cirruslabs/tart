@@ -1,5 +1,5 @@
 {
-  "originHash" : "5b17565466d26bfaa0fcb1b0ee11405dfe2c43ba46b7a7e30e9742537dadbad0",
+  "originHash" : "0da1cc30fa3c41e8c2e2edcdd55706549908275a54f681203e0eeade279deab9",
   "pins" : [
     {
       "identity" : "antlr4",
@@ -49,7 +49,7 @@
     {
       "identity" : "opentelemetry-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/edigaryev/opentelemetry-swift",
+      "location" : "https://github.com/cirruslabs/opentelemetry-swift",
       "state" : {
         "branch" : "use-feedback-handler",
         "revision" : "2040f383e2a8b0a568a7617d147f8f1e23abb298"
