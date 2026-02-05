@@ -6,15 +6,15 @@ import Cirruslabs_TartGuestAgent_Apple_Swift
 import Cirruslabs_TartGuestAgent_Grpc_Swift
 
 class AgentResolver {
-  static func ResolveIP(_ controlSocketURL: URL) async throws -> IPv4Address? {
+  static func ResolveIP(_ controlSocketPath: String) async throws -> IPv4Address? {
     do {
-      return try await resolveIP(controlSocketURL)
+      return try await resolveIP(controlSocketPath)
     } catch let error as GRPCConnectionPoolError {
       return nil
     }
   }
 
-  private static func resolveIP(_ controlSocketURL: URL) async throws -> IPv4Address? {
+  private static func resolveIP(_ controlSocketPath: String) async throws -> IPv4Address? {
     // Create a gRPC channel connected to the VM's control socket
     let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     defer {
@@ -22,7 +22,7 @@ class AgentResolver {
     }
 
     let channel = try GRPCChannelPool.with(
-      target: .unixDomainSocket(controlSocketURL.path()),
+      target: .unixDomainSocket(controlSocketPath),
       transportSecurity: .plaintext,
       eventLoopGroup: group,
     )

@@ -68,7 +68,15 @@ struct IP: AsyncParsableCommand {
           throw RuntimeError.Generic("Cannot perform IP resolution via Tart Guest Agent when control socket URL is not set")
         }
 
-        if let ip = try await AgentResolver.ResolveIP(controlSocketURL) {
+        // Change the current working directory to a VM's base directory
+        // to work around Unix domain socket 104 byte limitation [1]
+        //
+        // [1]: https://blog.8-p.info/en/2020/06/11/unix-domain-socket-length/
+        if let baseURL = controlSocketURL.baseURL {
+          FileManager.default.changeCurrentDirectoryPath(baseURL.path())
+        }
+
+        if let ip = try await AgentResolver.ResolveIP(controlSocketURL.relativePath) {
           return ip
         }
       }

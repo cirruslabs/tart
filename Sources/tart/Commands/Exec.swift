@@ -47,8 +47,16 @@ struct Exec: AsyncParsableCommand {
       try! group.syncShutdownGracefully()
     }
 
+    // Change the current working directory to a VM's base directory
+    // to work around Unix domain socket 104 byte limitation [1]
+    //
+    // [1]: https://blog.8-p.info/en/2020/06/11/unix-domain-socket-length/
+    if let baseURL = vmDir.controlSocketURL.baseURL {
+      FileManager.default.changeCurrentDirectoryPath(baseURL.path())
+    }
+
     let channel = try GRPCChannelPool.with(
-      target: .unixDomainSocket(vmDir.controlSocketURL.path()),
+      target: .unixDomainSocket(vmDir.controlSocketURL.relativePath),
       transportSecurity: .plaintext,
       eventLoopGroup: group,
     )
