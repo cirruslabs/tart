@@ -53,6 +53,9 @@ plugins:
       debug: true
   - search
   - minify
+  - redirects:
+      redirect_maps:
+        'integrations/vm-management.md': quick-start.md
 
 markdown_extensions:
   - markdown.extensions.admonition
@@ -96,7 +99,7 @@ nav:
       - "GitHub Actions": https://cirrus-runners.app/
       - "GitLab Runner": integrations/gitlab-runner.md
       - "Buildkite": integrations/buildkite.md
-      - "Managing VMs": integrations/vm-management.md
+      - "Packer": integrations/packer.md
   - "Support & Licensing": licensing.md
   - "Orchestration":
       - "Quick Start": orchard/quick-start.md
