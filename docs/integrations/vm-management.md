@@ -116,7 +116,9 @@ In addition, Tart supports [Docker credential helpers](https://docs.docker.com/e
 if defined in `~/.docker/config.json`.
 
 Finally, `TART_REGISTRY_USERNAME` and `TART_REGISTRY_PASSWORD` environment variables allow to override authorization
-for all registries which might useful for integrating with your CI's secret management.
+for all registries, which might be useful for integrating with your CI's secret management.
+
+You can also set the `TART_REGISTRY_HOSTNAME` environment variable to apply these overrides only to a specific host.
 
 ### Pushing a Local Image
 
