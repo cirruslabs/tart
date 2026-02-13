@@ -60,10 +60,14 @@ device without a physical display connected. For example, a Mac Mini with a HDMI
 but a Mac Mini on a desk with a connected physical display is considered a personal computer. **Usage on personal computers
 and before reaching the 100 CPU cores limit is royalty-free and does not have the viral properties of AGPL.**
 
+!!! note "Pricing update"
+    This post announced Tart licensing in February 2023 and originally listed monthly prices.
+    Pricing has since changed to yearly billing. See [Licensing and Support](../../licensing.md#license-tiers) for the latest terms.
+
 When an organization surpasses the 100 CPU cores limit, they will be required to obtain a [Gold Tier License](../../licensing.md#license-tiers),
-which costs \$1000 per month. Upon reaching a limit of 500 CPU cores, a [Platinum Tier License](../../licensing.md#license-tiers)
-(\$3000 per month) will be required, and for organizations that exceed 3000 CPU cores, a custom [Diamond Tier License](../../licensing.md#license-tiers)
-(\$1 per core per month) will be necessary. **All paid license tiers will include priority feature development and SLAs on support with urgent issues.**
+which costs \$12,000 per year. Upon reaching a limit of 500 CPU cores, a [Platinum Tier License](../../licensing.md#license-tiers)
+(\$36,000 per year) will be required, and for organizations that exceed 3000 CPU cores, a custom [Diamond Tier License](../../licensing.md#license-tiers)
+(\$12 per core per year) will be necessary. **All paid license tiers will include priority feature development and SLAs on support with urgent issues.**
 
 ## Have we considered alternatives?
 
