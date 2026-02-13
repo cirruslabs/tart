@@ -184,7 +184,7 @@ security unlock-keychain login.keychain
 
 This command also supports the `-p` command-line argument that allows you to supply a password and unlock non-interactively, which is great for scripts.
 
-Alternatively, you can pass the credentials via the environment variables, see [Registry Authorization](integrations/vm-management.md#registry-authorization) for more details on how to do that.
+Alternatively, you can pass the credentials via the environment variables, see [Registry Authorization](quick-start.md#registry-authorization) for more details on how to do that.
 
 ## How is Tart different from Anka?
 
