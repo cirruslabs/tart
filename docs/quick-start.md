@@ -178,19 +178,18 @@ Note: to use the directory mounting feature, the host needs to run macOS 13.0 (V
 
 ### Accessing mounted directories in macOS guests
 
-All shared directories are automatically mounted to `/Volumes/My Shared Files` directory.
-
-The directory we've mounted above will be accessible from the `/Volumes/My Shared Files/project` path inside a guest VM.
+All shared directories are automatically mounted under `/Volumes/My Shared Files` inside a guest VM.
+The `--dir=project` directory from above will be accessible from `/Volumes/My Shared Files/project`.
 
 Note: to use the directory mounting feature, the guest VM needs to run macOS 13.0 (Ventura) or newer.
 
 ??? tip "Changing mount location"
     It is possible to remount the directories after a virtual machine is started by running the following commands:
 
-    ```bash
-    sudo umount "/Volumes/My Shared Files"
-    mkdir ~/workspace
-    mount_virtiofs com.apple.virtio-fs.automount ~/workspace
+    ```console
+    admin@Manageds-Virtual-Machine:~$ sudo umount "/Volumes/My Shared Files"
+    admin@Manageds-Virtual-Machine:~$ mkdir ~/workspace
+    admin@Manageds-Virtual-Machine:~$ mount_virtiofs com.apple.virtio-fs.automount ~/workspace
     ```
 
     After running the above commands the direcory will be available at `~/workspace/project`
@@ -199,17 +198,17 @@ Note: to use the directory mounting feature, the guest VM needs to run macOS 13.
 
 To be able to access the shared directories from the Linux guest, you need to manually mount the virtual filesystem first:
 
-```bash
-sudo mkdir /mnt/shared
-sudo mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
+```console
+admin@ubuntu:~$ sudo mkdir /mnt/shared
+admin@ubuntu:~$ sudo mount -t virtiofs com.apple.virtio-fs.automount /mnt/shared
 ```
 
-The directory we've mounted above will be accessible from the `/mnt/shared/project` path inside a guest VM.
+Once `/mnt/shared` is mounted inside a guest VM, the `--dir=project` directory from above will be accessible from `/mnt/shared/project`.
 
 ??? info "Auto-mount at boot time"
     To automatically mount this directory at boot time, add the following line to the `/etc/fstab` file:
 
-    ```shell
+    ```
     com.apple.virtio-fs.automount /mnt/shared virtiofs rw,relatime 0 0
     ```
 
