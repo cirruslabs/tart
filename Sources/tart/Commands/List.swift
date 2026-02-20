@@ -7,7 +7,6 @@ fileprivate struct VMInfo: Encodable {
   let Name: String
   let Disk: Int
   let Size: Int
-  let SizeOnDisk: Int
   let Accessed: String
   let Running: Bool
   let State: String
@@ -45,7 +44,6 @@ struct List: AsyncParsableCommand {
           Name: name,
           Disk: vmDir.sizeGB(),
           Size: vmDir.allocatedSizeGB(),
-          SizeOnDisk: vmDir.allocatedSizeGB() - vmDir.deduplicatedSizeGB(),
           Accessed: formatAccessDate(try vmDir.accessDate()),
           Running: vmDir.running(),
           State: vmDir.state().rawValue
@@ -60,7 +58,6 @@ struct List: AsyncParsableCommand {
           Name: name,
           Disk: vmDir.sizeGB(),
           Size: vmDir.allocatedSizeGB(),
-          SizeOnDisk: vmDir.allocatedSizeGB() - vmDir.deduplicatedSizeGB(),
           Accessed: formatAccessDate(try vmDir.accessDate()),
           Running: vmDir.running(),
           State: vmDir.state().rawValue
