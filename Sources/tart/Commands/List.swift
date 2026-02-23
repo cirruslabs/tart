@@ -7,7 +7,7 @@ fileprivate struct VMInfo: Encodable {
   let Name: String
   let Disk: Int
   let Size: Int
-  let SizeOnDisk: Int
+  let Accessed: String
   let Running: Bool
   let State: String
 }
@@ -39,13 +39,29 @@ struct List: AsyncParsableCommand {
 
     if source == nil || source == "local" {
       infos += sortedInfos(try VMStorageLocal().list().map { (name, vmDir) in
-        try VMInfo(Source: "local", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), SizeOnDisk: vmDir.allocatedSizeGB() - vmDir.deduplicatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
+        try VMInfo(
+          Source: "local",
+          Name: name,
+          Disk: vmDir.sizeGB(),
+          Size: vmDir.allocatedSizeGB(),
+          Accessed: formatAccessDate(try vmDir.accessDate()),
+          Running: vmDir.running(),
+          State: vmDir.state().rawValue
+        )
       })
     }
 
     if source == nil || source == "oci" {
       infos += sortedInfos(try VMStorageOCI().list().map { (name, vmDir, _) in
-        try VMInfo(Source: "OCI", Name: name, Disk: vmDir.sizeGB(), Size: vmDir.allocatedSizeGB(), SizeOnDisk: vmDir.allocatedSizeGB() - vmDir.deduplicatedSizeGB(), Running: vmDir.running(), State: vmDir.state().rawValue)
+        try VMInfo(
+          Source: "OCI",
+          Name: name,
+          Disk: vmDir.sizeGB(),
+          Size: vmDir.allocatedSizeGB(),
+          Accessed: formatAccessDate(try vmDir.accessDate()),
+          Running: vmDir.running(),
+          State: vmDir.state().rawValue
+        )
       })
     }
 
@@ -60,5 +76,17 @@ struct List: AsyncParsableCommand {
 
   private func sortedInfos(_ infos: [VMInfo]) -> [VMInfo] {
     infos.sorted(by: { left, right in left.Name < right.Name })
+  }
+
+  private func formatAccessDate(_ accessDate: Date) -> String {
+    switch format {
+    case .text:
+      let formatter = RelativeDateTimeFormatter()
+      formatter.unitsStyle = .full
+      return formatter.localizedString(for: accessDate, relativeTo: Date())
+    case .json:
+      let formatter = ISO8601DateFormatter()
+      return formatter.string(from: accessDate)
+    }
   }
 }
