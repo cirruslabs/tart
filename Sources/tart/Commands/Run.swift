@@ -243,6 +243,13 @@ struct Run: AsyncParsableCommand {
   @Flag(help: ArgumentHelp("Restrict network access to the host-only network"))
   var netHost: Bool = false
 
+  @Option(help: ArgumentHelp("Use externally managed connected datagram socket file descriptor for VM networking (e.g. --net-fd=3)", discussion: """
+  This option allows integrating Tart with externally launched networking helpers.
+
+  The provided file descriptor must reference a connected datagram socket.
+  """, valueName: "fd", visibility: .hidden))
+  var netFd: Int32?
+
   @Option(help: ArgumentHelp("Set the root disk options (e.g. --root-disk-opts=\"ro\" or --root-disk-opts=\"caching=cached,sync=none\")",
                              discussion: """
                              Options are comma-separated and are as follows:
@@ -295,14 +302,19 @@ struct Run: AsyncParsableCommand {
       netSoftnet = true
     }
 
+    if let netFd = netFd, netFd < 0 {
+      throw ValidationError("--net-fd must be greater than or equal to 0")
+    }
+
     // Check that no more than one network option is specified
     var netFlags = 0
     if netBridged.count > 0 { netFlags += 1 }
     if netSoftnet { netFlags += 1 }
     if netHost { netFlags += 1 }
+    if netFd != nil { netFlags += 1 }
 
     if netFlags > 1 {
-      throw ValidationError("--net-bridged, --net-softnet and --net-host are mutually exclusive")
+      throw ValidationError("--net-bridged, --net-softnet, --net-host and --net-fd are mutually exclusive")
     }
 
     if graphics && noGraphics {
@@ -620,6 +632,10 @@ struct Run: AsyncParsableCommand {
   }
 
   func userSpecifiedNetwork(vmDir: VMDirectory) throws -> Network? {
+    if let netFd = netFd {
+      return try NetworkFD(fd: netFd)
+    }
+
     var softnetExtraArguments: [String] = []
 
     if let netSoftnetAllow = netSoftnetAllow {

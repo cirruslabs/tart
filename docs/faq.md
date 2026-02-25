@@ -77,6 +77,20 @@ Note: that accessing host is only possible with the default NAT network. If you 
 [Softnet](https://github.com/cirruslabs/softnet) (via `tart run --net-softnet <VM NAME>)`, then the network isolation
 is stricter and it's not possible to access the host.
 
+## Using externally managed networking (`--net-fd`)
+
+For advanced integrations, `tart run` can consume a pre-opened connected datagram socket via `--net-fd`.
+
+Unlike `--net-softnet`, Tart will not launch Softnet or configure Softnet permissions in this mode.
+
+External launcher is responsible for:
+
+* creating a connected datagram socketpair (for example, `socketpair(AF_UNIX, SOCK_DGRAM, ...)`)
+* starting `softnet --vm-fd ...` (or another networking helper) with one end of that socketpair
+* starting `tart run --net-fd <FD> <VM NAME>` with the other end inherited into Tart
+
+If the file descriptor is invalid, not a datagram socket, or not connected, `tart run` fails fast.
+
 ## Changing the default NAT subnet
 
 To change the default network to `192.168.77.1`:
