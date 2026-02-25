@@ -2,6 +2,8 @@ import Compression
 import Foundation
 import OpenTelemetryApi
 
+let legacyDiskV1MediaType = "application/vnd.cirruslabs.tart.disk.v1"
+
 enum OCIError: Error {
   case ShouldBeExactlyOneLayer
   case ShouldBeAtLeastOneLayer
@@ -29,16 +31,12 @@ extension VMDirectory {
     try configFile.close()
 
     // Pull VM's disk layers and decompress them into a disk file
-    let diskImplType: Disk.Type
-    let layers: [OCIManifestLayer]
+    if manifest.layers.contains(where: { $0.mediaType == legacyDiskV1MediaType }) {
+      throw RuntimeError.Generic("Pulling OCI images with legacy disk media type \(legacyDiskV1MediaType) is no longer supported, please re-push the image using a current Tart version")
+    }
 
-    if manifest.layers.contains(where: { $0.mediaType == diskV1MediaType }) {
-      diskImplType = DiskV1.self
-      layers = manifest.layers.filter { $0.mediaType == diskV1MediaType }
-    } else if manifest.layers.contains(where: { $0.mediaType == diskV2MediaType }) {
-      diskImplType = DiskV2.self
-      layers = manifest.layers.filter { $0.mediaType == diskV2MediaType }
-    } else {
+    let layers = manifest.layers.filter { $0.mediaType == diskV2MediaType }
+    if layers.isEmpty {
       throw OCIError.ShouldBeAtLeastOneLayer
     }
 
@@ -55,10 +53,10 @@ extension VMDirectory {
     ProgressObserver(progress).log(defaultLogger)
 
     do {
-      try await diskImplType.pull(registry: registry, diskLayers: layers, diskURL: diskURL,
-                                  concurrency: concurrency, progress: progress,
-                                  localLayerCache: localLayerCache,
-                                  deduplicate: deduplicate)
+      try await DiskV2.pull(registry: registry, diskLayers: layers, diskURL: diskURL,
+                            concurrency: concurrency, progress: progress,
+                            localLayerCache: localLayerCache,
+                            deduplicate: deduplicate)
     } catch let error where error is FilterError {
       throw RuntimeError.PullFailed("failed to decompress disk: \(error.localizedDescription)")
     }
@@ -90,7 +88,7 @@ extension VMDirectory {
     try manifest.toJSON().write(to: manifestURL)
   }
 
-  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, diskFormat: String, concurrency: UInt, labels: [String: String] = [:]) async throws -> RemoteName {
+  func pushToRegistry(registry: Registry, references: [String], chunkSizeMb: Int, concurrency: UInt, labels: [String: String] = [:]) async throws -> RemoteName {
     var layers = Array<OCIManifestLayer>()
 
     // Read VM's config and push it as blob
@@ -111,14 +109,7 @@ extension VMDirectory {
     let progress = Progress(totalUnitCount: diskSize)
     ProgressObserver(progress).log(defaultLogger)
 
-    switch diskFormat {
-    case "v1":
-      layers.append(contentsOf: try await DiskV1.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, concurrency: concurrency, progress: progress))
-    case "v2":
-      layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, concurrency: concurrency, progress: progress))
-    default:
-      throw RuntimeError.OCIUnsupportedDiskFormat(diskFormat)
-    }
+    layers.append(contentsOf: try await DiskV2.push(diskURL: diskURL, registry: registry, chunkSizeMb: chunkSizeMb, concurrency: concurrency, progress: progress))
 
     // Read VM's NVRAM and push it as blob
     defaultLogger.appendNewLine("pushing NVRAM...")

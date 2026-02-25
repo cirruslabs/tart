@@ -6,7 +6,6 @@ let ociConfigMediaType = "application/vnd.oci.image.config.v1+json"
 
 // Layer media types
 let configMediaType = "application/vnd.cirruslabs.tart.config.v1"
-let diskV1MediaType = "application/vnd.cirruslabs.tart.disk.v1"
 let diskV2MediaType = "application/vnd.cirruslabs.tart.disk.v2"
 let nvramMediaType = "application/vnd.cirruslabs.tart.nvram.v1"
 
