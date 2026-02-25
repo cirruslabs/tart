@@ -2,6 +2,8 @@ import Compression
 import Foundation
 import OpenTelemetryApi
 
+let legacyDiskV1MediaType = "application/vnd.cirruslabs.tart.disk.v1"
+
 enum OCIError: Error {
   case ShouldBeExactlyOneLayer
   case ShouldBeAtLeastOneLayer
@@ -29,6 +31,10 @@ extension VMDirectory {
     try configFile.close()
 
     // Pull VM's disk layers and decompress them into a disk file
+    if manifest.layers.contains(where: { $0.mediaType == legacyDiskV1MediaType }) {
+      throw RuntimeError.Generic("Pulling OCI images with legacy disk media type \"application/vnd.cirruslabs.tart.disk.v1\" is no longer supported, please re-push the image using a current Tart version")
+    }
+
     let layers = manifest.layers.filter { $0.mediaType == diskV2MediaType }
     if layers.isEmpty {
       throw OCIError.ShouldBeAtLeastOneLayer
