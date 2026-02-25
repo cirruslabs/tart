@@ -19,6 +19,7 @@ tart run sequoia-base
     ```bash
     curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
     tar -xzvf tart.tar.gz
+    xattr -dr com.apple.quarantine tart.app
     ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
     ./tart.app/Contents/MacOS/tart run sequoia-base
     ```
