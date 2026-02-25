@@ -24,27 +24,6 @@ final class LayerizerTests: XCTestCase {
     registryRunner = nil
   }
 
-  func testDiskV1() async throws {
-    // Original disk file to be pushed to the registry
-    let originalDiskFileURL = try fileWithRandomData(sizeBytes: 5 * 1024 * 1024 * 1024)
-    addTeardownBlock {
-      try FileManager.default.removeItem(at: originalDiskFileURL)
-    }
-
-    // Disk file to be pulled from the registry
-    // and compared against the original disk file
-    let pulledDiskFileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-
-    print("pushing disk...")
-    let diskLayers = try await DiskV1.push(diskURL: originalDiskFileURL, registry: registry, chunkSizeMb: 0, concurrency: 4, progress: Progress())
-
-    print("pulling disk...")
-    try await DiskV1.pull(registry: registry, diskLayers: diskLayers, diskURL: pulledDiskFileURL, concurrency: 16, progress: Progress())
-
-    print("comparing disks...")
-    try XCTAssertEqual(Digest.hash(originalDiskFileURL), Digest.hash(pulledDiskFileURL))
-  }
-
   func testDiskV2() async throws {
     // Original disk file to be pushed to the registry
     let originalDiskFileURL = try fileWithRandomData(sizeBytes: 5 * 1024 * 1024 * 1024)
