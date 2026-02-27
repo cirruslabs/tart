@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+<!-- Render landing page under tabs -->
+{% block tabs %} {{ super() }}
+
+<!-- Additional styles for landing page -->
+<style>
+  body {
+    overflow-x: hidden;
+  }
+
+  .md-content__inner {
+    margin-bottom: 0;
+    padding: 2.2rem 0;
+  }
+
+  .md-content__inner:before {
+    display: none;
+  }
+
+  /* Application header should be static for the landing page */
+  .md-header {
+    position: initial;
+  }
+
+  /* Remove spacing, as we cannot hide it completely */
+  .md-main__inner {
+    margin: 0;
+  }
+
+  /* Hide sidebar, preventing unnecessary margins on the page */
+  .md-main__inner > .md-content,
+  .md-main__inner > .md-sidebar--secondary {
+    display: none;
+  }
+
+  /* Prevent removing default title on the page */
+  .md-content__inner h1:first-child {
+    display: block;
+  }
+
+  .tx-landing__image {
+    margin-top: 45px;
+  }
+
+  /* Prevent layout shift after image loading */
+  .tx-landing__image dotlottie-player {
+    aspect-ratio: 1.66;
+  }
+
+  @media (max-width: 959px) {
+    .tx-landing__image {
+      margin-bottom: 10px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .md-typeset .headerlink {
+      display: none;
+    }
+  }
+
+  /* Hide table of contents */
+  @media screen and (min-width: 60em) {
+    .md-sidebar--secondary {
+      display: none;
+    }
+  }
+
+  /* Hide navigation */
+  @media screen and (min-width: 76.25em) {
+    .md-sidebar--primary {
+      display: none;
+    }
+  }
+</style>
+
+<script src="https://unpkg.com/@dotlottie/player-component@1.4.2/dist/dotlottie-player.js"></script>
+
+<!-- landing page for landing page -->
+<!-- Hero -->
+<section class="tx-container">
+  <div class="md-grid md-typeset">
+    <div class="tx-landing">
+      <!-- landing image -->
+      <div class="tx-landing__image">
+        <dotlottie-player
+            src="/assets/animations/TartLogo.lottie"
+            mode="normal"
+            style="width: 75%; margin: auto"
+            autoplay
+        />
+      </div>
+
+      <!-- landing content -->
+      <div class="tx-landing__content">
+        <h2>
+          <strong>Tart</strong> is a virtualization toolset to build, run and
+          manage <i>macOS</i> and <i>Linux</i> virtual machines on
+          <i>Apple Silicon.</i>
+        </h2>
+        <a href="/quick-start" title="Quick Start" class="md-button">
+          Learn More
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Spotlights -->
+<section class="mdx-parallax__group" data-md-color-scheme="default">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner">
+      <header class="md-typeset">
+        <h1 id="virtualization-and-beyond">
+          Virtualization and beyond
+          <a href="#virtualization-and-beyond"
+             class="headerlink"
+             title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <div class="mdx-spotlight">
+        <figure class="mdx-spotlight__feature">
+          <img src="assets/images/spotlight/virtualization-framework.webp"
+               alt="Apple’s native Virtualization.Framework"
+               loading="lazy"
+               width="500"
+               height="212"
+          />
+          <figcaption class="md-typeset">
+            <h2>Native performance</h2>
+            <p>
+              Tart is&nbsp;using Apple&rsquo;s native
+              <i>Virtualization.Framework</i> that was developed along with
+              architecting the first M1&nbsp;chip. This seamless integration
+              between hardware and software ensures smooth performance without
+              any drawbacks.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <img src="assets/images/spotlight/supported-registries.webp"
+               alt="OCI-compatible container registries"
+               loading="lazy"
+               width="500"
+               height="160"
+          />
+          <figcaption class="md-typeset">
+            <h2>Remote storage for Virtual Machines</h2>
+            <p>
+              For storing virtual machine images Tart integrates with
+              OCI-compatible container registries. Work with virtual machines as
+              you used to&nbsp;with Docker containers.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <img src="assets/images/spotlight/github-actions-runners.webp"
+               alt="GitHub Actions Runners"
+               loading="lazy"
+               width="500"
+               height="280"
+          />
+          <figcaption class="md-typeset">
+            <h2>Seamless integration with your existing automations</h2>
+            <p>
+              Tart integrates with many continuous integration systems, including a dedicated
+              service of on-demand GitHub Actions Runners. With a single line change, you can cut your
+              CI/CD costs by up to <b>30 times</b> by using <a href="https://cirrus-runners.app/">Cirrus
+              Runners</a>
+              to run your workflows.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="mdx-spotlight__feature">
+          <div id="lottie-player">
+            <dotlottie-player src="/assets/animations/Orchard.lottie"
+                              mode="normal"
+                              style="height: 280px; margin: auto"
+                              autoplay
+                              loop
+            />
+          </div>
+          <figcaption class="md-typeset">
+            <h2>Run at scale with <a href="https://github.com/cirruslabs/orchard">Orchard</a></h2>
+            <p>
+              Tart toolset includes Orchard Orchestration &mdash; tool to run and manage Tart virtual
+              machines at scale on a cluster of Apple Silicon hosts. An Orchard Cluster exposes a simple REST API to
+              manage thousands virtual machines. Orchard CLI allows accessing remote virtual machines like they run
+              locally.
+            </p>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mdx-parallax__group" data-md-color-scheme="slate" data-md-color-primary="indigo">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner mdx-installations md-typeset">
+      <header class="md-typeset">
+        <h1 id="powerhouse">
+          Automation Powerhouse
+          <a href="#powerhouse"
+             class="headerlink"
+             title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <script>
+          fetch("https://api.github.com/repos/cirruslabs/tart/releases?per_page=100")
+              .then((response) => response.json())
+              .then((releases) => {
+                  let allDownloads = 0;
+                  for (let release of releases) {
+                      for (let asset of release.assets) {
+                          if (asset && asset.content_type === "application/octet-stream") {
+                              allDownloads += asset.download_count || 0
+                          }
+                      }
+                  }
+                  let counterElement = document.getElementById('installation-counter');
+                  if (counterElement) {
+                      // Live installation count is available starting version 1.0.0
+                      // Prior Tart was installed a little over 14,000 times, let's count them too
+                      let installationPriorV1 = 14
+                      counterElement.textContent = (installationPriorV1 + Math.round(allDownloads / 1000)) + ",000"
+                  }
+              })
+      </script>
+      <h2>
+        With more than <strong id="installation-counter">25,000</strong> installations to date, Tart has been
+        adopted for various scenarios.
+        Its applications range from powering CI/CD pipelines and reproducible local development environments,
+        to helping in the testing of device management systems without actual physical devices.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="mdx-parallax__group" data-md-color-scheme="default">
+  <div class="md-content md-grid" data-md-component="content">
+    <div class="md-content__inner md-content__inner-testimonials">
+      <header class="md-typeset">
+        <h1 id="what-our-users-say">
+          What our users say
+          <a href="#what-our-users-say"
+             class="headerlink"
+             title="Permanent link"
+          >
+            ¶
+          </a>
+        </h1>
+      </header>
+      <div class="mdx-users">
+        <figure class="mdx-users__testimonial">
+          <img src="assets/images/users/mikhail-tokarev.webp"
+               alt="Mikhail Tokarev"
+               loading="lazy"
+               width="200"
+               height="200"
+          />
+          <figcaption class="md-typeset">
+            <h3>
+              Mikhail Tokarev, CTO at <a href="https://codemagic.io/start/" target="_blank">Codemagic</a>
+            </h3>
+            <hr/>
+            <cite>
+              Thanks to the minimal overhead of using the Apple Virtualization
+              API, we’ve seen some performance improvements in booting new
+              virtual machines compared with Anka.
+            </cite>
+          </figcaption>
+        </figure>
+        <figure class="mdx-users__testimonial">
+          <img src="assets/images/users/expo.webp"
+               alt="Expo"
+               loading="lazy"
+               width="200"
+               height="200"
+          />
+          <figcaption class="md-typeset">
+            <h3>
+              Infrastructure Team at <a href="https://expo.dev/" target="_blank">Expo</a>
+            </h3>
+            <hr/>
+            <cite>
+              Tart was the practical way for us to use the Virtualization framework. Cirrus Labs’
+              continued maintenance and support gives us confidence, and it is also important for us
+              to be able to read the source code when we need to understand an abstraction layer below.
+            </cite>
+          </figcaption>
+        </figure>
+        <figure class="mdx-users__testimonial">
+          <img src="assets/images/users/snowflake.webp"
+               alt="Snowflake"
+               loading="lazy"
+               width="200"
+               height="200"
+          />
+          <figcaption class="md-typeset">
+            <h3>
+              Red Team at <a href="https://www.snowflake.com/" target="_blank">Snowflake</a>
+            </h3>
+            <hr/>
+            <cite>
+              The Snowflake Red Team had a need for macOS CI/CD and a segmented macOS development
+              environment. We solved this problem and shared our implementation with macOS EC2 and Tart.
+              We also automated this process with Terraform/Packer to simplify the deployment of our
+              infrastructure and machine images.
+            </cite>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
