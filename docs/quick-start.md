@@ -9,8 +9,8 @@ Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) 
 
 ```bash
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
-tart run sequoia-base
+tart clone ghcr.io/cirruslabs/macos-tahoe-base:latest tahoe-base
+tart run tahoe-base
 ```
 
 ??? info "Manual installation from a release archive"
@@ -19,8 +19,8 @@ tart run sequoia-base
     ```bash
     curl -LO https://github.com/cirruslabs/tart/releases/latest/download/tart.tar.gz
     tar -xzvf tart.tar.gz
-    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
-    ./tart.app/Contents/MacOS/tart run sequoia-base
+    ./tart.app/Contents/MacOS/tart clone ghcr.io/cirruslabs/macos-tahoe-base:latest tahoe-base
+    ./tart.app/Contents/MacOS/tart run tahoe-base
     ```
 
     Please note that `./tart.app/Contents/MacOS/tart` binary is required to be used in order to trick macOS
@@ -34,6 +34,10 @@ tart run sequoia-base
 
 The following macOS images are currently available:
 
+* macOS 26 (Tahoe)
+    * `ghcr.io/cirruslabs/macos-tahoe-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-tahoe-base:latest`
+    * `ghcr.io/cirruslabs/macos-tahoe-xcode:latest`
 * macOS 15 (Sequoia)
     * `ghcr.io/cirruslabs/macos-sequoia-vanilla:latest`
     * `ghcr.io/cirruslabs/macos-sequoia-base:latest`
@@ -86,7 +90,7 @@ These credentials work both for logging in via GUI, console (Linux) and SSH.
 If the guest VM is running and configured to accept incoming SSH connections you can conveniently connect to it like so:
 
 ```bash
-ssh admin@$(tart ip sequoia-base)
+ssh admin@$(tart ip tahoe-base)
 ```
 
 !!! tip "Running scripts inside Tart virtual machines"
@@ -95,8 +99,8 @@ ssh admin@$(tart ip sequoia-base)
 
     ```bash
     brew install cirruslabs/cli/sshpass
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip sequoia-base) "uname -a"
-    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip sequoia-base) < script.sh
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip tahoe-base) "uname -a"
+    sshpass -p admin ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" admin@$(tart ip tahoe-base) < script.sh
     ```
 
 ## Creating VM images
@@ -110,8 +114,8 @@ Tart can create VMs from `*.ipsw` files. You can download a specific `*.ipsw` fi
 use `latest` instead of a path to `*.ipsw` to download the latest available version:
 
 ```bash
-tart create --from-ipsw=latest sequoia-vanilla
-tart run sequoia-vanilla
+tart create --from-ipsw=latest tahoe-vanilla
+tart run tahoe-vanilla
 ```
 
 After the initial booting of the VM, you'll need to manually go through the macOS installation process. As a convention we recommend creating an `admin` user with an `admin` password. After the regular installation please do some additional modifications in the VM:
