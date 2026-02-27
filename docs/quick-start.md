@@ -9,8 +9,8 @@ Try running a Tart VM on your Apple Silicon device running macOS 13.0 (Ventura) 
 
 ```bash
 brew install cirruslabs/cli/tart
-tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest sequoia-base
-tart run sequoia-base
+tart clone ghcr.io/cirruslabs/macos-tahoe-base:latest tahoe-base
+tart run tahoe-base
 ```
 
 ??? info "Manual installation from a release archive"
@@ -34,6 +34,10 @@ tart run sequoia-base
 
 The following macOS images are currently available:
 
+* macOS 26 (Tahoe)
+    * `ghcr.io/cirruslabs/macos-tahoe-vanilla:latest`
+    * `ghcr.io/cirruslabs/macos-tahoe-base:latest`
+    * `ghcr.io/cirruslabs/macos-tahoe-xcode:latest`
 * macOS 15 (Sequoia)
     * `ghcr.io/cirruslabs/macos-sequoia-vanilla:latest`
     * `ghcr.io/cirruslabs/macos-sequoia-base:latest`
