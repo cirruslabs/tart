@@ -40,7 +40,7 @@ The following macOS images are currently available:
     * `ghcr.io/cirruslabs/macos-tahoe-xcode:latest`
 * macOS 15 (Sequoia)
     * `ghcr.io/cirruslabs/macos-sequoia-vanilla:latest`
-    * `ghcr.io/cirruslabs/macos-sequoia-base:latest`
+    * `ghcr.io/cirruslabs/macos-tahoe-base:latest`
     * `ghcr.io/cirruslabs/macos-sequoia-xcode:latest`
 * macOS 14 (Sonoma)
     * `ghcr.io/cirruslabs/macos-sonoma-vanilla:latest`

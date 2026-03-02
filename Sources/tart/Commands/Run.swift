@@ -137,7 +137,7 @@ struct Run: AsyncParsableCommand {
   To work with block devices, the easiest way is to modify their permissions to be accessible to the current user:
 
   sudo chown $USER /dev/diskX
-  tart run sequoia --disk=/dev/diskX
+  tart run macos --disk=/dev/diskX
 
   Warning: after running the chown command above, all software running under the current user will be able to access /dev/diskX. If that violates your threat model, we recommend avoiding mounting block devices altogether.
   """, valueName: "path[:options]"), completion: .file())
