@@ -17,8 +17,8 @@ packer {
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "ghcr.io/cirruslabs/macos-sequoia-base:latest"
-  vm_name      = "my-custom-sequoia"
+  vm_base_name = "ghcr.io/cirruslabs/macos-tahoe-base:latest"
+  vm_name      = "my-custom-tahoe"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 70

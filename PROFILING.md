@@ -7,7 +7,7 @@ Perhaps, the easiest, but not the most comprehensive way to tell what's going on
 In the example below, you will run `tart pull` via `time(1)` to gather generalized CPU, I/O and memory usage metrics:
 
 ```shell
-/usr/bin/time -l tart pull ghcr.io/cirruslabs/macos-sequoia-base:latest
+/usr/bin/time -l tart pull ghcr.io/cirruslabs/macos-tahoe-base:latest
 ```
 
 **Note:** you need to specify a full path to `time(1)` binary, otherwise the shell's built-in `time` command will be invoked, which doesn't have the `-l` command-line argument.
@@ -48,7 +48,7 @@ To use it, make sure that [Xcode](https://developer.apple.com/xcode/resources/) 
 Once done, you can create a CPU profile of `tart pull`:
 
 ```shell
-xctrace record --template "CPU Profiler" --target-stdout - --launch -- /opt/homebrew/bin/tart pull ghcr.io/cirruslabs/macos-sequoia-base:latest
+xctrace record --template "CPU Profiler" --target-stdout - --launch -- /opt/homebrew/bin/tart pull ghcr.io/cirruslabs/macos-tahoe-base:latest
 ```
 
 Now that `xctrace(1)` is running, you'll see the `tart pull`-related output first, and once finished, the following line will appear:
