@@ -77,6 +77,21 @@ Note: that accessing host is only possible with the default NAT network. If you 
 [Softnet](https://github.com/cirruslabs/softnet) (via `tart run --net-softnet <VM NAME>)`, then the network isolation
 is stricter and it's not possible to access the host.
 
+## Avoiding the "Local Network" permission prompt
+
+Starting from macOS 15 (Sequoia), a GUI "Local Network" permission prompt might appear when Tart is used by another tool that needs to connect to a VM over a private IPv4 network, for example [Packer](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart).
+
+This is not caused by Tart itself, but by the host-side process that needs network access into the guest.
+
+If you need a non-interactive workaround, you can configure the [local network privacy preferences](https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy#macOS-considerations) on the host so that all [RFC 1918](https://datatracker.ietf.org/doc/html/rfc1918#section-3) address ranges that Tart VMs commonly use are excluded from the prompt:
+
+```shell
+sudo defaults write com.apple.network.local-network AllowedEthernetLocalNetworkAddresses -array "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"
+sudo defaults write com.apple.network.local-network AllowedWiFiLocalNetworkAddresses -array "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"
+```
+
+After applying these settings, reboot the host.
+
 ## Changing the default NAT subnet
 
 To change the default network to `192.168.77.1`:
