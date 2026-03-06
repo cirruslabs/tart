@@ -77,9 +77,9 @@ Note: that accessing host is only possible with the default NAT network. If you 
 [Softnet](https://github.com/cirruslabs/softnet) (via `tart run --net-softnet <VM NAME>)`, then the network isolation
 is stricter and it's not possible to access the host.
 
-## Avoiding the "Local Network" permission prompt
+## Avoiding the "Local Network" permission pop-up
 
-Starting from macOS 15 (Sequoia), a GUI "Local Network" permission prompt might appear when Tart is used by another tool that needs to connect to a VM over a private IPv4 network, for example [Packer](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart).
+Starting from macOS 15 (Sequoia), a GUI "Local Network" permission pop-up might appear when Tart is used by another tool that needs to connect to a VM over a private IPv4 network, for example [Packer](https://developer.hashicorp.com/packer/integrations/cirruslabs/tart/latest/components/builder/tart).
 
 This is not caused by Tart itself, but by the host-side process that needs network access into the guest.
 
