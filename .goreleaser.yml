@@ -40,7 +40,7 @@ notarize:
   macos_native:
     - enabled: "true"
       sign:
-        keychain: "{{ .Env.KEYCHAIN_PATH }}"
+        keychain: "{{.Env.KEYCHAIN_PATH}}"
         identity: "Developer ID Application: Cirrus Labs, Inc."
         options: [runtime]
         entitlements: ./Resources/tart-prod.entitlements

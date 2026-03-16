@@ -8,15 +8,23 @@ task:
   env:
     MACOS_SIGN_P12: ENCRYPTED[!183482723ca1a95f9c4439f7a79c9d3b115472bb18c739ed1586e12d3914ccf94ade8169eeda7332fc204f8be9c27d9f!]
     MACOS_SIGN_PASSWORD: ENCRYPTED[!417423346c567f12007f42d084bff1cfee30ee14f7e8258550157679a269c70d541c9f19224224ab0293b10f2c6d4c5e!]
+    KEYCHAIN_PASSWORD: password101
+    MACOS_NOTARY_PROFILE_NAME: notarytool
     MACOS_NOTARY_ISSUER_ID: ENCRYPTED[!74076906e9fa36bca3c1da1637b0759b58bb009eb1a707446896eefad3767e8dba1d0f87e71106b98cde98ac4b037a2a!]
     MACOS_NOTARY_KEY_ID: ENCRYPTED[!af9e5da1010a6b04e548ef494acc77a6e0ce176549de98f81c5b5cdd72856de09f77e51cf0849e3c4b7a2d2c22f25ca8!]
     MACOS_NOTARY_KEY: ENCRYPTED[!c70c53f3e6c163931c7cdf9d90aff8934ef21d5dd1090158688e00b94e97c68257d9cf4ae1df873e6ae0d949866aee72!]
-    CERTIFICATE_PATH: $CIRRUS_WORKING_DIR/goreleaser.p12
-    KEY_PATH: $CIRRUS_WORKING_DIR/goreleaser.p8
-    KEYCHAIN_PATH: $CIRRUS_WORKING_DIR/goreleaser.keychain-db
+    CERTIFICATE_PATH: "${CIRRUS_WORKING_DIR}/goreleaser.p12"
+    KEY_PATH: "${CIRRUS_WORKING_DIR}/goreleaser.p8"
+    KEYCHAIN_PATH: "${CIRRUS_WORKING_DIR}/goreleaser.keychain-db"
     GITHUB_TOKEN: ENCRYPTED[!98ace8259c6024da912c14d5a3c5c6aac186890a8d4819fad78f3e0c41a4e0cd3a2537dd6e91493952fb056fa434be7c!]
     GORELEASER_KEY: ENCRYPTED[!9b80b6ef684ceaf40edd4c7af93014ee156c8aba7e6e5795f41c482729887b5c31f36b651491d790f1f668670888d9fd!]
-  kek_script: |
+  install_script:
+    - brew install go
+    - brew install --cask goreleaser/tap/goreleaser-pro
+  info_script:
+    - xcodebuild -version
+    - swift -version
+  goreleaser_script: |
     # import certificate and key from secrets
     echo -n "$MACOS_SIGN_P12" | base64 --decode -o $CERTIFICATE_PATH
     echo -n "$MACOS_NOTARY_KEY" | base64 --decode -o $KEY_PATH
@@ -32,26 +40,20 @@ task:
     security list-keychain -d user -s $KEYCHAIN_PATH
 
     # create notary profile
-    echo xcrun notarytool store-credentials "$MACOS_NOTARY_PROFILE_NAME" \
+    xcrun notarytool store-credentials "notarytool" \
       --key "$KEY_PATH" \
       --key-id "$MACOS_NOTARY_KEY_ID" \
       --issuer "$MACOS_NOTARY_ISSUER_ID" \
       --keychain $KEYCHAIN_PATH
 
-    # create notary profile
-    echo xcrun notarytool store-credentials "$MACOS_NOTARY_PROFILE_NAME" \
-      --key "$KEY_PATH" \
-      --key-id "$MACOS_NOTARY_KEY_ID" \
-      --issuer "$MACOS_NOTARY_ISSUER_ID" \
-      --keychain $KEYCHAIN_PATH
-  install_script:
-    - brew install go
-    - brew install --cask goreleaser/tap/goreleaser-pro
-  info_script:
-    - security find-identity -v
-    - xcodebuild -version
-    - swift -version
-  goreleaser_script: goreleaser release --skip=publish --snapshot --clean
+    security find-identity -v
+    
+    echo $KEYCHAIN_PATH
+    
+    security default-keychain -s "$KEYCHAIN_PATH"
+    security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+    goreleaser release --skip=publish --snapshot --clean
   always:
     check_dist_script:
       - find dist/
