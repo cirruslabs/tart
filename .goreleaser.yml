@@ -87,8 +87,8 @@ homebrew_casks:
     skip_upload: auto
     dependencies:
       - formula: "cirruslabs/cli/softnet"
-    install: |
-      generate_completions_from_executable(libexec/"tart.app/Contents/MacOS/tart", "--generate-completion-script")
+#    install: |
+#      generate_completions_from_executable(libexec/"tart.app/Contents/MacOS/tart", "--generate-completion-script")
     completions:
       bash: completions/tart.bash
       zsh: completions/tart.zsh
