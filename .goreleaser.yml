@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
 version: 2
 
 project_name: tart
@@ -17,15 +18,35 @@ builds:
     goarch:
       - arm64
       - amd64
-    binary: tart.app/Contents/MacOS/tart
+    binary: tart
     prebuilt:
       path: '.build/{{- if eq .Arch "arm64" }}arm64{{- else }}x86_64{{ end }}-apple-macosx/release/tart'
 
 universal_binaries:
   - name_template: tart.app/Contents/MacOS/tart
     replace: true
-    hooks:
-      post: gon gon.hcl
+
+app_bundles:
+  - name: Tart
+    bundle: com.github.cirruslabs.tart
+    icon: Resources/AppIcon.png
+
+dmg:
+  - name: Tart
+    use: appbundle
+    replace: true
+
+notarize:
+  macos_native:
+    - enabled: "true"
+      sign:
+        keychain: "build.keychain"
+        identity: "Developer ID Application: Cirrus Labs, Inc."
+        #options: [runtime]
+        entitlements: ./Resources/tart-prod.entitlements
+      notarize:
+        profile_name: "notarytool"
+        #wait: true
 
 archives:
   - name_template: "{{ .ProjectName }}"
