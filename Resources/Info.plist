@@ -7,7 +7,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>Tart</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.cirruslabs.tart</string>
+	<string>com.github.cirruslabs.tart</string>
 	<key>CFBundleExecutable</key>
 	<string>tart</string>
   <key>LSApplicationCategoryType</key>
