@@ -59,4 +59,6 @@ task:
       - find dist/
       - du -hs dist/
     dist_artifacts:
-      path: "dist/dmg/tart_all/Tart.dmg"
+      path:
+        - dist/dmg/tart_all/Tart.dmg
+        - dist/homebrew/tart.rb
