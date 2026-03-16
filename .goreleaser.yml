@@ -8,6 +8,9 @@ before:
     - .ci/set-version.sh
     - swift build --arch arm64 --configuration release --product tart
     - swift build --arch x86_64 --configuration release --product tart
+    - .build/arm64-apple-macosx/release/tart --generate-completion-script bash > completions/tart.bash
+    - .build/arm64-apple-macosx/release/tart --generate-completion-script zsh > completions/tart.zsh
+    - .build/arm64-apple-macosx/release/tart --generate-completion-script fish > completions/tart.fish
 
 builds:
   - id: tart
@@ -65,8 +68,9 @@ archives:
 release:
   prerelease: auto
 
-brews:
+homebrew_casks:
   - name: tart
+    app: Tart.app
     repository:
       owner: cirruslabs
       name: homebrew-cli
@@ -82,10 +86,12 @@ brews:
     description: Run macOS and Linux VMs on Apple Hardware
     skip_upload: auto
     dependencies:
-      - "cirruslabs/cli/softnet"
+      - formula: "cirruslabs/cli/softnet"
     install: |
-      libexec.install Dir["*"]
-      bin.write_exec_script "#{libexec}/tart.app/Contents/MacOS/tart"
       generate_completions_from_executable(libexec/"tart.app/Contents/MacOS/tart", "--generate-completion-script")
+    completions:
+      bash: completions/tart.bash
+      zsh: completions/tart.zsh
+      fish: completions/tart.fish
     custom_block: |
       depends_on :macos => :ventura
