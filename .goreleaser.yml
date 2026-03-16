@@ -30,6 +30,8 @@ universal_binaries:
 archives:
   - name_template: "{{ .ProjectName }}"
     files:
+      - src: dist/tart_darwin_all/tart.app/Contents/_CodeSignature/CodeResources
+        dst: tart.app/Contents/_CodeSignature/CodeResources
       - src: Resources/embedded.provisionprofile
         dst: tart.app/Contents
         strip_parent: true
