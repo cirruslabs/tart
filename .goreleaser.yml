@@ -40,13 +40,13 @@ notarize:
   macos_native:
     - enabled: "true"
       sign:
-        keychain: "build.keychain"
+        keychain: "{{ .Env.KEYCHAIN_PATH }}"
         identity: "Developer ID Application: Cirrus Labs, Inc."
-        #options: [runtime]
+        options: [runtime]
         entitlements: ./Resources/tart-prod.entitlements
       notarize:
         profile_name: "notarytool"
-        #wait: true
+        wait: true
 
 archives:
   - name_template: "{{ .ProjectName }}"
