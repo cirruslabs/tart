@@ -25,20 +25,26 @@ universal_binaries:
   - name_template: tart.app/Contents/MacOS/tart
     replace: true
     hooks:
-      post: gon gon.hcl
+      pre:
+        - mkdir -p dist/tart_darwin_all/tart.app/Contents/Resources
+        - cp Resources/embedded.provisionprofile dist/tart_darwin_all/tart.app/Contents/embedded.provisionprofile
+        - cp Resources/Info.plist dist/tart_darwin_all/tart.app/Contents/Info.plist
+        - cp Resources/AppIcon.png dist/tart_darwin_all/tart.app/Contents/Resources/AppIcon.png
+      post:
+        - gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
     files:
       - src: dist/tart_darwin_all/tart.app/Contents/_CodeSignature/CodeResources
         dst: tart.app/Contents/_CodeSignature/CodeResources
-      - src: Resources/embedded.provisionprofile
+      - src: dist/tart_darwin_all/tart.app/Contents/embedded.provisionprofile
         dst: tart.app/Contents
         strip_parent: true
-      - src: Resources/Info.plist
+      - src: dist/tart_darwin_all/tart.app/Contents/Info.plist
         dst: tart.app/Contents
         strip_parent: true
-      - src: Resources/AppIcon.png
+      - src: dist/tart_darwin_all/tart.app/Contents/Resources/AppIcon.png
         dst: tart.app/Contents/Resources
         strip_parent: true
       - LICENSE
