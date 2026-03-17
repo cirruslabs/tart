@@ -61,5 +61,4 @@ task:
     dist_artifacts:
       paths:
         - dist/dmg/tart_all/Tart.dmg
-        - dist/homebrew/tart.rb
-
+        - dist/homebrew/Casks/tart.rb
