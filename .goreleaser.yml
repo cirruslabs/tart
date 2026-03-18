@@ -29,7 +29,10 @@ universal_binaries:
 app_bundles:
   - name: Tart
     bundle: com.github.cirruslabs.tart
-    icon: Resources/AppIcon.png
+    icon: Resources/AppIcon.icns
+    extra_files:
+      - src: Resources/embedded.provisionprofile
+        dst: Contents/embedded.provisionprofile
 
 dmg:
   - name: Tart
