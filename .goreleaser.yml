@@ -70,6 +70,7 @@ release:
 
 homebrew_casks:
   - name: tart
+    app: Tart.app
     repository:
       owner: cirruslabs
       name: homebrew-cli
