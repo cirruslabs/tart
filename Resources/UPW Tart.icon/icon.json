@@ -1,0 +1,140 @@
+{
+  "fill" : "automatic",
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "hidden" : false,
+          "image-name-specializations" : [
+            {
+              "value" : "4.4-–-layer.png"
+            },
+            {
+              "idiom" : "square",
+              "value" : "UPW Tart L4.png"
+            }
+          ],
+          "name" : "UPW Tart L4"
+        }
+      ],
+      "opacity" : 1,
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 1
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.25
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name-specializations" : [
+            {
+              "value" : "3.3-–-layer.png"
+            },
+            {
+              "idiom" : "square",
+              "value" : "UPW Tart L3.png"
+            }
+          ],
+          "name" : "UPW Tart L3",
+          "position-specializations" : [
+            {
+              "idiom" : "square",
+              "value" : {
+                "scale" : 1,
+                "translation-in-points" : [
+                  0,
+                  0
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 1
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.25
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "image-name-specializations" : [
+            {
+              "value" : "2.2-–-layer.png"
+            },
+            {
+              "idiom" : "square",
+              "value" : "UPW Tart L2.png"
+            }
+          ],
+          "name" : "UPW Tart L2"
+        }
+      ],
+      "position-specializations" : [
+        {
+          "idiom" : "square",
+          "value" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 1
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.25
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name-specializations" : [
+            {
+              "value" : "1.1-–-layer.png"
+            },
+            {
+              "idiom" : "square",
+              "value" : "UPW Tart L1.png"
+            }
+          ],
+          "name" : "UPW Tart L1"
+        }
+      ],
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.25
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
