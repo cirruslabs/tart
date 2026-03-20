@@ -25,20 +25,26 @@ universal_binaries:
   - name_template: tart.app/Contents/MacOS/tart
     replace: true
     hooks:
-      post: gon gon.hcl
+      post:
+        - mkdir -p dist/tart_darwin_all/tart.app/Contents/Resources
+        - cp Resources/embedded.provisionprofile dist/tart_darwin_all/tart.app/Contents/
+        - cp Resources/Info.plist dist/tart_darwin_all/tart.app/Contents/
+        - cp "Resources/actool/UPW Tart.icns" "Resources/actool/Assets.car" dist/tart_darwin_all/tart.app/Contents/Resources/
+        - gon gon.hcl
 
 archives:
   - name_template: "{{ .ProjectName }}"
     files:
-      - src: Resources/embedded.provisionprofile
-        dst: tart.app/Contents
-        strip_parent: true
-      - src: Resources/Info.plist
-        dst: tart.app/Contents
-        strip_parent: true
-      - src: Resources/AppIcon.png
-        dst: tart.app/Contents/Resources
-        strip_parent: true
+      - src: dist/tart_darwin_all/tart.app/Contents/Info.plist
+        dst: tart.app/Contents/Info.plist
+      - src: dist/tart_darwin_all/tart.app/Contents/embedded.provisionprofile
+        dst: tart.app/Contents/embedded.provisionprofile
+      - src: dist/tart_darwin_all/tart.app/Contents/Resources/UPW Tart.icns
+        dst: tart.app/Contents/Resources/UPW Tart.icns
+      - src: dist/tart_darwin_all/tart.app/Contents/Resources/Assets.car
+        dst: tart.app/Contents/Resources/Assets.car
+      - src: dist/tart_darwin_all/tart.app/Contents/_CodeSignature/CodeResources
+        dst: tart.app/Contents/_CodeSignature/CodeResources
       - LICENSE
 
 release:
