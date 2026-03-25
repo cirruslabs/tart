@@ -13,7 +13,7 @@ class RegistryRunner {
     let stdoutPipe = Pipe()
 
     let proc = Process()
-    proc.executableURL = URL(fileURLWithPath: "/usr/local/bin/docker")
+    proc.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/docker")
     proc.arguments = arguments
     proc.standardOutput = stdoutPipe
     try proc.run()
@@ -31,7 +31,7 @@ class RegistryRunner {
 
   init() async throws {
     // Start container
-    let container = try Self.dockerCmd("run", "-d", "--rm", "-p", "127.0.0.1:0:5000", "registry:2")
+    let container = try Self.dockerCmd("run", "-d", "--rm", "-p", "127.0.0.1::5000", "registry:2")
       .trimmingCharacters(in: CharacterSet.newlines)
     containerID = container
 
