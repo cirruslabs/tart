@@ -13,7 +13,7 @@ class RegistryRunner {
     let stdoutPipe = Pipe()
 
     let proc = Process()
-    proc.executableURL = URL(fileURLWithPath: "/usr/local/bin/docker")
+    proc.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/docker")
     proc.arguments = arguments
     proc.standardOutput = stdoutPipe
     try proc.run()
