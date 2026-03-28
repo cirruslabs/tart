@@ -22,3 +22,6 @@ dist/
 
 # mkdocs-material
 site
+
+# Python cache files
+*.pyc
