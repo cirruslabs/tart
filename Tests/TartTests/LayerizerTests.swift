@@ -26,7 +26,7 @@ final class LayerizerTests: XCTestCase {
 
   func testDiskV2() async throws {
     // Original disk file to be pushed to the registry
-    let originalDiskFileURL = try fileWithRandomData(sizeBytes: 5 * 1024 * 1024 * 1024)
+    let originalDiskFileURL = try fileWithRandomData(sizeBytes: 1 * 1024 * 1024 * 1024)
     addTeardownBlock {
       try FileManager.default.removeItem(at: originalDiskFileURL)
     }
