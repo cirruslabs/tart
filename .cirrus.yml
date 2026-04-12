@@ -103,7 +103,6 @@ task:
   only_if: $CIRRUS_TAG != ''
   depends_on:
     - lint
-    - test
     - build
   macos_instance:
     image: ghcr.io/cirruslabs/macos-runner:tahoe
