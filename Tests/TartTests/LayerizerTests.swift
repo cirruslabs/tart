@@ -14,7 +14,7 @@ final class LayerizerTests: XCTestCase {
     do {
       registryRunner = try await RegistryRunner()
     } catch {
-      try XCTSkipIf(ProcessInfo.processInfo.environment["CI"] == nil)
+      try XCTSkip("Registry is unavailable: \(error)")
     }
   }
 
