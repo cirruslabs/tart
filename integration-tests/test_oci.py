@@ -46,7 +46,7 @@ def vm_with_random_disk(tart):
     disk_path = os.path.join(tart.home(), "vms", vm_name, "disk.img")
 
     with tempfile.NamedTemporaryFile(delete=False) as tf:
-        tf.write(os.urandom(amount_to_transfer.bytes))
+        tf.write(os.urandom(int(amount_to_transfer.bytes)))
         tf.close()
         os.rename(tf.name, disk_path)
 
